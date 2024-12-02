@@ -11,30 +11,22 @@ function Home() {
 
     useEffect(() => {
       const token = localStorage.getItem('token');
-      // If there's no token, we'll still fetch users but might get a limited list
-      api.get('/users', {
-          headers: {
-              ...(token && { 'Authorization': `Bearer ${token}` }),
-              'Content-Type': 'application/json'
-          }
-      })
-      .then(res => {
-          if (!res.ok) {
-              // If unauthorized, we might want to show a message or handle differently
-              if (res.status === 401) {
-                  console.log('Unauthorized access - limited user list will be shown');
-                  return [];
+      const fetchUsers = async () => {
+        try {
+          const response = await api.get('/users', {
+              headers: {
+                  ...(token && { 'Authorization': `Bearer ${token}` }),
+                  'Content-Type': 'application/json'
               }
-              throw new Error('Failed to fetch users');
-          }
-          return res.json();
-      })
-      .then(data => setUsers(data))
-      .catch(err => {
+          });
+          setUsers(response.data);
+        } catch (err) {
           console.error('Error fetching users:', err);
           setError('Failed to load users');
-      });
-  }, []);
+        }
+      };
+      fetchUsers();
+    }, []);
 
     const clearForm = () => {
         setUserId('');
