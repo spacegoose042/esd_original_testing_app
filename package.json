@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "scripts": {
       "build": "cd server && npm install && cd ../client && npm install && npm run build",
-      "start": "cd server && echo 'PWD:' && pwd && echo 'Files:' && ls -la && npm start"
+      "start": "echo 'Root dir:' && ls -la /app && echo 'Client dir:' && ls -la /app/client && npm start"
     },
     "engines": {
       "node": ">=14.0.0"
