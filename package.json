@@ -1,13 +1,16 @@
 {
     "name": "esd-testing-app",
     "version": "1.0.0",
-    "private": true,
-    "workspaces": [
-      "client",
-      "server"
-    ],
     "scripts": {
-      "build": "cd client && npm run build && cd ../server && npm install",
-      "start": "cd server && npm start"
+      "start": "node server/server.js",
+      "build": "cd client && npm install && npm run build && npx prisma generate && npx prisma migrate deploy",
+      "install-client": "cd client && npm install",
+      "heroku-postbuild": "npm run install-client && npm run build"
+    },
+    "engines": {
+      "node": ">=14.0.0"
+    },
+    "dependencies": {
+      "express": "^4.17.1"
     }
   }
