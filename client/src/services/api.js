@@ -1,11 +1,10 @@
 import axios from 'axios';
-import API_URL from '../config/api';
 
 const api = axios.create({
-    baseURL: API_URL
+    baseURL: 'https://esdoriginaltestingapp-production.up.railway.app/api'
 });
 
-// Add a request interceptor
+// Add request interceptor for auth token
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -13,5 +12,14 @@ api.interceptors.request.use((config) => {
     }
     return config;
 });
+
+// Add response interceptor for consistent response handling
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        console.error('API Error:', error);
+        return Promise.reject(error);
+    }
+);
 
 export default api; 
