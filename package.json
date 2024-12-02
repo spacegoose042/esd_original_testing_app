@@ -11,6 +11,8 @@
       "node": ">=14.0.0"
     },
     "dependencies": {
-      "express": "^4.17.1"
+      "express": "^4.17.1",
+      "@prisma/client": "^5.7.1",
+      "prisma": "^5.7.1"
     }
   }
