@@ -1,5 +1,7 @@
-import api from '../services/api';
+import axios from 'axios';
 import { useState, useEffect } from 'react';
+
+const API_URL = 'https://esdoriginaltestingapp-production.up.railway.app/api';
 
 function UserEdit({ userId, onClose, onUpdate }) {
     const [formData, setFormData] = useState({
@@ -18,7 +20,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
                 console.log('Token exists:', !!token);
                 console.log('Fetching user with ID:', userId);
 
-                const response = await api.get(`/users/${userId}`);
+                const response = await axios.get(`${API_URL}/users/${userId}`);
 
                 if (!response.ok) {
                     const errorData = await response.json();

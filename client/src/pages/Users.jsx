@@ -1,6 +1,8 @@
-import api from '../services/api';
+import axios from 'axios';
 import { useState, useEffect } from 'react';
 import UserEdit from '../components/UserEdit';
+
+const API_URL = 'https://esdoriginaltestingapp-production.up.railway.app/api';
 
 function Users() {
     const [users, setUsers] = useState([]);
@@ -16,12 +18,13 @@ function Users() {
     const fetchUsers = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await api.get('/users');
+            const response = await axios.get(`${API_URL}/users`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             
-            if (!response.ok) throw new Error('Failed to fetch users');
-            const data = await response.json();
-            console.log('Fetched users:', data); // Debug log
-            setUsers(data);
+            setUsers(response.data);
         } catch (err) {
             console.error('Error fetching users:', err);
             setError('Failed to load users');
@@ -36,14 +39,13 @@ function Users() {
         if (!window.confirm('Are you sure you want to delete this user?')) return;
 
         try {
-            const response = await fetch(`http://localhost:5001/api/users/${userId}`, {
-                method: 'DELETE',
+            const response = await axios.delete(`${API_URL}/users/${userId}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
 
-            if (!response.ok) throw new Error('Failed to delete user');
+            if (!response.data.ok) throw new Error('Failed to delete user');
             
             setSuccess('User deleted successfully');
             fetchUsers();
@@ -62,13 +64,11 @@ function Users() {
 
         try {
             const promises = selectedUsers.map(userId =>
-                fetch(`http://localhost:5001/api/users/${userId}`, {
-                    method: 'PUT',
+                axios.put(`${API_URL}/users/${userId}`, { manager_email: bulkManagerEmail }, {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify({ manager_email: bulkManagerEmail })
+                    }
                 })
             );
 

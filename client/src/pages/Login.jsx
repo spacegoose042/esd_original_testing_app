@@ -1,6 +1,8 @@
-import api from '../services/api';
+import axios from 'axios';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+const API_URL = 'https://esdoriginaltestingapp-production.up.railway.app/api';
 
 function Login() {
     const [email, setEmail] = useState('');
@@ -15,30 +17,13 @@ function Login() {
         try {
             console.log('Attempting login with:', { email }); // Debug log
 
-            const response = await api.post('/auth/login', {
+            const response = await axios.post('/auth/login', {
                 email,
                 password
-            });
-
-            // Log the raw response for debugging
-            const rawResponse = await response.text();
-            console.log('Raw response:', rawResponse);
-
-            // Try to parse as JSON
-            let data;
-            try {
-                data = JSON.parse(rawResponse);
-            } catch (parseError) {
-                console.error('Failed to parse response as JSON:', parseError);
-                throw new Error('Server returned invalid JSON');
-            }
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Login failed');
-            }
+            }, { baseURL: API_URL });
 
             // Store the token
-            localStorage.setItem('token', data.token);
+            localStorage.setItem('token', response.data.token);
             
             // Redirect to home page
             navigate('/');

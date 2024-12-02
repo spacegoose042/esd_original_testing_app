@@ -1,4 +1,4 @@
-import api from './services/api';
+import axios from 'axios';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Home from './pages/Home';
 import History from './pages/History';
@@ -6,6 +6,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Users from './pages/Users';
 import { useState, useEffect } from 'react';
+
+const API_URL = 'https://esdoriginaltestingapp-production.up.railway.app/api';
 
 function App() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -16,10 +18,15 @@ function App() {
       if (token) {
         try {
           console.log('Checking admin status...'); // Debug log
-          const response = await api.get('/auth/verify');
+          const response = await axios.get('/auth/verify', {
+            baseURL: API_URL,
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
           
-          if (response.ok) {
-            const data = await response.json();
+          if (response.status === 200) {
+            const data = response.data;
             console.log('Admin status response:', data); // Debug log
             setIsAdmin(data.isAdmin);
           } else {

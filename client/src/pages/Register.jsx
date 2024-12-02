@@ -1,6 +1,8 @@
-import api from '../services/api';
+import axios from 'axios';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+const API_URL = 'https://esdoriginaltestingapp-production.up.railway.app/api';
 
 function Register() {
     const [formData, setFormData] = useState({
@@ -35,7 +37,7 @@ function Register() {
         }
 
         try {
-            const response = await api.post('/auth/register', {
+            const response = await axios.post(`${API_URL}/auth/register`, {
                 first_name: formData.firstName,
                 last_name: formData.lastName,
                 manager_email: formData.managerEmail,
@@ -44,9 +46,9 @@ function Register() {
                 password: formData.password
             });
 
-            const data = await response.json();
+            const data = await response.data;
 
-            if (!response.ok) {
+            if (!response.data.ok) {
                 throw new Error(data.error || 'Failed to register user');
             }
 
