@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "scripts": {
       "start": "node server/server.js",
-      "build": "npm install && cd server && npm install && cd .. && npx prisma generate && npx prisma migrate deploy && cd client && npm install && npm run build",
+      "build": "cd server && npm install && NODE_ENV=production npx prisma generate && NODE_ENV=production npx prisma migrate deploy && cd ../client && npm install && npm run build",
       "install-client": "cd client && npm install",
       "heroku-postbuild": "npm run install-client && npm run build"
     },
@@ -11,8 +11,6 @@
       "node": ">=14.0.0"
     },
     "dependencies": {
-      "express": "^4.17.1",
-      "@prisma/client": "^5.7.1",
-      "prisma": "^5.7.1"
+      "express": "^4.17.1"
     }
   }
