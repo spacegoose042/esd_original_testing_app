@@ -2,16 +2,13 @@
     "name": "esd-testing-app",
     "version": "1.0.0",
     "scripts": {
-      "preinstall": "cd client && npm install && cd ../server && npm install",
-      "build": "cd server && npm install && npm run prisma:deploy && cd ../client && npm install && npm run build",
+      "build": "cd server && npm install && cd ../client && npm install && npm run build",
       "start": "cd server && npm start"
     },
     "engines": {
       "node": ">=14.0.0"
     },
     "dependencies": {
-      "express": "^4.17.1",
-      "@prisma/client": "^5.7.1",
-      "prisma": "^5.7.1"
+      "express": "^4.17.1"
     }
   }
