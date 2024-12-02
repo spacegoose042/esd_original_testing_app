@@ -1,0 +1,13 @@
+{
+    "name": "esd-testing-app",
+    "version": "1.0.0",
+    "private": true,
+    "workspaces": [
+      "client",
+      "server"
+    ],
+    "scripts": {
+      "build": "cd client && npm run build && cd ../server && npm install",
+      "start": "cd server && npm start"
+    }
+  }
