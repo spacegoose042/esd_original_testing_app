@@ -1,5 +1,7 @@
-import api from '../services/api';
+import axios from 'axios';
 import { useState, useEffect } from 'react';
+
+const API_URL = 'https://esdoriginaltestingapp-production.up.railway.app/api';
 
 function Home() {
     const [userId, setUserId] = useState('');
@@ -13,7 +15,7 @@ function Home() {
       const token = localStorage.getItem('token');
       const fetchUsers = async () => {
         try {
-          const response = await api.get('/users', {
+          const response = await axios.get(`${API_URL}/users`, {
               headers: {
                   ...(token && { 'Authorization': `Bearer ${token}` }),
                   'Content-Type': 'application/json'
@@ -44,22 +46,14 @@ function Home() {
         }
 
         try {
-            const response = await fetch('http://localhost:5001/api/tests/submit', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    user_id: userId,
-                    test_period: period === 'AM' ? 'AM Test' : 'PM Test',
-                    passed: testValue === 'PASS'
-                })
+            const response = await axios.post(`${API_URL}/tests/submit`, {
+                user_id: userId,
+                test_period: period === 'AM' ? 'AM Test' : 'PM Test',
+                passed: testValue === 'PASS'
             });
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Failed to submit test');
+            if (!response.data) {
+                throw new Error('Failed to submit test');
             }
 
             // Set success message with the result
