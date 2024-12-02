@@ -3,7 +3,8 @@
     "version": "1.0.0",
     "scripts": {
       "install": "cd server && npm install && cd ../client && npm install",
-      "build": "cd client && npm run build",
+      "build": "cd client && npm run build && cd ../server && npx prisma generate && npx prisma migrate deploy",
+      "postbuild": "mv client/build/* public/",
       "start": "node server/server.js"
     },
     "engines": {
