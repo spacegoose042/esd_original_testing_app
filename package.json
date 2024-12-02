@@ -5,7 +5,8 @@
       "start": "node server/server.js",
       "build": "cd server && npm install && NODE_ENV=production npx prisma generate && NODE_ENV=production npx prisma migrate deploy && cd ../client && npm install && npm run build",
       "install-client": "cd client && npm install",
-      "heroku-postbuild": "npm run install-client && npm run build"
+      "heroku-postbuild": "npm run install-client && npm run build",
+      "postinstall": "cd server && npm install"
     },
     "engines": {
       "node": ">=14.0.0"
