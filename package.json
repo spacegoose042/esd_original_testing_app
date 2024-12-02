@@ -2,7 +2,7 @@
   "name": "esd-testing-app",
   "version": "1.0.0",
   "scripts": {
-    "build": "cd server && npm install && cd ../client && npm install && npm run build",
+    "build": "cd server && rm -rf node_modules && npm install && cd ../client && npm install && npm run build",
     "start": "cd server && npm start"
   },
   "engines": {

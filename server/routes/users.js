@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/db');
 const auth = require('../middleware/auth');
+const bcrypt = require('bcryptjs');
 
 // Get all users - accessible to both authenticated and unauthenticated users
 router.get('/', async (req, res) => {
