@@ -15,11 +15,7 @@ function App() {
       if (token) {
         try {
           console.log('Checking admin status...'); // Debug log
-          const response = await fetch('http://localhost:5001/api/auth/verify', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
+          const response = await api.get('/auth/verify');
           
           if (response.ok) {
             const data = await response.json();

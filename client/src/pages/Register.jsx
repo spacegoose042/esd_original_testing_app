@@ -34,20 +34,13 @@ function Register() {
         }
 
         try {
-            const response = await fetch('http://localhost:5001/api/auth/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({
-                    first_name: formData.firstName,
-                    last_name: formData.lastName,
-                    manager_email: formData.managerEmail,
-                    is_admin: formData.isAdmin,
-                    email: formData.isAdmin ? formData.email : formData.managerEmail,
-                    password: formData.password
-                })
+            const response = await api.post('/auth/register', {
+                first_name: formData.firstName,
+                last_name: formData.lastName,
+                manager_email: formData.managerEmail,
+                is_admin: formData.isAdmin,
+                email: formData.isAdmin ? formData.email : formData.managerEmail,
+                password: formData.password
             });
 
             const data = await response.json();

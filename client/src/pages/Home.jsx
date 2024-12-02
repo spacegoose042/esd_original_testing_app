@@ -11,7 +11,7 @@ function Home() {
     useEffect(() => {
       const token = localStorage.getItem('token');
       // If there's no token, we'll still fetch users but might get a limited list
-      fetch('http://localhost:5001/api/users', {
+      api.get('/users', {
           headers: {
               ...(token && { 'Authorization': `Bearer ${token}` }),
               'Content-Type': 'application/json'

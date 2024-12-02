@@ -14,12 +14,9 @@ function Login() {
         try {
             console.log('Attempting login with:', { email }); // Debug log
 
-            const response = await fetch('http://localhost:5001/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email, password })
+            const response = await api.post('/auth/login', {
+                email,
+                password
             });
 
             // Log the raw response for debugging

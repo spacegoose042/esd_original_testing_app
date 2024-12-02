@@ -17,12 +17,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
                 console.log('Token exists:', !!token);
                 console.log('Fetching user with ID:', userId);
 
-                const response = await fetch(`http://localhost:5001/api/users/${userId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
+                const response = await api.get(`/users/${userId}`);
 
                 if (!response.ok) {
                     const errorData = await response.json();
