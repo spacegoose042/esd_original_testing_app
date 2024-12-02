@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "scripts": {
       "preinstall": "cd client && npm install && cd ../server && npm install",
-      "build": "cd client && npm run build && cd ../server && npx prisma generate && npx prisma migrate deploy",
+      "build": "cd server && npm install && cd ../client && npm install && npm run build && cd ../server && npx prisma generate --schema=./prisma/schema.prisma && npx prisma migrate deploy --schema=./prisma/schema.prisma",
       "start": "cd server && npm start"
     },
     "engines": {
