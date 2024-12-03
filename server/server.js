@@ -2,12 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const initializeDatabase = require('./config/initDb');
+const pool = require('./config/db');
 
 const app = express();
-
-// Initialize database
-initializeDatabase().catch(console.error);
 
 app.use(cors());
 app.use(express.json());
@@ -16,7 +13,6 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/tests', require('./routes/tests'));
 app.use('/api/users', require('./routes/users'));
-app.use('/api/debug', require('./routes/debug'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -28,7 +24,7 @@ app.use((err, req, res, next) => {
 });
 
 // Serve static files with correct MIME types
-app.use(express.static(path.join(__dirname, '../client/dist'), {
+app.use('/', express.static(path.join(__dirname, '../client/dist'), {
     setHeaders: (res, filePath) => {
         if (filePath.endsWith('.js')) {
             res.set('Content-Type', 'application/javascript');
@@ -53,6 +49,14 @@ app.get('/*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+
+// Start server after database is initialized
+pool.query('SELECT NOW()', (err) => {
+    if (err) {
+        console.error('Error connecting to database:', err);
+        process.exit(1);
+    }
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
 });

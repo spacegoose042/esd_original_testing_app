@@ -4,7 +4,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "init-db": "node -e 'require(\"./config/initDb.js\")()'"
+    "init-db": "node -e 'require(\"./config/db.js\")'"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
