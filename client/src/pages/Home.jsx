@@ -13,21 +13,17 @@ function Home() {
 
     useEffect(() => {
       const token = localStorage.getItem('token');
-      const fetchUsers = async () => {
-        try {
-          const response = await axios.get(`${API_URL}/users`, {
-              headers: {
-                  ...(token && { 'Authorization': `Bearer ${token}` }),
-                  'Content-Type': 'application/json'
-              }
-          });
+      axios.get(`${API_URL}/users`, {
+          headers: {
+              ...(token && { 'Authorization': `Bearer ${token}` }),
+              'Content-Type': 'application/json'
+          }
+      }).then(response => {
           setUsers(response.data);
-        } catch (err) {
+      }).catch(err => {
           console.error('Error fetching users:', err);
           setError(err.response?.data?.error || 'Failed to load users');
-        }
-      };
-      fetchUsers();
+      });
     }, []);
 
     const clearForm = () => {

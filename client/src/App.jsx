@@ -13,28 +13,32 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const checkAdminStatus = async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
+    (async () => {
+      if (localStorage.getItem('token')) {
         try {
+          console.log('Checking admin status...');
           const response = await axios.get(`${API_URL}/auth/verify`, {
             headers: {
-              'Authorization': `Bearer ${token}`
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
           });
-          
-          setIsAdmin(response.data.isAdmin);
+          if (response.ok) {
+            const data = response.data;
+            console.log('Admin status response:', data);
+            setIsAdmin(data.isAdmin);
+          } else {
+            console.log('Failed to verify admin status');
+            localStorage.removeItem('token');
+            setIsAdmin(false);
+          }
         } catch (err) {
           console.error('Error verifying admin status:', err);
-          localStorage.removeItem('token');
           setIsAdmin(false);
         }
       } else {
         setIsAdmin(false);
       }
-    };
-
-    checkAdminStatus();
+    })();
   }, []);
 
   // Debug log

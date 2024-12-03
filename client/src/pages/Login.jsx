@@ -15,23 +15,25 @@ function Login() {
         setError('');
 
         try {
-            console.log('Attempting login with:', { email }); // Debug log
+            console.log('Attempting login with:', { email });
 
             const response = await axios.post(`${API_URL}/auth/login`, {
                 email,
                 password
             });
 
-            // Store the token
-            localStorage.setItem('token', response.data.token);
-            
-            // Redirect to home page
+            const jsonData = response.data;
+            if (!response.ok) {
+                throw new Error(jsonData.error || 'Login failed');
+            }
+
+            localStorage.setItem('token', jsonData.token);
             navigate('/');
             window.location.reload();
 
         } catch (err) {
             console.error('Login error:', err);
-            setError(err.response?.data?.error || 'Login failed');
+            setError(err.message || 'Login failed');
         }
     };
 
