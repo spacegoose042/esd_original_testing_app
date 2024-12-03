@@ -23,19 +23,32 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Serve static files
-app.use(express.static(path.join(__dirname, '../client/dist')));
+// Serve static files with correct MIME types
+app.use(express.static(path.join(__dirname, '../client/dist'), {
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.js')) {
+            res.set('Content-Type', 'application/javascript');
+        } else if (filePath.endsWith('.css')) {
+            res.set('Content-Type', 'text/css');
+        } else if (filePath.endsWith('.html')) {
+            res.set('Content-Type', 'text/html');
+        }
+    }
+}));
 
 // Handle React routing
-app.get('*', (req, res) => {
+app.get('/*', (req, res) => {
     if (req.path.startsWith('/api')) {
         return res.status(404).json({ error: 'API endpoint not found' });
     }
-    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'), {
+        headers: {
+            'Content-Type': 'text/html'
+        }
+    });
 });
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-    console.log('Static files served from:', path.join(__dirname, '../client/dist'));
 });
