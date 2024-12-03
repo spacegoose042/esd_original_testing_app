@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
+import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import History from './pages/History';
@@ -13,7 +14,7 @@ function App() {
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
-            api.get('/auth/verify')
+            api.get('/api/auth/verify')
                 .then(response => {
                     setIsAdmin(response.data.isAdmin);
                 })
@@ -29,15 +30,15 @@ function App() {
             <Navbar isAdmin={isAdmin} />
             <main className="container mx-auto px-4 py-8">
                 <Routes>
-                    <Route path="/" element={<History />} />
+                    <Route path="/" element={<Home />} />
                     <Route path="/login" element={<Login />} />
+                    <Route path="/history" element={<History />} />
                     {isAdmin && (
                         <>
                             <Route path="/register" element={<Register />} />
                             <Route path="/users" element={<Users />} />
                         </>
                     )}
-                    <Route path="/history" element={<History />} />
                 </Routes>
             </main>
         </div>
