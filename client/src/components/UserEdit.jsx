@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { api } from '../lib/api';
 
 function UserEdit({ userId, onClose, onUpdate }) {
     const [formData, setFormData] = useState({
@@ -9,8 +10,6 @@ function UserEdit({ userId, onClose, onUpdate }) {
     });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-
-    const api = window.api;
 
     useEffect(() => {
         if (userId) {
