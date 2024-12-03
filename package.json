@@ -6,7 +6,8 @@
   },
   "scripts": {
     "build": "cd server && rm -rf node_modules && npm install && cd ../client && npm install && npm run build",
-    "start": "cd server && npm start"
+    "start": "cd server && npm start",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "express": "^4.17.1"
