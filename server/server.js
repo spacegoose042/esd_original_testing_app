@@ -14,6 +14,15 @@ app.use('/api/tests', require('./routes/tests'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/debug', require('./routes/debug'));
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error('Server Error:', err);
+    res.status(500).json({
+        error: 'Internal Server Error',
+        message: err.message
+    });
+});
+
 // Serve static files
 app.use(express.static(path.join(__dirname, '../client/dist')));
 
