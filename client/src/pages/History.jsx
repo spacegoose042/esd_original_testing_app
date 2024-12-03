@@ -60,8 +60,6 @@ function History() {
 
     const handleExport = async (filteredOnly) => {
         try {
-            const token = localStorage.getItem('token');
-            
             if (filteredOnly) {
                 // Export filtered/current view data
                 const dataToExport = filteredTests.map(test => ({
@@ -81,19 +79,13 @@ function History() {
             }
 
             // Export all data
-            const response = await api.get(
-                `/tests/export`,
-                {
-                    params: {
-                        start_date: startDate,
-                        end_date: endDate
-                    },
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
-                    responseType: 'blob'
-                }
-            );
+            const response = await api.get('/tests/export', {
+                params: {
+                    start_date: startDate,
+                    end_date: endDate
+                },
+                responseType: 'blob'
+            });
             
             const blob = new Blob([response.data], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
