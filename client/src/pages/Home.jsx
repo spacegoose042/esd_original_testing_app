@@ -1,5 +1,7 @@
-import api from '../config/axios';
 import { useState, useEffect } from 'react';
+import axios from 'axios';
+
+const API_URL = 'https://esdoriginaltestingapp-production.up.railway.app/api';
 
 function Home() {
     const [userId, setUserId] = useState('');
@@ -10,22 +12,28 @@ function Home() {
     const [users, setUsers] = useState([]);
 
     useEffect(() => {
-      api.get('/users')
-          .then(response => {
-              if (response.status !== 200) {
-                  if (response.status === 401) {
-                      console.log("Unauthorized access - limited user list will be shown");
-                      setUsers([]);
-                      return;
-                  }
-                  throw new Error(`Failed to fetch users: ${response.status} ${response.statusText}`);
-              }
-              setUsers(response.data);
-          })
-          .catch(error => {
-              console.error("Error fetching users:", error);
-              setError(error.response?.data?.error || `Failed to load users: ${error.message}`);
-          });
+        const token = localStorage.getItem('token');
+        axios.get(`${API_URL}/users`, {
+            headers: {
+                ...(token && { 'Authorization': `Bearer ${token}` }),
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => {
+                if (response.status !== 200) {
+                    if (response.status === 401) {
+                        console.log("Unauthorized access - limited user list will be shown");
+                        setUsers([]);
+                        return;
+                    }
+                    throw new Error(`Failed to fetch users: ${response.status} ${response.statusText}`);
+                }
+                setUsers(response.data);
+            })
+            .catch(error => {
+                console.error("Error fetching users:", error);
+                setError(error.response?.data?.error || `Failed to load users: ${error.message}`);
+            });
     }, []);
 
     const clearForm = () => {
@@ -44,10 +52,14 @@ function Home() {
         }
 
         try {
-            await api.post('/tests/submit', {
+            await axios.post(`${API_URL}/tests/submit`, {
                 user_id: userId,
                 test_period: period === 'AM' ? 'AM Test' : 'PM Test',
                 passed: testValue === 'PASS'
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
             });
 
             // Set success message with the result
