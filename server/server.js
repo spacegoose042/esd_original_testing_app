@@ -5,8 +5,21 @@ const path = require('path');
 
 const app = express();
 
+// Log environment for debugging
+console.log('Database URL exists:', !!process.env.DATABASE_URL);
+console.log('JWT Secret exists:', !!process.env.JWT_SECRET);
+console.log('NODE_ENV:', process.env.NODE_ENV);
+
 app.use(cors());
 app.use(express.json());
+
+// Error handling for JSON parsing
+app.use((err, req, res, next) => {
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        return res.status(400).json({ error: 'Invalid JSON' });
+    }
+    next();
+});
 
 // API routes
 app.use('/api/auth', require('./routes/auth'));
