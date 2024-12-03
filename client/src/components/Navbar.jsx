@@ -1,24 +1,64 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 function Navbar({ isAdmin }) {
-  return (
-    <nav className="bg-gray-800 p-4">
-      <div className="container mx-auto flex justify-between items-center">
-        <div className="flex space-x-4">
-          <Link to="/" className="text-white hover:text-gray-300">Home</Link>
-          <Link to="/history" className="text-white hover:text-gray-300">History</Link>
-        </div>
-        <div className="flex space-x-4">
-          <Link to="/login" className="text-white hover:text-gray-300">Admin Login</Link>
-          {isAdmin && (
-            <Link to="/register" className="text-white hover:text-gray-300">
-              Register
-            </Link>
-          )}
-        </div>
-      </div>
-    </nav>
-  );
+    const navigate = useNavigate();
+    
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        navigate('/');
+        window.location.reload();
+    };
+
+    return (
+        <nav className="bg-white shadow-lg">
+            <div className="max-w-6xl mx-auto px-4">
+                <div className="flex justify-between">
+                    <div className="flex space-x-7">
+                        <div className="flex items-center py-4 px-2">
+                            <Link to="/" className="text-gray-800 text-lg font-semibold">
+                                ESD Testing
+                            </Link>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                            <Link to="/" className="py-4 px-2 text-gray-500 hover:text-gray-900">
+                                Home
+                            </Link>
+                            <Link to="/history" className="py-4 px-2 text-gray-500 hover:text-gray-900">
+                                History
+                            </Link>
+                            {isAdmin && (
+                                <>
+                                    <Link to="/users" className="py-4 px-2 text-gray-500 hover:text-gray-900">
+                                        Users
+                                    </Link>
+                                    <Link to="/register" className="py-4 px-2 text-gray-500 hover:text-gray-900">
+                                        Register
+                                    </Link>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                        {!localStorage.getItem('token') ? (
+                            <Link
+                                to="/login"
+                                className="py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300"
+                            >
+                                Admin Login
+                            </Link>
+                        ) : (
+                            <button
+                                onClick={handleLogout}
+                                className="py-2 px-4 bg-red-500 text-white rounded hover:bg-red-600 transition duration-300"
+                            >
+                                Logout
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </nav>
+    );
 }
 
 export default Navbar;
