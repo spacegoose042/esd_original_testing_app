@@ -11,11 +11,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
-    "fast-csv": "^5.0.2",
-    "json2csv": "^6.0.0-alpha.2",
     "jsonwebtoken": "^9.0.2",
-    "node-cron": "^3.0.3",
-    "nodemailer": "^6.9.16",
     "pg": "^8.13.1"
   },
   "devDependencies": {
