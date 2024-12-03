@@ -2,8 +2,12 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const initializeDatabase = require('./config/initDb');
 
 const app = express();
+
+// Initialize database
+initializeDatabase().catch(console.error);
 
 app.use(cors());
 app.use(express.json());
