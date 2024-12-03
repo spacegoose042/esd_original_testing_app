@@ -14,28 +14,27 @@ function UserEdit({ userId, onClose, onUpdate }) {
     const [success, setSuccess] = useState('');
 
     useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await axios.get(`${API_URL}/users/${userId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                
-                setFormData({
-                    firstName: response.data.first_name,
-                    lastName: response.data.last_name,
-                    managerEmail: response.data.manager_email || '',
-                    isAdmin: response.data.is_admin
-                });
-            } catch (err) {
-                console.error('Error fetching user:', err);
-                setError(err.response?.data?.error || 'Failed to load user data');
-            }
-        };
-
         if (userId) {
+            const fetchUser = async () => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(`${API_URL}/users/${userId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    setFormData({
+                        firstName: response.data.first_name,
+                        lastName: response.data.last_name,
+                        managerEmail: response.data.manager_email || '',
+                        isAdmin: response.data.is_admin
+                    });
+                } catch (err) {
+                    console.error('Error fetching user:', err);
+                    setError(err.response?.data?.error || 'Failed to load user data');
+                }
+            };
             fetchUser();
         }
     }, [userId]);

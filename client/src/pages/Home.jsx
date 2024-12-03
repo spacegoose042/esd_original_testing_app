@@ -1,7 +1,5 @@
-import axios from 'axios';
+import api from '../config/axios';
 import { useState, useEffect } from 'react';
-
-const API_URL = 'https://esdoriginaltestingapp-production.up.railway.app/api';
 
 function Home() {
     const [userId, setUserId] = useState('');
@@ -12,15 +10,7 @@ function Home() {
     const [users, setUsers] = useState([]);
 
     useEffect(() => {
-      const token = localStorage.getItem('token');
-      const config = {
-          headers: {
-              ...(token && { 'Authorization': `Bearer ${token}` }),
-              'Content-Type': 'application/json'
-          }
-      };
-
-      axios.get(`${API_URL}/users`, config)
+      api.get('/users')
           .then(response => {
               if (response.status !== 200) {
                   if (response.status === 401) {
@@ -54,7 +44,7 @@ function Home() {
         }
 
         try {
-            await axios.post(`${API_URL}/tests/submit`, {
+            await api.post('/tests/submit', {
                 user_id: userId,
                 test_period: period === 'AM' ? 'AM Test' : 'PM Test',
                 passed: testValue === 'PASS'

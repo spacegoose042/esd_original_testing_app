@@ -1,4 +1,4 @@
-import axios from 'axios';
+import api from './config/axios';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Home from './pages/Home';
 import History from './pages/History';
@@ -6,8 +6,6 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Users from './pages/Users';
 import { useState, useEffect } from 'react';
-
-const API_URL = 'https://esdoriginaltestingapp-production.up.railway.app/api';
 
 function App() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -17,12 +15,7 @@ function App() {
       if (localStorage.getItem('token')) {
         try {
           console.log('Checking admin status...');
-          const config = {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-          };
-          const response = await axios.get(`${API_URL}/auth/verify`, config);
+          const response = await api.get('/auth/verify');
           if (response.status !== 200) {
             throw new Error(`Verification failed: ${response.status} ${response.statusText}`);
           }
