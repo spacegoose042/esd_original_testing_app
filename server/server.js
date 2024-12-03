@@ -29,6 +29,7 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3001;
+console.log('Starting server on port:', PORT);
 
 // Start server
 const server = app.listen(PORT, () => {
