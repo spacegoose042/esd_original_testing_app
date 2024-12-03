@@ -26,8 +26,16 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/tests', require('./routes/tests'));
 app.use('/api/users', require('./routes/users'));
 
-// Serve static files
-app.use(express.static(path.join(__dirname, '../client/dist')));
+// Serve static files with correct MIME types
+app.use(express.static(path.join(__dirname, '../client/dist'), {
+    setHeaders: (res, path) => {
+        if (path.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript');
+        } else if (path.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css');
+        }
+    }
+}));
 
 // All other routes to React app
 app.get('*', (req, res) => {

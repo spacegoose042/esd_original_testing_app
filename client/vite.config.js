@@ -9,6 +9,9 @@ export default defineConfig({
       output: {
         manualChunks: undefined
       }
-    }
+    },
+    assetsDir: 'assets',
+    manifest: true,
+    sourcemap: false
   }
 })
