@@ -1,14 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../services/api';
 
 function TestForm() {
     const [formData, setFormData] = useState({
+        user_id: '',
         test_period: 'AM Test',
         passed: false,
         notes: ''
     });
+    const [users, setUsers] = useState([]);
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
+
+    useEffect(() => {
+        // Fetch users when component mounts
+        const fetchUsers = async () => {
+            try {
+                const response = await api.get('/api/users');
+                setUsers(response.data);
+            } catch (err) {
+                console.error('Error fetching users:', err);
+                setError('Failed to load users');
+            }
+        };
+
+        fetchUsers();
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -16,11 +33,11 @@ function TestForm() {
             await api.post('/api/tests/submit', formData);
             setMessage('Test submitted successfully');
             setFormData({
+                user_id: '',
                 test_period: 'AM Test',
                 passed: false,
                 notes: ''
             });
-            // Refresh the page after 2 seconds
             setTimeout(() => window.location.reload(), 2000);
         } catch (err) {
             setError(err.response?.data?.error || 'Failed to submit test');
@@ -52,6 +69,26 @@ function TestForm() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                    <label className="block text-gray-700 text-sm font-bold mb-2">
+                        User
+                    </label>
+                    <select
+                        name="user_id"
+                        value={formData.user_id}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-3 py-2 border rounded-md"
+                    >
+                        <option value="">Select a user</option>
+                        {users.map(user => (
+                            <option key={user.id} value={user.id}>
+                                {user.first_name} {user.last_name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
                 <div>
                     <label className="block text-gray-700 text-sm font-bold mb-2">
                         Test Period

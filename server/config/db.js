@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const bcrypt = require('bcryptjs');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -40,6 +41,26 @@ const initializeDb = async () => {
             CREATE INDEX IF NOT EXISTS idx_esd_tests_date ON esd_tests(test_date);
         `);
         console.log('Database tables initialized');
+
+        // Add default users if they don't exist
+        const adminPassword = await bcrypt.hash('Admin123!', 10);
+        const testUserPassword = await bcrypt.hash('password123', 10);
+
+        // Add admin user
+        await client.query(`
+            INSERT INTO users (first_name, last_name, email, password, is_admin)
+            VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT (email) DO NOTHING
+        `, ['Matt', 'Miers', 'matt.miers@sandyindustries.com', adminPassword, true]);
+
+        // Add test user
+        await client.query(`
+            INSERT INTO users (first_name, last_name, email, password, is_admin)
+            VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT (email) DO NOTHING
+        `, ['Testy', 'McTesterson', 'testy@test.com', testUserPassword, false]);
+
+        console.log('Default users created');
 
         client.release();
     } catch (err) {
