@@ -17,29 +17,21 @@ function UserEdit({ userId, onClose, onUpdate }) {
         const fetchUser = async () => {
             try {
                 const token = localStorage.getItem('token');
-                console.log('Token exists:', !!token);
-                console.log('Fetching user with ID:', userId);
-
-                const response = await axios.get(`${API_URL}/users/${userId}`);
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    console.error('Server response:', errorData);
-                    throw new Error(errorData.error || 'Failed to fetch user');
-                }
-
-                const data = await response.json();
-                console.log('User data received:', data);
-
+                const response = await axios.get(`${API_URL}/users/${userId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
                 setFormData({
-                    firstName: data.first_name,
-                    lastName: data.last_name,
-                    managerEmail: data.manager_email || '',
-                    isAdmin: data.is_admin
+                    firstName: response.data.first_name,
+                    lastName: response.data.last_name,
+                    managerEmail: response.data.manager_email || '',
+                    isAdmin: response.data.is_admin
                 });
             } catch (err) {
                 console.error('Error fetching user:', err);
-                setError('Failed to load user data');
+                setError(err.response?.data?.error || 'Failed to load user data');
             }
         };
 
@@ -50,39 +42,26 @@ function UserEdit({ userId, onClose, onUpdate }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
-        setSuccess('');
-
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:5001/api/users/${userId}`, {
-                method: 'PUT',
+            await axios.put(`${API_URL}/users/${userId}`, {
+                first_name: formData.firstName,
+                last_name: formData.lastName,
+                manager_email: formData.managerEmail,
+                is_admin: formData.isAdmin
+            }, {
                 headers: {
-                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    first_name: formData.firstName,
-                    last_name: formData.lastName,
-                    manager_email: formData.managerEmail,
-                    is_admin: formData.isAdmin
-                })
+                }
             });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to update user');
-            }
 
             setSuccess('User updated successfully');
             setTimeout(() => {
-                onUpdate(); // Refresh the users list
-                onClose(); // Close the edit form
+                onUpdate();
+                onClose();
             }, 2000);
-
         } catch (err) {
-            console.error('Error updating user:', err);
-            setError(err.message || 'Failed to update user');
+            setError(err.response?.data?.error || 'Failed to update user');
         }
     };
 

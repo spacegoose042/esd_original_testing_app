@@ -17,25 +17,16 @@ function App() {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          console.log('Checking admin status...'); // Debug log
-          const response = await axios.get('/auth/verify', {
-            baseURL: API_URL,
+          const response = await axios.get(`${API_URL}/auth/verify`, {
             headers: {
-              Authorization: `Bearer ${token}`,
-            },
+              'Authorization': `Bearer ${token}`
+            }
           });
           
-          if (response.status === 200) {
-            const data = response.data;
-            console.log('Admin status response:', data); // Debug log
-            setIsAdmin(data.isAdmin);
-          } else {
-            console.log('Failed to verify admin status'); // Debug log
-            localStorage.removeItem('token');
-            setIsAdmin(false);
-          }
+          setIsAdmin(response.data.isAdmin);
         } catch (err) {
           console.error('Error verifying admin status:', err);
+          localStorage.removeItem('token');
           setIsAdmin(false);
         }
       } else {

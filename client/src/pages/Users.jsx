@@ -27,7 +27,7 @@ function Users() {
             setUsers(response.data);
         } catch (err) {
             console.error('Error fetching users:', err);
-            setError('Failed to load users');
+            setError(err.response?.data?.error || 'Failed to load users');
         }
     };
 
@@ -39,14 +39,12 @@ function Users() {
         if (!window.confirm('Are you sure you want to delete this user?')) return;
 
         try {
-            const response = await axios.delete(`${API_URL}/users/${userId}`, {
+            await axios.delete(`${API_URL}/users/${userId}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
 
-            if (!response.data.ok) throw new Error('Failed to delete user');
-            
             setSuccess('User deleted successfully');
             fetchUsers();
             setTimeout(() => setSuccess(''), 3000);

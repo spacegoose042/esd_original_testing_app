@@ -17,10 +17,10 @@ function Login() {
         try {
             console.log('Attempting login with:', { email }); // Debug log
 
-            const response = await axios.post('/auth/login', {
+            const response = await axios.post(`${API_URL}/auth/login`, {
                 email,
                 password
-            }, { baseURL: API_URL });
+            });
 
             // Store the token
             localStorage.setItem('token', response.data.token);
@@ -31,7 +31,7 @@ function Login() {
 
         } catch (err) {
             console.error('Login error:', err);
-            setError(err.message || 'Login failed');
+            setError(err.response?.data?.error || 'Login failed');
         }
     };
 

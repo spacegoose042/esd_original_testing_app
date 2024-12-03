@@ -20,12 +20,17 @@ function History() {
         // Check if user is admin
         const token = localStorage.getItem('token');
         if (token) {
-            axios.get('/auth/verify', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-            .then(res => res.json())
-            .then(data => setIsAdmin(data.isAdmin))
-            .catch(err => console.error('Error verifying admin status:', err));
+            const checkAdmin = async () => {
+                try {
+                    const response = await axios.get(`${API_URL}/auth/verify`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    setIsAdmin(response.data.isAdmin);
+                } catch (err) {
+                    console.error('Error verifying admin status:', err);
+                }
+            };
+            checkAdmin();
         }
 
         // Set default date range (last 7 days)
@@ -46,22 +51,22 @@ function History() {
         try {
             setLoading(true);
             const token = localStorage.getItem('token');
-            const response = await fetch(
-                `http://localhost:5001/api/tests/history?start_date=${startDate}&end_date=${endDate}`,
-                {
+            const response = await axios.get(
+                `${API_URL}/tests/history`, {
+                    params: {
+                        start_date: startDate,
+                        end_date: endDate
+                    },
                     headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+                        'Authorization': `Bearer ${token}`
                     }
                 }
             );
-            if (!response.ok) throw new Error('Failed to fetch tests');
-            const data = await response.json();
-            setTests(data);
+            setTests(response.data);
             setError('');
         } catch (err) {
             console.error('Error fetching tests:', err);
-            setError('Failed to load test history');
+            setError(err.response?.data?.error || 'Failed to load test history');
         } finally {
             setLoading(false);
         }
@@ -90,22 +95,21 @@ function History() {
             }
 
             // Export all data
-            const response = await fetch(
-                `http://localhost:5001/api/tests/export?start_date=${startDate}&end_date=${endDate}`,
+            const response = await axios.get(
+                `${API_URL}/tests/export`,
                 {
+                    params: {
+                        start_date: startDate,
+                        end_date: endDate
+                    },
                     headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
+                        'Authorization': `Bearer ${token}`
+                    },
+                    responseType: 'blob'
                 }
             );
             
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Export failed');
-            }
-            
-            const blob = await response.blob();
+            const blob = new Blob([response.data], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -116,7 +120,7 @@ function History() {
             document.body.removeChild(a);
         } catch (err) {
             console.error('Export error:', err);
-            setError(err.message || 'Failed to export data');
+            setError(err.response?.data?.error || 'Failed to export data');
             setTimeout(() => setError(''), 3000);
         }
     };

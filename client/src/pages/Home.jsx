@@ -24,7 +24,7 @@ function Home() {
           setUsers(response.data);
         } catch (err) {
           console.error('Error fetching users:', err);
-          setError('Failed to load users');
+          setError(err.response?.data?.error || 'Failed to load users');
         }
       };
       fetchUsers();
@@ -46,15 +46,11 @@ function Home() {
         }
 
         try {
-            const response = await axios.post(`${API_URL}/tests/submit`, {
+            await axios.post(`${API_URL}/tests/submit`, {
                 user_id: userId,
                 test_period: period === 'AM' ? 'AM Test' : 'PM Test',
                 passed: testValue === 'PASS'
             });
-
-            if (!response.data) {
-                throw new Error('Failed to submit test');
-            }
 
             // Set success message with the result
             setSuccess(`Test submitted successfully: ${testValue}`);
@@ -66,7 +62,7 @@ function Home() {
             }, 2000);
 
         } catch (err) {
-            setError(err.message);
+            setError(err.response?.data?.error || 'Failed to submit test');
         }
     };
 

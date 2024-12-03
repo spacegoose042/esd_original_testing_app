@@ -37,20 +37,18 @@ function Register() {
         }
 
         try {
-            const response = await axios.post(`${API_URL}/auth/register`, {
+            await axios.post(`${API_URL}/auth/register`, {
                 first_name: formData.firstName,
                 last_name: formData.lastName,
                 manager_email: formData.managerEmail,
                 is_admin: formData.isAdmin,
                 email: formData.isAdmin ? formData.email : formData.managerEmail,
                 password: formData.password
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
             });
-
-            const data = await response.data;
-
-            if (!response.data.ok) {
-                throw new Error(data.error || 'Failed to register user');
-            }
 
             setSuccess('User registered successfully');
             setTimeout(() => {
@@ -59,7 +57,7 @@ function Register() {
 
         } catch (err) {
             console.error('Registration error:', err);
-            setError(err.message);
+            setError(err.response?.data?.error || 'Failed to register user');
         }
     };
 
