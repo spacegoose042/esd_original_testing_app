@@ -5,7 +5,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Users from './pages/Users';
 import { useState, useEffect } from 'react';
-import { api } from './lib/api';
+import api from './services/api';
 
 function App() {
   const [isAdmin, setIsAdmin] = useState(false);
