@@ -9,6 +9,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Debug logging
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.path}`);
+    next();
+});
+
 // API routes first
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/tests', require('./routes/tests'));
@@ -30,6 +36,8 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3001;
 console.log('Starting server on port:', PORT);
+console.log('Environment:', process.env.NODE_ENV);
+console.log('Static path:', path.join(__dirname, '../client/dist'));
 
 // Start server
 const server = app.listen(PORT, () => {
