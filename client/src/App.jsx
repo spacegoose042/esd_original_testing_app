@@ -17,11 +17,15 @@ function App() {
       if (localStorage.getItem('token')) {
         try {
           console.log('Checking admin status...');
-          const response = await axios.get(`${API_URL}/auth/verify`, {
+          const config = {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
-          });
+          };
+          const response = await axios.get(`${API_URL}/auth/verify`, config);
+          if (response.status !== 200) {
+            throw new Error(`Verification failed: ${response.status} ${response.statusText}`);
+          }
           console.log('Admin status response:', response.data);
           setIsAdmin(response.data.isAdmin);
         } catch (err) {

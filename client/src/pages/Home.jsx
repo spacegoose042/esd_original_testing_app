@@ -13,17 +13,29 @@ function Home() {
 
     useEffect(() => {
       const token = localStorage.getItem('token');
-      axios.get(`${API_URL}/users`, {
+      const config = {
           headers: {
               ...(token && { 'Authorization': `Bearer ${token}` }),
               'Content-Type': 'application/json'
           }
-      }).then(response => {
-          setUsers(response.data);
-      }).catch(err => {
-          console.error('Error fetching users:', err);
-          setError(err.response?.data?.error || 'Failed to load users');
-      });
+      };
+
+      axios.get(`${API_URL}/users`, config)
+          .then(response => {
+              if (response.status !== 200) {
+                  if (response.status === 401) {
+                      console.log("Unauthorized access - limited user list will be shown");
+                      setUsers([]);
+                      return;
+                  }
+                  throw new Error(`Failed to fetch users: ${response.status} ${response.statusText}`);
+              }
+              setUsers(response.data);
+          })
+          .catch(error => {
+              console.error("Error fetching users:", error);
+              setError(error.response?.data?.error || `Failed to load users: ${error.message}`);
+          });
     }, []);
 
     const clearForm = () => {
