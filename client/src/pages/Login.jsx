@@ -21,11 +21,18 @@ function Login() {
                 password
             });
 
+            console.log('Full response:', response);
+            console.log('Response data:', response.data);
+            console.log('Response status:', response.status);
+
             localStorage.setItem('token', response.data.token);
             navigate('/');
             window.location.reload();
         } catch (err) {
             console.error('Login error:', err);
+            console.log('Error response:', err.response);
+            console.log('Error data:', err.response?.data);
+            console.log('Error status:', err.response?.status);
             setError(err.response?.data?.error || 'Login failed');
         }
     };
