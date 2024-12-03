@@ -28,6 +28,7 @@ function History() {
                     setIsAdmin(response.data.isAdmin);
                 } catch (err) {
                     console.error('Error verifying admin status:', err);
+                    setError(err.response?.data?.error || 'Failed to verify admin status');
                 }
             };
             checkAdmin();

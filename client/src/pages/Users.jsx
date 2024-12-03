@@ -49,7 +49,7 @@ function Users() {
             fetchUsers();
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
-            setError('Failed to delete user');
+            setError(err.response?.data?.error || 'Failed to delete user');
             setTimeout(() => setError(''), 3000);
         }
     };
@@ -77,7 +77,7 @@ function Users() {
             setBulkManagerEmail('');
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
-            setError('Failed to update manager emails');
+            setError(err.response?.data?.error || 'Failed to update manager emails');
             setTimeout(() => setError(''), 3000);
         }
     };
