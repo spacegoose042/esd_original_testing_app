@@ -16,11 +16,14 @@ function TestForm() {
         // Fetch users when component mounts
         const fetchUsers = async () => {
             try {
+                console.log('Fetching users...');
                 const response = await api.get('/api/users');
+                console.log('Users response:', response.data);
                 setUsers(response.data);
+                setError(''); // Clear any previous errors
             } catch (err) {
                 console.error('Error fetching users:', err);
-                setError('Failed to load users');
+                setError(err.response?.data?.error || 'Failed to load users. Please try again.');
             }
         };
 
