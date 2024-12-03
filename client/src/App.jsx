@@ -22,17 +22,11 @@ function App() {
               'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
           });
-          if (response.ok) {
-            const data = response.data;
-            console.log('Admin status response:', data);
-            setIsAdmin(data.isAdmin);
-          } else {
-            console.log('Failed to verify admin status');
-            localStorage.removeItem('token');
-            setIsAdmin(false);
-          }
+          console.log('Admin status response:', response.data);
+          setIsAdmin(response.data.isAdmin);
         } catch (err) {
           console.error('Error verifying admin status:', err);
+          localStorage.removeItem('token');
           setIsAdmin(false);
         }
       } else {
