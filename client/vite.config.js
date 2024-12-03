@@ -7,11 +7,12 @@ export default defineConfig({
     outDir: 'dist',
     rollupOptions: {
       output: {
-        manualChunks: undefined
+        manualChunks: undefined,
+        format: 'es',
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
       }
-    },
-    assetsDir: 'assets',
-    manifest: true,
-    sourcemap: false
+    }
   }
 })

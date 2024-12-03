@@ -2,8 +2,14 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
+
+// Debug: List files in dist directory
+const distPath = path.join(__dirname, '../client/dist');
+console.log('Dist directory contents:', fs.readdirSync(distPath));
+console.log('Assets directory contents:', fs.readdirSync(path.join(distPath, 'assets')));
 
 // Log environment for debugging
 console.log('Database URL exists:', !!process.env.DATABASE_URL);
@@ -18,6 +24,16 @@ app.use((err, req, res, next) => {
     if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
         return res.status(400).json({ error: 'Invalid JSON' });
     }
+    next();
+});
+
+// Add this before your routes
+app.use((req, res, next) => {
+    console.log('Request:', {
+        method: req.method,
+        path: req.path,
+        headers: req.headers
+    });
     next();
 });
 
