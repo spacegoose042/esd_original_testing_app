@@ -14,25 +14,19 @@ app.use('/api/tests', require('./routes/tests'));
 app.use('/api/users', require('./routes/users'));
 
 // Serve static files with proper MIME types
-app.use(express.static(path.join(__dirname, '../client/dist'), {
+app.use('/', express.static(path.join(__dirname, '../client/dist'), {
     setHeaders: (res, filePath) => {
         if (filePath.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-        } else if (filePath.endsWith('.mjs')) {
-            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+            res.setHeader('Content-Type', 'application/javascript');
         } else if (filePath.endsWith('.css')) {
-            res.setHeader('Content-Type', 'text/css; charset=utf-8');
+            res.setHeader('Content-Type', 'text/css');
         }
     }
 }));
 
 // Handle React routing
-app.get('/*', function(req, res) {
-    res.sendFile(path.join(__dirname, '../client/dist/index.html'), function(err) {
-        if (err) {
-            res.status(500).send(err);
-        }
-    });
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 
 const PORT = process.env.PORT || 3001;
