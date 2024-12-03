@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-
-const API_URL = 'https://esdoriginaltestingapp-production.up.railway.app/api';
+import { api } from '../api';
 
 function Home() {
     const [userId, setUserId] = useState('');
@@ -12,13 +10,7 @@ function Home() {
     const [users, setUsers] = useState([]);
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        axios.get(`${API_URL}/users`, {
-            headers: {
-                ...(token && { 'Authorization': `Bearer ${token}` }),
-                'Content-Type': 'application/json'
-            }
-        })
+        api.get('/users')
             .then(response => {
                 if (response.status !== 200) {
                     if (response.status === 401) {
@@ -52,14 +44,10 @@ function Home() {
         }
 
         try {
-            await axios.post(`${API_URL}/tests/submit`, {
+            await api.post('/tests/submit', {
                 user_id: userId,
                 test_period: period === 'AM' ? 'AM Test' : 'PM Test',
                 passed: testValue === 'PASS'
-            }, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
             });
 
             // Set success message with the result
