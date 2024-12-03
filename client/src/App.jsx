@@ -1,4 +1,3 @@
-import { api } from './api';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Home from './pages/Home';
 import History from './pages/History';
@@ -6,6 +5,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Users from './pages/Users';
 import { useState, useEffect } from 'react';
+
+const api = window.api;
 
 function App() {
   const [isAdmin, setIsAdmin] = useState(false);

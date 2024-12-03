@@ -1,4 +1,3 @@
-import { api } from '../api';
 import { useState, useEffect } from 'react';
 
 function UserEdit({ userId, onClose, onUpdate }) {
@@ -10,6 +9,8 @@ function UserEdit({ userId, onClose, onUpdate }) {
     });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+
+    const api = window.api;
 
     useEffect(() => {
         if (userId) {

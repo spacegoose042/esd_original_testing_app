@@ -1,13 +1,8 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import axios from 'axios'
-import './index.css'
-import App from './App.jsx'
-import ErrorBoundary from './components/ErrorBoundary'
+import axios from 'axios';
 
-// API Configuration
 const API_URL = 'https://esdoriginaltestingapp-production.up.railway.app/api';
 
+// Create axios instance with default config
 const axiosInstance = axios.create({
     baseURL: API_URL,
     headers: {
@@ -39,18 +34,11 @@ axiosInstance.interceptors.response.use(
     }
 );
 
-// Export API methods globally
-window.api = {
+export const api = {
     get: (url, config = {}) => axiosInstance.get(url, config),
     post: (url, data = {}, config = {}) => axiosInstance.post(url, data, config),
     put: (url, data = {}, config = {}) => axiosInstance.put(url, data, config),
     delete: (url, config = {}) => axiosInstance.delete(url, config)
 };
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-    <React.StrictMode>
-        <ErrorBoundary>
-            <App />
-        </ErrorBoundary>
-    </React.StrictMode>,
-)
+export default api; 

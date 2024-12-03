@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api } from '../api';
+import { api } from '../api/index.js';
 
 function Home() {
     const [userId, setUserId] = useState('');
