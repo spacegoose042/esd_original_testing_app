@@ -9,11 +9,12 @@ import { useState, useEffect } from 'react';
 
 function App() {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      if (localStorage.getItem('token')) {
-        try {
+      try {
+        if (localStorage.getItem('token')) {
           console.log('Checking admin status...');
           const response = await api.get('/auth/verify');
           if (response.status !== 200) {
@@ -21,19 +22,24 @@ function App() {
           }
           console.log('Admin status response:', response.data);
           setIsAdmin(response.data.isAdmin);
-        } catch (err) {
-          console.error('Error verifying admin status:', err);
-          localStorage.removeItem('token');
+        } else {
           setIsAdmin(false);
         }
-      } else {
+      } catch (err) {
+        console.error('Error verifying admin status:', err);
+        localStorage.removeItem('token');
         setIsAdmin(false);
+      } finally {
+        setIsLoading(false);
       }
     })();
   }, []);
 
-  // Debug log
-  console.log('Current isAdmin state:', isAdmin);
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">
+      <div className="text-xl">Loading...</div>
+    </div>;
+  }
 
   const handleLogout = () => {
     localStorage.removeItem('token');
