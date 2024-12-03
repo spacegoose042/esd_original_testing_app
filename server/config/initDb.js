@@ -1,6 +1,7 @@
 const pool = require('./db');
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 
 async function initializeDatabase() {
     try {
@@ -13,14 +14,18 @@ async function initializeDatabase() {
 
         // Create admin user if it doesn't exist
         const adminEmail = 'admin@example.com';
+        const adminPassword = 'admin123'; // Change this to your desired password
+        const hashedPassword = await bcrypt.hash(adminPassword, 10);
+        
         const result = await pool.query('SELECT * FROM users WHERE email = $1', [adminEmail]);
         
         if (result.rows.length === 0) {
             await pool.query(`
                 INSERT INTO users (first_name, last_name, email, password, is_admin)
                 VALUES ($1, $2, $3, $4, $5)
-            `, ['Admin', 'User', adminEmail, '$2a$10$your_hashed_password', true]);
-            console.log('Admin user created');
+            `, ['Admin', 'User', adminEmail, hashedPassword, true]);
+            console.log('Admin user created with email:', adminEmail);
+            console.log('Admin password:', adminPassword);
         }
     } catch (error) {
         console.error('Error initializing database:', error);
