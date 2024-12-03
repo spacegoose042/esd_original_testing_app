@@ -1,8 +1,6 @@
-import axios from 'axios';
+import { api } from '../api';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-const API_URL = 'https://esdoriginaltestingapp-production.up.railway.app/api';
 
 function Login() {
     const [email, setEmail] = useState('');
@@ -16,23 +14,16 @@ function Login() {
 
         try {
             console.log('Attempting login with:', { email });
-            const response = await axios.post(`${API_URL}/auth/login`, {
+            const response = await api.post('/auth/login', {
                 email,
                 password
             });
-
-            console.log('Full response:', response);
-            console.log('Response data:', response.data);
-            console.log('Response status:', response.status);
 
             localStorage.setItem('token', response.data.token);
             navigate('/');
             window.location.reload();
         } catch (err) {
             console.error('Login error:', err);
-            console.log('Error response:', err.response);
-            console.log('Error data:', err.response?.data);
-            console.log('Error status:', err.response?.status);
             setError(err.response?.data?.error || 'Login failed');
         }
     };

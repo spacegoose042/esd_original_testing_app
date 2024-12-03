@@ -1,7 +1,5 @@
-import axios from 'axios';
+import { api } from '../api';
 import { useState, useEffect } from 'react';
-
-const API_URL = 'https://esdoriginaltestingapp-production.up.railway.app/api';
 
 function History() {
     const [tests, setTests] = useState([]);
@@ -22,9 +20,7 @@ function History() {
         if (token) {
             const checkAdmin = async () => {
                 try {
-                    const response = await axios.get(`${API_URL}/auth/verify`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
+                    const response = await api.get('/auth/verify');
                     setIsAdmin(response.data.isAdmin);
                 } catch (err) {
                     console.error('Error verifying admin status:', err);
@@ -51,18 +47,7 @@ function History() {
     const fetchTests = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('token');
-            const response = await axios.get(
-                `${API_URL}/tests/history`, {
-                    params: {
-                        start_date: startDate,
-                        end_date: endDate
-                    },
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                }
-            );
+            const response = await api.get(`/tests/history?start_date=${startDate}&end_date=${endDate}`);
             setTests(response.data);
             setError('');
         } catch (err) {
@@ -96,8 +81,8 @@ function History() {
             }
 
             // Export all data
-            const response = await axios.get(
-                `${API_URL}/tests/export`,
+            const response = await api.get(
+                `/tests/export`,
                 {
                     params: {
                         start_date: startDate,

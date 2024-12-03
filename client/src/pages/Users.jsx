@@ -1,8 +1,6 @@
-import axios from 'axios';
+import { api } from '../api';
 import { useState, useEffect } from 'react';
 import UserEdit from '../components/UserEdit';
-
-const API_URL = 'https://esdoriginaltestingapp-production.up.railway.app/api';
 
 function Users() {
     const [users, setUsers] = useState([]);
@@ -17,13 +15,7 @@ function Users() {
 
     const fetchUsers = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get(`${API_URL}/users`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            
+            const response = await api.get('/users');
             setUsers(response.data);
         } catch (err) {
             console.error('Error fetching users:', err);
@@ -36,21 +28,16 @@ function Users() {
     }, []);
 
     const handleDelete = async (userId) => {
-        if (!window.confirm('Are you sure you want to delete this user?')) return;
-
-        try {
-            await axios.delete(`${API_URL}/users/${userId}`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            setSuccess('User deleted successfully');
-            fetchUsers();
-            setTimeout(() => setSuccess(''), 3000);
-        } catch (err) {
-            setError(err.response?.data?.error || 'Failed to delete user');
-            setTimeout(() => setError(''), 3000);
+        if (window.confirm('Are you sure you want to delete this user?')) {
+            try {
+                await api.delete(`/users/${userId}`);
+                setSuccess('User deleted successfully');
+                fetchUsers();
+                setTimeout(() => setSuccess(''), 3000);
+            } catch (err) {
+                setError('Failed to delete user');
+                setTimeout(() => setError(''), 3000);
+            }
         }
     };
 
@@ -62,12 +49,7 @@ function Users() {
 
         try {
             const promises = selectedUsers.map(userId =>
-                axios.put(`${API_URL}/users/${userId}`, { manager_email: bulkManagerEmail }, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                })
+                api.put(`/users/${userId}`, { manager_email: bulkManagerEmail })
             );
 
             await Promise.all(promises);

@@ -1,7 +1,5 @@
-import axios from 'axios';
+import { api } from '../api';
 import { useState, useEffect } from 'react';
-
-const API_URL = 'https://esdoriginaltestingapp-production.up.railway.app/api';
 
 function UserEdit({ userId, onClose, onUpdate }) {
     const [formData, setFormData] = useState({
@@ -17,12 +15,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
         if (userId) {
             const fetchUser = async () => {
                 try {
-                    const token = localStorage.getItem('token');
-                    const response = await axios.get(`${API_URL}/users/${userId}`, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
+                    const response = await api.get(`/users/${userId}`);
                     
                     setFormData({
                         firstName: response.data.first_name,
@@ -42,16 +35,11 @@ function UserEdit({ userId, onClose, onUpdate }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
-            await axios.put(`${API_URL}/users/${userId}`, {
+            await api.put(`/users/${userId}`, {
                 first_name: formData.firstName,
                 last_name: formData.lastName,
                 manager_email: formData.managerEmail,
                 is_admin: formData.isAdmin
-            }, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
             });
 
             setSuccess('User updated successfully');
