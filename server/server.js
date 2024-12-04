@@ -14,14 +14,18 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/tests', require('./routes/tests'));
 app.use('/api/users', require('./routes/users'));
 
-// Handle JavaScript files first
-app.get('*.js', (req, res, next) => {
-    res.set('Content-Type', 'application/javascript');
-    next();
-});
-
-// Serve static files
-app.use(express.static(path.join(__dirname, '../client/dist')));
+// Serve static files with proper MIME types
+app.use(express.static(path.join(__dirname, '../client/dist'), {
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.js')) {
+            res.set({
+                'Content-Type': 'application/javascript',
+                'Cache-Control': 'no-cache',
+                'X-Content-Type-Options': 'nosniff'
+            });
+        }
+    }
+}));
 
 // Handle React routing - must be last
 app.get('*', (req, res) => {
