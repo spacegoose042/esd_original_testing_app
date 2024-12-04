@@ -9,35 +9,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Set proper MIME types first
-app.use((req, res, next) => {
-    const ext = path.extname(req.url);
-    switch (ext) {
-        case '.js':
-            res.type('application/javascript');
-            break;
-        case '.css':
-            res.type('text/css');
-            break;
-        case '.html':
-            res.type('text/html');
-            break;
-    }
-    next();
-});
-
-// Serve static files with proper MIME types
-app.use(express.static(path.join(__dirname, '../client/dist'), {
-    setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.js')) {
-            res.set('Content-Type', 'application/javascript');
-        } else if (filePath.endsWith('.css')) {
-            res.set('Content-Type', 'text/css');
-        }
-    }
-}));
-
-// API routes
+// API routes first
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/tests', require('./routes/tests'));
 app.use('/api/users', require('./routes/users'));
@@ -62,9 +34,37 @@ app.use((err, req, res, next) => {
     });
 });
 
+// Serve static files with proper MIME types
+app.use(express.static(path.join(__dirname, '../client/dist'), {
+    setHeaders: (res, filePath) => {
+        const ext = path.extname(filePath);
+        switch (ext) {
+            case '.js':
+                res.set('Content-Type', 'application/javascript; charset=utf-8');
+                break;
+            case '.css':
+                res.set('Content-Type', 'text/css; charset=utf-8');
+                break;
+            case '.html':
+                res.set('Content-Type', 'text/html; charset=utf-8');
+                break;
+            case '.json':
+                res.set('Content-Type', 'application/json; charset=utf-8');
+                break;
+        }
+    }
+}));
+
 // Handle React routing - must be last
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+    if (req.path.startsWith('/api')) {
+        return res.status(404).json({ error: 'API endpoint not found' });
+    }
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'), {
+        headers: {
+            'Content-Type': 'text/html; charset=utf-8'
+        }
+    });
 });
 
 const PORT = process.env.PORT || 3001;
