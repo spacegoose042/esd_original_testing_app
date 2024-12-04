@@ -33,16 +33,22 @@ function TestForm() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await api.post('api/tests/submit', formData);
-            setMessage('Test submitted successfully');
+            console.log('Submitting test:', formData);
+            const response = await api.post('api/tests/submit', formData);
+            console.log('Submit response:', response.data);
+            
+            setMessage(response.data.message || 'Test submitted successfully');
             setFormData({
                 user_id: '',
                 test_period: 'AM Test',
                 passed: false,
                 notes: ''
             });
+            
+            // Optional: Refresh the page after 2 seconds
             setTimeout(() => window.location.reload(), 2000);
         } catch (err) {
+            console.error('Submit error:', err);
             setError(err.response?.data?.error || 'Failed to submit test');
         }
     };
