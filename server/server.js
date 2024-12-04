@@ -14,6 +14,12 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/tests', require('./routes/tests'));
 app.use('/api/users', require('./routes/users'));
 
+// Add debug logging for API requests
+app.use('/api', (req, res, next) => {
+    console.log('API Request:', req.method, req.path);
+    next();
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Server Error:', err);
@@ -39,9 +45,6 @@ app.use(express.static(path.join(__dirname, '../client/dist')));
 
 // Handle React routing
 app.get('/*', (req, res) => {
-    if (req.path.startsWith('/api')) {
-        return res.status(404).json({ error: 'API endpoint not found' });
-    }
     res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 

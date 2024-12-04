@@ -17,7 +17,7 @@ function TestForm() {
         const fetchUsers = async () => {
             try {
                 console.log('Fetching users...');
-                const response = await api.get('/api/users');
+                const response = await api.get('api/users');
                 console.log('Users response:', response.data);
                 setUsers(response.data);
                 setError(''); // Clear any previous errors
@@ -33,7 +33,7 @@ function TestForm() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await api.post('/api/tests/submit', formData);
+            await api.post('api/tests/submit', formData);
             setMessage('Test submitted successfully');
             setFormData({
                 user_id: '',
