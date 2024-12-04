@@ -5,18 +5,14 @@ export default defineConfig({
   plugins: [react()],
   build: {
     outDir: 'dist',
-    assetsDir: 'assets',
+    assetsDir: '',
     rollupOptions: {
       output: {
-        entryFileNames: '[name].[hash].mjs',
-        chunkFileNames: '[name].[hash].mjs',
+        entryFileNames: '[name].[hash].js',
+        chunkFileNames: '[name].[hash].js',
         assetFileNames: '[name].[hash].[ext]'
       }
     },
     sourcemap: false
-  },
-  server: {
-    port: 3000,
-    strictPort: true
   }
 })
