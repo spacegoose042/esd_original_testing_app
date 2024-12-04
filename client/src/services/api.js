@@ -13,7 +13,10 @@ const api = axios.create({
 
 api.interceptors.request.use(
     (config) => {
-        if (!config.url.startsWith('/api')) {
+        if (config.url.startsWith('/api/api')) {
+            config.url = config.url.replace('/api/api', '/api');
+        }
+        else if (!config.url.startsWith('/api')) {
             config.url = `/api${config.url}`;
         }
         

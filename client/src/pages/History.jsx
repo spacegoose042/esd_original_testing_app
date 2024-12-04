@@ -9,7 +9,8 @@ function History() {
     useEffect(() => {
         const fetchTests = async () => {
             try {
-                const response = await api.get('api/tests/history');
+                console.log('Fetching test history...');
+                const response = await api.get('/tests/history');
                 console.log('History response:', response.data);
                 setTests(Array.isArray(response.data) ? response.data : []);
                 setError('');
