@@ -2,7 +2,7 @@ const handleSubmit = async (e) => {
     e.preventDefault();
     try {
         console.log('Attempting login with:', formData);
-        const response = await api.post('/api/auth/login', formData);
+        const response = await api.post('auth/login', formData);
         console.log('Login response:', response.data);
         
         // Store token
