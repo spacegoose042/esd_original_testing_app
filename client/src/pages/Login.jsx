@@ -1,16 +1,18 @@
-import api from '../services/api';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
 
 function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setLoading(true);
 
         try {
             console.log('Attempting login with:', { email });
@@ -19,12 +21,19 @@ function Login() {
                 password
             });
 
+            console.log('Login successful:', response.data);
             localStorage.setItem('token', response.data.token);
             navigate('/');
             window.location.reload();
         } catch (err) {
             console.error('Login error:', err);
-            setError(err.response?.data?.error || 'Login failed');
+            setError(
+                err.response?.data?.error || 
+                err.response?.data?.details || 
+                'Failed to login. Please try again.'
+            );
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -49,6 +58,7 @@ function Login() {
                                 placeholder="Email address"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
+                                disabled={loading}
                             />
                         </div>
                         <div>
@@ -62,6 +72,7 @@ function Login() {
                                 placeholder="Password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
+                                disabled={loading}
                             />
                         </div>
                     </div>
@@ -75,9 +86,12 @@ function Login() {
                     <div>
                         <button
                             type="submit"
-                            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            disabled={loading}
+                            className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+                                loading ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
                         >
-                            Sign in
+                            {loading ? 'Signing in...' : 'Sign in'}
                         </button>
                     </div>
                 </form>

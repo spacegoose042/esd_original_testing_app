@@ -10,6 +10,10 @@ router.post('/login', async (req, res) => {
         console.log('Login attempt:', req.body);
         const { email, password } = req.body;
 
+        if (!email || !password) {
+            return res.status(400).json({ error: 'Email and password are required' });
+        }
+
         // Find user by email
         const result = await pool.query(
             'SELECT * FROM users WHERE email = $1',
@@ -17,14 +21,17 @@ router.post('/login', async (req, res) => {
         );
 
         if (result.rows.length === 0) {
+            console.log('User not found:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
         const user = result.rows[0];
+        console.log('Found user:', { id: user.id, email: user.email });
 
-        // Verify password
-        const isValid = await bcrypt.compare(password, user.password_hash);
+        // Compare password with stored hash
+        const isValid = await bcrypt.compare(password, user.password);
         if (!isValid) {
+            console.log('Invalid password for user:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
@@ -52,7 +59,7 @@ router.post('/login', async (req, res) => {
         });
     } catch (error) {
         console.error('Login error:', error);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: 'Server error', details: error.message });
     }
 });
 

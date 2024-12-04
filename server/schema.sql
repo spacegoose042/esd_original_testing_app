@@ -24,3 +24,7 @@ CREATE TABLE IF NOT EXISTS esd_tests (
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_esd_tests_user_id ON esd_tests(user_id);
 CREATE INDEX IF NOT EXISTS idx_esd_tests_date ON esd_tests(test_date); 
+
+-- Update users table if needed
+ALTER TABLE users 
+RENAME COLUMN password_hash TO password;
