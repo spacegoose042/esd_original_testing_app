@@ -40,17 +40,16 @@ app.use(express.static(path.join(__dirname, '../client/dist'), {
         const ext = path.extname(filePath);
         switch (ext) {
             case '.js':
-                res.setHeader('Content-Type', 'application/javascript');
-                res.setHeader('X-Content-Type-Options', 'nosniff');
+                res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
                 break;
             case '.css':
-                res.setHeader('Content-Type', 'text/css');
+                res.setHeader('Content-Type', 'text/css; charset=utf-8');
                 break;
             case '.html':
-                res.setHeader('Content-Type', 'text/html');
+                res.setHeader('Content-Type', 'text/html; charset=utf-8');
                 break;
             case '.json':
-                res.setHeader('Content-Type', 'application/json');
+                res.setHeader('Content-Type', 'application/json; charset=utf-8');
                 break;
             case '.svg':
                 res.setHeader('Content-Type', 'image/svg+xml');
@@ -64,11 +63,7 @@ app.get('*', (req, res) => {
     if (req.path.startsWith('/api')) {
         return res.status(404).json({ error: 'API endpoint not found' });
     }
-    res.sendFile(path.join(__dirname, '../client/dist/index.html'), {
-        headers: {
-            'Content-Type': 'text/html'
-        }
-    });
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 
 const PORT = process.env.PORT || 3001;
