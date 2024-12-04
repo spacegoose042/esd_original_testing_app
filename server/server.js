@@ -40,22 +40,20 @@ app.use(express.static(path.join(__dirname, '../client/dist'), {
         const ext = path.extname(filePath);
         switch (ext) {
             case '.js':
-                res.set({
-                    'Content-Type': 'application/javascript',
-                    'X-Content-Type-Options': 'nosniff'
-                });
+                res.setHeader('Content-Type', 'application/javascript');
+                res.setHeader('X-Content-Type-Options', 'nosniff');
                 break;
             case '.css':
-                res.set('Content-Type', 'text/css');
+                res.setHeader('Content-Type', 'text/css');
                 break;
             case '.html':
-                res.set('Content-Type', 'text/html');
+                res.setHeader('Content-Type', 'text/html');
                 break;
             case '.json':
-                res.set('Content-Type', 'application/json');
+                res.setHeader('Content-Type', 'application/json');
                 break;
             case '.svg':
-                res.set('Content-Type', 'image/svg+xml');
+                res.setHeader('Content-Type', 'image/svg+xml');
                 break;
         }
     }
@@ -66,7 +64,11 @@ app.get('*', (req, res) => {
     if (req.path.startsWith('/api')) {
         return res.status(404).json({ error: 'API endpoint not found' });
     }
-    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'), {
+        headers: {
+            'Content-Type': 'text/html'
+        }
+    });
 });
 
 const PORT = process.env.PORT || 3001;
