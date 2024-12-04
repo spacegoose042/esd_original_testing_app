@@ -40,8 +40,6 @@ app.use(express.static(path.join(__dirname, '../client/dist'), {
         const ext = path.extname(filePath);
         switch (ext) {
             case '.js':
-            case '.mjs':
-            case '.jsx':
                 res.set({
                     'Content-Type': 'application/javascript',
                     'X-Content-Type-Options': 'nosniff'
