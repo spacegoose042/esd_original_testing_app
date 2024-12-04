@@ -14,49 +14,14 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/tests', require('./routes/tests'));
 app.use('/api/users', require('./routes/users'));
 
-// Add debug logging for API requests
-app.use('/api', (req, res, next) => {
-    console.log('API Request:', {
-        method: req.method,
-        path: req.path,
-        body: req.body,
-        query: req.query
-    });
+// Handle JavaScript files first
+app.get('*.js', (req, res, next) => {
+    res.set('Content-Type', 'application/javascript');
     next();
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-    console.error('Server Error:', err);
-    res.status(500).json({
-        error: 'Internal Server Error',
-        message: err.message
-    });
-});
-
-// Serve static files with proper MIME types
-app.use(express.static(path.join(__dirname, '../client/dist'), {
-    setHeaders: (res, filePath) => {
-        const ext = path.extname(filePath);
-        switch (ext) {
-            case '.js':
-                res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-                break;
-            case '.css':
-                res.setHeader('Content-Type', 'text/css; charset=utf-8');
-                break;
-            case '.html':
-                res.setHeader('Content-Type', 'text/html; charset=utf-8');
-                break;
-            case '.json':
-                res.setHeader('Content-Type', 'application/json; charset=utf-8');
-                break;
-            case '.svg':
-                res.setHeader('Content-Type', 'image/svg+xml');
-                break;
-        }
-    }
-}));
+// Serve static files
+app.use(express.static(path.join(__dirname, '../client/dist')));
 
 // Handle React routing - must be last
 app.get('*', (req, res) => {
