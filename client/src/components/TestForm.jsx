@@ -17,13 +17,13 @@ function TestForm() {
         const fetchUsers = async () => {
             try {
                 console.log('Fetching users...');
-                const response = await api.get('api/users');
+                const response = await api.get('/users');
                 console.log('Users response:', response.data);
                 setUsers(response.data);
                 setError(''); // Clear any previous errors
             } catch (err) {
                 console.error('Error fetching users:', err);
-                setError(err.response?.data?.error || 'Failed to load users. Please try again.');
+                setError(err.response?.data?.error || 'Failed to load users');
             }
         };
 
@@ -34,7 +34,7 @@ function TestForm() {
         e.preventDefault();
         try {
             console.log('Submitting test:', formData);
-            const response = await api.post('api/tests/submit', formData);
+            const response = await api.post('/tests/submit', formData);
             console.log('Submit response:', response.data);
             
             setMessage(response.data.message || 'Test submitted successfully');
