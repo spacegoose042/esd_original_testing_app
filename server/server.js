@@ -17,14 +17,24 @@ app.use('/api/users', require('./routes/users'));
 // Serve static files with proper MIME types
 app.use(express.static(path.join(__dirname, '../client/dist'), {
     setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.js')) {
-            res.set({
-                'Content-Type': 'application/javascript',
-                'Cache-Control': 'no-cache',
-                'X-Content-Type-Options': 'nosniff'
-            });
+        const ext = path.extname(filePath);
+        switch (ext) {
+            case '.js':
+                res.set({
+                    'Content-Type': 'application/javascript; charset=UTF-8',
+                    'Cache-Control': 'no-cache',
+                    'X-Content-Type-Options': 'nosniff'
+                });
+                break;
+            case '.css':
+                res.set('Content-Type', 'text/css');
+                break;
+            case '.html':
+                res.set('Content-Type', 'text/html');
+                break;
         }
-    }
+    },
+    index: false // Don't serve index.html for directory requests
 }));
 
 // Handle React routing - must be last
