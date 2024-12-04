@@ -8,12 +8,15 @@ export default defineConfig({
     assetsDir: 'assets',
     rollupOptions: {
       output: {
-        entryFileNames: 'assets/[name].[hash].js',
-        chunkFileNames: 'assets/[name].[hash].js',
-        assetFileNames: 'assets/[name].[hash].[ext]'
+        entryFileNames: '[name].[hash].mjs',
+        chunkFileNames: '[name].[hash].mjs',
+        assetFileNames: '[name].[hash].[ext]'
       }
     },
-    sourcemap: false,
-    manifest: true
+    sourcemap: false
+  },
+  server: {
+    port: 3000,
+    strictPort: true
   }
 })

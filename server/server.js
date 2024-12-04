@@ -40,6 +40,7 @@ app.use(express.static(path.join(__dirname, '../client/dist'), {
         const ext = path.extname(filePath);
         switch (ext) {
             case '.js':
+            case '.mjs':
                 res.set('Content-Type', 'application/javascript; charset=utf-8');
                 break;
             case '.css':
@@ -50,6 +51,9 @@ app.use(express.static(path.join(__dirname, '../client/dist'), {
                 break;
             case '.json':
                 res.set('Content-Type', 'application/json; charset=utf-8');
+                break;
+            case '.svg':
+                res.set('Content-Type', 'image/svg+xml');
                 break;
         }
     }
