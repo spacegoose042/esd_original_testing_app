@@ -65,3 +65,8 @@ ALTER TABLE users
     ADD COLUMN IF NOT EXISTS manager_id INTEGER REFERENCES users(id),
     ADD COLUMN IF NOT EXISTS department_id INTEGER REFERENCES departments(id),
     ADD COLUMN IF NOT EXISTS is_manager BOOLEAN DEFAULT false;
+
+-- Modify the users table email constraint
+ALTER TABLE users 
+    ALTER COLUMN email DROP NOT NULL,
+    ADD CONSTRAINT users_email_unique UNIQUE (email);

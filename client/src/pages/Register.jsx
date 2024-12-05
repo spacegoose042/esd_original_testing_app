@@ -7,6 +7,7 @@ function Register() {
     const [formData, setFormData] = useState({
         first_name: '',
         last_name: '',
+        email: '',
         manager_id: '',
         department_id: '',
         is_manager: false
@@ -106,6 +107,20 @@ function Register() {
                         type="text"
                         name="last_name"
                         value={formData.last_name}
+                        onChange={handleChange}
+                        required
+                        className="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
+                    />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Email
+                    </label>
+                    <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
                         onChange={handleChange}
                         required
                         className="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"

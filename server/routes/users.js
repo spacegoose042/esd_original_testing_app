@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/db');
+const bcrypt = require('bcrypt');
 
 // Get all users with manager and department info
 router.get('/', async (req, res) => {
@@ -35,56 +36,65 @@ router.get('/', async (req, res) => {
 // Create new user
 router.post('/', async (req, res) => {
     try {
-        const { first_name, last_name, manager_id, department_id, is_manager } = req.body;
+        const { first_name, last_name, email, manager_id, department_id, is_manager } = req.body;
 
         console.log('Received registration request:', {
             first_name,
             last_name,
+            email,
             manager_id,
             department_id,
             is_manager
         });
 
         // Validate required fields
-        if (!first_name || !last_name || !department_id) {
+        if (!first_name || !last_name || !email || !department_id) {
             return res.status(400).json({ 
                 error: 'Missing required fields',
-                details: 'First name, last name, and department are required'
+                details: 'First name, last name, email, and department are required'
             });
         }
 
-        // Insert the new user with better error handling
+        // Generate a random password for the user
+        const tempPassword = Math.random().toString(36).slice(-8);
+        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+        // Insert the new user
         const result = await pool.query(`
             INSERT INTO users (
                 first_name,
                 last_name,
+                email,
+                password,
                 manager_id,
                 department_id,
-                is_manager,
-                email,
-                password
+                is_manager
             ) VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING 
                 id, 
                 first_name, 
-                last_name, 
+                last_name,
+                email,
                 is_manager, 
                 department_id, 
                 manager_id
         `, [
             first_name,
             last_name,
+            email,
+            hashedPassword,
             manager_id || null,
             department_id,
-            is_manager || false,
-            null, // email is optional for non-admin users
-            null  // password is optional for non-admin users
+            is_manager || false
         ]);
 
         // Log successful creation
         console.log('User created successfully:', result.rows[0]);
 
-        res.status(201).json(result.rows[0]);
+        res.status(201).json({
+            ...result.rows[0],
+            tempPassword // Include temporary password in response
+        });
     } catch (error) {
         console.error('Error creating user:', {
             message: error.message,
