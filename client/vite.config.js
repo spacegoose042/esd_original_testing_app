@@ -4,7 +4,7 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
-  base: './',
+  base: '/',
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
@@ -25,7 +25,7 @@ export default defineConfig({
           ? 'https://esdoriginaltestingapp-production.up.railway.app'
           : 'http://localhost:3001',
         changeOrigin: true,
-        secure: true
+        secure: false
       }
     }
   }

@@ -25,22 +25,20 @@ app.use('/api/users', require('./routes/users'));
 // Serve static files from the React app
 const staticPath = path.join(__dirname, '../client/dist');
 
-// Serve assets with proper MIME types
-app.get('/assets/*.js', (req, res, next) => {
-    res.set('Content-Type', 'application/javascript; charset=utf-8');
-    next();
-});
-
-app.get('/assets/*.css', (req, res, next) => {
-    res.set('Content-Type', 'text/css; charset=utf-8');
-    next();
-});
-
 // Configure static file serving
 app.use(express.static(staticPath, {
     maxAge: '1y',
     etag: true,
-    index: false
+    index: false,
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.js')) {
+            res.set('Content-Type', 'application/javascript; charset=utf-8');
+        } else if (filePath.endsWith('.css')) {
+            res.set('Content-Type', 'text/css; charset=utf-8');
+        } else if (filePath.endsWith('.html')) {
+            res.set('Content-Type', 'text/html; charset=utf-8');
+        }
+    }
 }));
 
 // Debug route to check static files
@@ -67,11 +65,14 @@ app.get('/debug/static-files', (req, res) => {
     }
 });
 
-// Catch-all route - must be last
+// Handle client-side routing
 app.get('*', (req, res) => {
+    // Don't handle API routes
     if (req.path.startsWith('/api')) {
-        return next();
+        return res.status(404).json({ error: 'API endpoint not found' });
     }
+    
+    // Serve the main HTML file for all other routes
     res.sendFile(path.join(staticPath, 'index.html'));
 });
 
