@@ -64,7 +64,7 @@ router.post('/', async (req, res) => {
             });
         }
 
-        // Generate a random password for the user if they are a manager or admin
+        // Generate a random password only for managers and admins
         let hashedPassword = null;
         if (is_manager || is_admin) {
             const tempPassword = Math.random().toString(36).slice(-8);
@@ -95,7 +95,7 @@ router.post('/', async (req, res) => {
         `, [
             first_name,
             last_name,
-            email,
+            email || null,
             hashedPassword,
             manager_id || null,
             department_id,
@@ -106,10 +106,16 @@ router.post('/', async (req, res) => {
         // Log successful creation
         console.log('User created successfully:', result.rows[0]);
 
-        res.status(201).json({
-            ...result.rows[0],
-            tempPassword: hashedPassword ? tempPassword : undefined // Only include password for managers/admins
-        });
+        const response = {
+            ...result.rows[0]
+        };
+
+        // Only include temporary password for managers and admins
+        if (hashedPassword) {
+            response.tempPassword = tempPassword;
+        }
+
+        res.status(201).json(response);
     } catch (error) {
         console.error('Error creating user:', {
             message: error.message,

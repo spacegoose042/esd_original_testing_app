@@ -3,8 +3,8 @@ CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
+    password VARCHAR(255),
     is_admin BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -24,10 +24,6 @@ CREATE TABLE IF NOT EXISTS esd_tests (
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_esd_tests_user_id ON esd_tests(user_id);
 CREATE INDEX IF NOT EXISTS idx_esd_tests_date ON esd_tests(test_date); 
-
--- Update users table if needed
-ALTER TABLE users 
-RENAME COLUMN password_hash TO password;
 
 -- Create departments table
 CREATE TABLE IF NOT EXISTS departments (
@@ -55,18 +51,12 @@ INSERT INTO departments (name) VALUES
     ('Maintenance')
 ON CONFLICT DO NOTHING;
 
--- Add this to your schema.sql if not already present
+-- Make email and password nullable
 ALTER TABLE users 
     ALTER COLUMN email DROP NOT NULL,
     ALTER COLUMN password DROP NOT NULL;
 
--- Add any missing columns
+-- Add unique constraint to email (while allowing NULL)
 ALTER TABLE users 
-    ADD COLUMN IF NOT EXISTS manager_id INTEGER REFERENCES users(id),
-    ADD COLUMN IF NOT EXISTS department_id INTEGER REFERENCES departments(id),
-    ADD COLUMN IF NOT EXISTS is_manager BOOLEAN DEFAULT false;
-
--- Modify the users table email constraint
-ALTER TABLE users 
-    ALTER COLUMN email DROP NOT NULL,
+    DROP CONSTRAINT IF EXISTS users_email_unique,
     ADD CONSTRAINT users_email_unique UNIQUE (email);
