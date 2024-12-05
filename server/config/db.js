@@ -38,9 +38,35 @@ const initializeDb = async () => {
                 department_id INTEGER REFERENCES departments(id),
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
+
+            -- Create managers table if it doesn't exist
+            CREATE TABLE IF NOT EXISTS managers (
+                id SERIAL PRIMARY KEY,
+                first_name VARCHAR(100) NOT NULL,
+                last_name VARCHAR(100) NOT NULL,
+                department_id INTEGER REFERENCES departments(id),
+                user_id INTEGER REFERENCES users(id) UNIQUE,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
         `);
 
-        // Step 2: Insert departments one by one with explicit type casting
+        // Step 2: Add email column to managers table if it doesn't exist
+        await client.query(`
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'managers' 
+                    AND column_name = 'email'
+                ) THEN
+                    ALTER TABLE managers ADD COLUMN email VARCHAR(255);
+                    ALTER TABLE managers ALTER COLUMN email SET NOT NULL;
+                END IF;
+            END $$;
+        `);
+
+        // Step 3: Insert departments
         const departments = ['Engineering', 'Production', 'Quality Assurance', 'Maintenance'];
         for (const dept of departments) {
             await client.query(`
@@ -52,24 +78,16 @@ const initializeDb = async () => {
             `, [dept]);
         }
 
-        // Step 3: Create or modify managers table
-        await client.query(`
-            -- Create managers table if it doesn't exist
-            CREATE TABLE IF NOT EXISTS managers (
-                id SERIAL PRIMARY KEY,
-                first_name VARCHAR(100) NOT NULL,
-                last_name VARCHAR(100) NOT NULL,
-                email VARCHAR(255) NOT NULL,
-                department_id INTEGER REFERENCES departments(id),
-                user_id INTEGER REFERENCES users(id) UNIQUE,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                CONSTRAINT managers_email_unique UNIQUE (email)
-            );
-        `);
-
         // Step 4: Migrate manager data
         await client.query(`
-            -- Insert manager records from users
+            -- Update existing manager records with email from users table
+            UPDATE managers m
+            SET email = u.email
+            FROM users u
+            WHERE m.user_id = u.id
+            AND m.email IS NULL;
+
+            -- Insert new manager records
             INSERT INTO managers (first_name, last_name, email, department_id, user_id)
             SELECT 
                 first_name,
@@ -79,9 +97,7 @@ const initializeDb = async () => {
                 id
             FROM users
             WHERE is_manager = true
-            AND NOT EXISTS (
-                SELECT 1 FROM managers WHERE user_id = users.id
-            );
+            AND id NOT IN (SELECT user_id FROM managers WHERE user_id IS NOT NULL);
 
             -- Ensure admin user is set up
             WITH admin_update AS (
@@ -109,6 +125,7 @@ const initializeDb = async () => {
         await client.query(`
             CREATE INDEX IF NOT EXISTS idx_users_department_id ON users(department_id);
             CREATE INDEX IF NOT EXISTS idx_managers_department_id ON managers(department_id);
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_managers_email ON managers(email);
         `);
 
         console.log('Database schema updated successfully');
