@@ -35,14 +35,11 @@ const initializeDb = async () => {
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
 
-            -- Modify users table - remove manager_email and add other columns
+            -- Add manager-related columns to users table
             ALTER TABLE users 
                 ADD COLUMN IF NOT EXISTS manager_id INTEGER REFERENCES users(id),
                 ADD COLUMN IF NOT EXISTS department_id INTEGER REFERENCES departments(id),
                 ADD COLUMN IF NOT EXISTS is_manager BOOLEAN DEFAULT false;
-
-            -- Drop manager_email from users if it exists
-            ALTER TABLE users DROP COLUMN IF EXISTS manager_email;
 
             -- Create managers table with email field
             CREATE TABLE IF NOT EXISTS managers (
@@ -54,6 +51,20 @@ const initializeDb = async () => {
                 user_id INTEGER REFERENCES users(id) UNIQUE,
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
+
+            -- Migrate existing manager data
+            INSERT INTO managers (first_name, last_name, email, department_id, user_id)
+            SELECT 
+                u.first_name,
+                u.last_name,
+                u.email,
+                u.department_id,
+                u.id
+            FROM users u
+            WHERE u.is_manager = true
+            ON CONFLICT (user_id) DO UPDATE SET
+                email = EXCLUDED.email,
+                department_id = EXCLUDED.department_id;
 
             -- Create indexes after all tables and columns exist
             CREATE INDEX IF NOT EXISTS idx_users_manager_id ON users(manager_id);
