@@ -30,8 +30,10 @@ app.use(express.static(staticPath, {
     etag: true,
     index: false,
     setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.mjs') || filePath.endsWith('.js')) {
+        if (filePath.endsWith('.js')) {
             res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        } else if (filePath.endsWith('.mjs') || filePath.includes('.js?v=')) {
+            res.setHeader('Content-Type', 'text/javascript; charset=utf-8');
         } else if (filePath.endsWith('.css')) {
             res.setHeader('Content-Type', 'text/css; charset=utf-8');
         } else if (filePath.endsWith('.html')) {
@@ -43,6 +45,9 @@ app.use(express.static(staticPath, {
 // Handle React routing, return all requests to React app
 app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) {
+        return next();
+    }
+    if (req.path.includes('.js') || req.path.includes('.css') || req.path.includes('.map')) {
         return next();
     }
     res.sendFile(path.join(staticPath, 'index.html'), {
