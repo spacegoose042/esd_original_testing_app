@@ -25,43 +25,20 @@ const initializeDb = async () => {
                 is_admin BOOLEAN DEFAULT false,
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
-
-            CREATE TABLE IF NOT EXISTS esd_tests (
-                id SERIAL PRIMARY KEY,
-                user_id INTEGER REFERENCES users(id),
-                test_date DATE DEFAULT CURRENT_DATE,
-                test_time TIME DEFAULT CURRENT_TIME,
-                test_period VARCHAR(50) NOT NULL,
-                passed BOOLEAN NOT NULL,
-                notes TEXT,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            );
-
-            CREATE INDEX IF NOT EXISTS idx_esd_tests_user_id ON esd_tests(user_id);
-            CREATE INDEX IF NOT EXISTS idx_esd_tests_date ON esd_tests(test_date);
         `);
-        console.log('Database tables initialized');
 
-        // Add default users if they don't exist
-        const adminPassword = await bcrypt.hash('Admin123!', 10);
-        const testUserPassword = await bcrypt.hash('password123', 10);
+        // Create default admin user if it doesn't exist
+        const adminEmail = 'matt.miers@sandyindustries.com';
+        const adminPassword = 'Admin123!';
+        const hashedPassword = await bcrypt.hash(adminPassword, 10);
 
-        // Add admin user
         await client.query(`
             INSERT INTO users (first_name, last_name, email, password, is_admin)
             VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (email) DO NOTHING
-        `, ['Matt', 'Miers', 'matt.miers@sandyindustries.com', adminPassword, true]);
+        `, ['Matt', 'Miers', adminEmail, hashedPassword, true]);
 
-        // Add test user
-        await client.query(`
-            INSERT INTO users (first_name, last_name, email, password, is_admin)
-            VALUES ($1, $2, $3, $4, $5)
-            ON CONFLICT (email) DO NOTHING
-        `, ['Testy', 'McTesterson', 'testy@test.com', testUserPassword, false]);
-
-        console.log('Default users created');
-
+        console.log('Database initialized with admin user');
         client.release();
     } catch (err) {
         console.error('Database initialization error:', err);
@@ -69,6 +46,6 @@ const initializeDb = async () => {
     }
 };
 
-initializeDb();
+initializeDb().catch(console.error);
 
 module.exports = pool;

@@ -4,6 +4,11 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 
+// Health check route
+router.get('/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Login route
 router.post('/login', async (req, res) => {
     try {
@@ -28,8 +33,14 @@ router.post('/login', async (req, res) => {
         const user = result.rows[0];
         console.log('Found user:', { id: user.id, email: user.email });
 
+        // Debug log to check stored password hash
+        console.log('Stored password hash:', user.password);
+        console.log('Attempting to compare with provided password');
+
         // Compare password with stored hash
         const isValid = await bcrypt.compare(password, user.password);
+        console.log('Password validation result:', isValid);
+
         if (!isValid) {
             console.log('Invalid password for user:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
@@ -59,7 +70,12 @@ router.post('/login', async (req, res) => {
         });
     } catch (error) {
         console.error('Login error:', error);
-        res.status(500).json({ error: 'Server error', details: error.message });
+        console.error('Error stack:', error.stack);
+        res.status(500).json({ 
+            error: 'Server error', 
+            details: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 });
 
