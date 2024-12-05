@@ -23,16 +23,18 @@ app.use('/api/users', require('./routes/users'));
 
 // Serve static files from the React app
 const staticPath = path.join(__dirname, '../client/dist');
-app.use(express.static(staticPath, {
-    maxAge: '1y',
-    etag: false
-}));
 
 // Set correct MIME types
-app.get('*.js', (req, res, next) => {
-    res.set('Content-Type', 'application/javascript');
-    next();
-});
+app.use(express.static(staticPath, {
+    maxAge: '1y',
+    setHeaders: (res, path) => {
+        if (path.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript');
+        } else if (path.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css');
+        }
+    }
+}));
 
 // Handle React routing, return all requests to React app
 app.get('*', (req, res) => {
@@ -44,7 +46,6 @@ app.get('*', (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 
-// Add error handling for database connection
 pool.query('SELECT NOW()', (err) => {
     if (err) {
         console.error('Error connecting to database:', err);
