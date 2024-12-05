@@ -20,8 +20,9 @@ const initializeDb = async () => {
         const createDepartmentsSQL = `
             CREATE TABLE IF NOT EXISTS departments (
                 id SERIAL PRIMARY KEY,
-                name VARCHAR(100) NOT NULL UNIQUE,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                name VARCHAR(100) NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT departments_name_unique UNIQUE (name)
             );
         `;
         console.log('Creating departments table...');
@@ -51,40 +52,16 @@ const initializeDb = async () => {
                 last_name VARCHAR(100) NOT NULL,
                 email VARCHAR(255) NOT NULL,
                 department_id INTEGER REFERENCES departments(id),
-                user_id INTEGER REFERENCES users(id) UNIQUE,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                user_id INTEGER REFERENCES users(id),
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT managers_user_id_unique UNIQUE (user_id),
+                CONSTRAINT managers_email_unique UNIQUE (email)
             );
         `;
         console.log('Creating managers table...');
         await client.query(createManagersSQL);
 
-        // Step 4: Create basic indexes
-        const createBasicIndexesSQL = `
-            CREATE INDEX IF NOT EXISTS idx_users_department_id ON users(department_id);
-            CREATE INDEX IF NOT EXISTS idx_managers_department_id ON managers(department_id);
-            CREATE INDEX IF NOT EXISTS idx_managers_user_id ON managers(user_id);
-        `;
-        console.log('Creating basic indexes...');
-        await client.query(createBasicIndexesSQL);
-
-        // Step 5: Verify managers table structure and create email index
-        const verifyAndCreateEmailIndexSQL = `
-            DO $$
-            BEGIN
-                IF EXISTS (
-                    SELECT 1
-                    FROM information_schema.columns
-                    WHERE table_name = 'managers'
-                    AND column_name = 'email'
-                ) THEN
-                    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_managers_email ON managers(email)';
-                END IF;
-            END $$;
-        `;
-        console.log('Verifying managers table and creating email index...');
-        await client.query(verifyAndCreateEmailIndexSQL);
-
-        // Step 6: Insert departments
+        // Step 4: Insert departments
         const insertDepartmentsSQL = `
             INSERT INTO departments (name) 
             VALUES 
@@ -92,20 +69,42 @@ const initializeDb = async () => {
                 ('Production'),
                 ('Quality Assurance'),
                 ('Maintenance')
-            ON CONFLICT (name) DO NOTHING;
+            ON CONFLICT ON CONSTRAINT departments_name_unique DO NOTHING;
         `;
         console.log('Inserting departments...');
         await client.query(insertDepartmentsSQL);
 
-        // Step 7: Update admin user
-        const updateAdminSQL = `
-            WITH updated_user AS (
+        // Step 5: Migrate manager data
+        const migrateManagersSQL = `
+            -- First, ensure all existing managers are properly marked
+            UPDATE users 
+            SET is_manager = true 
+            WHERE id IN (SELECT user_id FROM managers);
+
+            -- Then insert any missing manager records
+            INSERT INTO managers (first_name, last_name, email, department_id, user_id)
+            SELECT 
+                first_name,
+                last_name,
+                email,
+                department_id,
+                id
+            FROM users
+            WHERE is_manager = true
+            AND id NOT IN (SELECT user_id FROM managers WHERE user_id IS NOT NULL)
+            ON CONFLICT ON CONSTRAINT managers_user_id_unique 
+            DO UPDATE SET
+                first_name = EXCLUDED.first_name,
+                last_name = EXCLUDED.last_name,
+                email = EXCLUDED.email,
+                department_id = EXCLUDED.department_id;
+
+            -- Update the admin user specifically
+            WITH admin_update AS (
                 UPDATE users 
                 SET 
                     is_manager = true,
-                    department_id = (
-                        SELECT id FROM departments WHERE name = 'Engineering' LIMIT 1
-                    )
+                    department_id = (SELECT id FROM departments WHERE name = 'Engineering' LIMIT 1)
                 WHERE email = 'matt.miers@sandyindustries.com'
                 RETURNING id, first_name, last_name, email, department_id
             )
@@ -116,14 +115,24 @@ const initializeDb = async () => {
                 email,
                 department_id,
                 id
-            FROM updated_user
-            ON CONFLICT (user_id) 
+            FROM admin_update
+            ON CONFLICT ON CONSTRAINT managers_user_id_unique 
             DO UPDATE SET
                 email = EXCLUDED.email,
                 department_id = EXCLUDED.department_id;
         `;
-        console.log('Updating admin user...');
-        await client.query(updateAdminSQL);
+        
+        console.log('Migrating manager data...');
+        await client.query(migrateManagersSQL);
+
+        // Step 6: Create indexes
+        const createIndexesSQL = `
+            CREATE INDEX IF NOT EXISTS idx_users_department_id ON users(department_id);
+            CREATE INDEX IF NOT EXISTS idx_managers_department_id ON managers(department_id);
+            CREATE INDEX IF NOT EXISTS idx_managers_email ON managers(email);
+        `;
+        console.log('Creating indexes...');
+        await client.query(createIndexesSQL);
 
         console.log('Database schema updated successfully');
         client.release();
