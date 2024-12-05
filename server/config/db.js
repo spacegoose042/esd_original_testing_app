@@ -14,7 +14,7 @@ const pool = new Pool({
 const initializeDb = async () => {
     try {
         const client = await pool.connect();
-        console.log('Successfully connected to database');
+        console.log('Starting database initialization...');
 
         // Read and execute the migration SQL
         const migrationSQL = `
@@ -76,6 +76,7 @@ const initializeDb = async () => {
             ON CONFLICT (user_id) DO NOTHING;
         `;
 
+        console.log('Executing database migrations...');
         await client.query(migrationSQL);
         console.log('Database schema updated successfully');
 
