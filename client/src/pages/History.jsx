@@ -106,13 +106,13 @@ function History() {
                             type="date"
                             value={filters.dateRange.start}
                             onChange={(e) => handleFilterChange('dateRange', { ...filters.dateRange, start: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full p-2 text-sm border border-gray-300 rounded bg-white hover:border-gray-400 focus:outline-none focus:border-blue-500"
                         />
                         <input
                             type="date"
                             value={filters.dateRange.end}
                             onChange={(e) => handleFilterChange('dateRange', { ...filters.dateRange, end: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full p-2 text-sm border border-gray-300 rounded bg-white hover:border-gray-400 focus:outline-none focus:border-blue-500"
                         />
                     </div>
                 </div>
@@ -123,7 +123,7 @@ function History() {
                         value={filters.user}
                         onChange={(e) => handleFilterChange('user', e.target.value)}
                         placeholder="Search by name"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full p-2 text-sm border border-gray-300 rounded bg-white hover:border-gray-400 focus:outline-none focus:border-blue-500"
                     />
                 </div>
                 <div>
@@ -131,7 +131,7 @@ function History() {
                     <select
                         value={filters.period}
                         onChange={(e) => handleFilterChange('period', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full p-2 text-sm border border-gray-300 rounded bg-white hover:border-gray-400 focus:outline-none focus:border-blue-500"
                     >
                         <option value="">All</option>
                         <option value="morning">Morning</option>
@@ -143,7 +143,7 @@ function History() {
                     <select
                         value={filters.result}
                         onChange={(e) => handleFilterChange('result', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full p-2 text-sm border border-gray-300 rounded bg-white hover:border-gray-400 focus:outline-none focus:border-blue-500"
                     >
                         <option value="">All</option>
                         <option value="pass">Pass</option>
@@ -157,7 +157,7 @@ function History() {
                         value={filters.notes}
                         onChange={(e) => handleFilterChange('notes', e.target.value)}
                         placeholder="Search notes"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full p-2 text-sm border border-gray-300 rounded bg-white hover:border-gray-400 focus:outline-none focus:border-blue-500"
                     />
                 </div>
             </div>
