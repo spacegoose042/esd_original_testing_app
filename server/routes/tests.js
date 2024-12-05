@@ -39,7 +39,13 @@ router.post('/submit', async (req, res) => {
         // Ensure consistent period values
         const normalizedPeriod = test_period.startsWith('AM') ? 'AM' : 'PM';
 
+        // Get current time in Los Angeles timezone
         const result = await pool.query(`
+            WITH current_la_time AS (
+                SELECT 
+                    (CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles')::DATE as la_date,
+                    CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles' as la_timestamp
+            )
             INSERT INTO esd_tests (
                 user_id, 
                 test_period, 
@@ -47,14 +53,15 @@ router.post('/submit', async (req, res) => {
                 notes,
                 test_date,
                 test_time
-            ) VALUES (
+            ) 
+            SELECT
                 $1, 
                 $2, 
                 $3, 
-                $4, 
-                CURRENT_DATE AT TIME ZONE 'America/Los_Angeles',
-                CURRENT_TIMESTAMP AT TIME ZONE 'America/Los_Angeles'
-            )
+                $4,
+                la_date,
+                la_timestamp
+            FROM current_la_time
             RETURNING 
                 id,
                 user_id,
