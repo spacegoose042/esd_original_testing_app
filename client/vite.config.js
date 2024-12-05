@@ -5,6 +5,17 @@ import path from 'path'
 export default defineConfig({
   plugins: [react()],
   base: '/',
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: true,
+    manifest: true,
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+      },
+    }
+  },
   server: {
     proxy: {
       '/api': {
@@ -13,16 +24,6 @@ export default defineConfig({
           : 'http://localhost:3001',
         changeOrigin: true,
         secure: true
-      }
-    }
-  },
-  build: {
-    outDir: 'dist',
-    assetsDir: 'assets',
-    sourcemap: true,
-    rollupOptions: {
-      output: {
-        manualChunks: undefined
       }
     }
   }

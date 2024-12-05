@@ -28,8 +28,8 @@ const staticPath = path.join(__dirname, '../client/dist');
 app.use(express.static(staticPath, {
     maxAge: '1y',
     etag: true,
+    index: false,
     setHeaders: (res, filePath) => {
-        // Set proper MIME types for different file extensions
         if (filePath.endsWith('.js')) {
             res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
         } else if (filePath.endsWith('.css')) {
@@ -45,7 +45,11 @@ app.get('*', (req, res) => {
     if (req.path.startsWith('/api')) {
         return res.status(404).json({ error: 'API endpoint not found' });
     }
-    res.sendFile(path.join(staticPath, 'index.html'));
+    res.sendFile(path.join(staticPath, 'index.html'), {
+        headers: {
+            'Content-Type': 'text/html; charset=utf-8'
+        }
+    });
 });
 
 const PORT = process.env.PORT || 3001;
