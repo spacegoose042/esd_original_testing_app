@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
-function Login() {
+function Login(props) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [managerId, setManagerId] = useState('');
@@ -37,6 +37,7 @@ function Login() {
             });
 
             localStorage.setItem('token', response.data.token);
+            props.setIsAdmin(response.data.isAdmin);
             navigate('/');
         } catch (err) {
             setError(err.response?.data?.error || 'Failed to login');
