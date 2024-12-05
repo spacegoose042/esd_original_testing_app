@@ -10,7 +10,6 @@ function Users() {
     const [departments, setDepartments] = useState([]);
     const [filters, setFilters] = useState({
         name: '',
-        email: '',
         department: '',
         manager: '',
         role: ''
@@ -48,13 +47,6 @@ function Users() {
             const searchTerm = filters.name.toLowerCase();
             filtered = filtered.filter(user => 
                 `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm)
-            );
-        }
-
-        if (filters.email && (filters.role === 'admin' || filters.role === 'manager')) {
-            const searchTerm = filters.email.toLowerCase();
-            filtered = filtered.filter(user => 
-                user.email?.toLowerCase().includes(searchTerm)
             );
         }
 
@@ -120,7 +112,7 @@ function Users() {
             <h1 className="text-2xl font-bold mb-6">Users Management</h1>
 
             {/* Filters */}
-            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                     <input
@@ -131,18 +123,6 @@ function Users() {
                         placeholder="Search by name"
                     />
                 </div>
-                {(filters.role === 'admin' || filters.role === 'manager') && (
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <input
-                            type="text"
-                            value={filters.email}
-                            onChange={(e) => handleFilterChange('email', e.target.value)}
-                            className="w-full p-2 border rounded"
-                            placeholder="Search by email"
-                        />
-                    </div>
-                )}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
                     <select
@@ -195,9 +175,6 @@ function Users() {
                                 Name
                             </th>
                             <th className="px-6 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Email
-                            </th>
-                            <th className="px-6 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                 Department
                             </th>
                             <th className="px-6 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -242,39 +219,22 @@ function Users() {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     {editingUser?.id === user.id ? (
-                                        (user.is_admin || user.is_manager) && (
-                                            <input
-                                                type="email"
-                                                value={editingUser.email || ''}
-                                                onChange={(e) => setEditingUser({
-                                                    ...editingUser,
-                                                    email: e.target.value
-                                                })}
-                                                className="w-full p-1 border rounded"
-                                                required={user.is_admin || user.is_manager}
-                                            />
-                                        )
-                                    ) : (
-                                        (user.is_admin || user.is_manager) ? user.email : '-'
-                                    )}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    {editingUser?.id === user.id ? (
                                         <select
-                                            value={editingUser.department_id || ''}
+                                            value={editingUser.department_id}
                                             onChange={(e) => setEditingUser({
                                                 ...editingUser,
-                                                department_id: e.target.value ? parseInt(e.target.value) : null
+                                                department_id: parseInt(e.target.value)
                                             })}
                                             className="w-full p-1 border rounded"
                                         >
-                                            <option value="">No Department</option>
                                             {departments.map(dept => (
-                                                <option key={dept.id} value={dept.id}>{dept.name}</option>
+                                                <option key={dept.id} value={dept.id}>
+                                                    {dept.name}
+                                                </option>
                                             ))}
                                         </select>
                                     ) : (
-                                        user.department_name || 'N/A'
+                                        user.department_name
                                     )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
@@ -295,37 +255,45 @@ function Users() {
                                             ))}
                                         </select>
                                     ) : (
-                                        user.manager_first_name ? 
-                                        `${user.manager_first_name} ${user.manager_last_name}` : 
-                                        'N/A'
+                                        user.manager_first_name && user.manager_last_name
+                                            ? `${user.manager_first_name} ${user.manager_last_name}`
+                                            : '-'
                                     )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     {editingUser?.id === user.id ? (
-                                        <select
-                                            value={editingUser.is_admin ? 'admin' : editingUser.is_manager ? 'manager' : 'user'}
-                                            onChange={(e) => {
-                                                const role = e.target.value;
-                                                setEditingUser({
-                                                    ...editingUser,
-                                                    is_admin: role === 'admin',
-                                                    is_manager: role === 'manager'
-                                                });
-                                            }}
-                                            className="w-full p-1 border rounded"
-                                        >
-                                            <option value="user">User</option>
-                                            <option value="manager">Manager</option>
-                                            <option value="admin">Admin</option>
-                                        </select>
+                                        <div className="flex gap-2">
+                                            <label className="flex items-center">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={editingUser.is_admin}
+                                                    onChange={(e) => setEditingUser({
+                                                        ...editingUser,
+                                                        is_admin: e.target.checked
+                                                    })}
+                                                    className="mr-2"
+                                                />
+                                                Admin
+                                            </label>
+                                            <label className="flex items-center">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={editingUser.is_manager}
+                                                    onChange={(e) => setEditingUser({
+                                                        ...editingUser,
+                                                        is_manager: e.target.checked
+                                                    })}
+                                                    className="mr-2"
+                                                />
+                                                Manager
+                                            </label>
+                                        </div>
                                     ) : (
-                                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                            user.is_admin ? 'bg-purple-100 text-purple-800' :
-                                            user.is_manager ? 'bg-blue-100 text-blue-800' :
-                                            'bg-gray-100 text-gray-800'
-                                        }`}>
-                                            {user.is_admin ? 'Admin' : user.is_manager ? 'Manager' : 'User'}
-                                        </span>
+                                        <div>
+                                            {user.is_admin && <span className="mr-2">Admin</span>}
+                                            {user.is_manager && <span>Manager</span>}
+                                            {!user.is_admin && !user.is_manager && <span>User</span>}
+                                        </div>
                                     )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
