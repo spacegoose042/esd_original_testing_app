@@ -61,7 +61,6 @@ const initializeDb = async () => {
                     AND column_name = 'email'
                 ) THEN
                     ALTER TABLE managers ADD COLUMN email VARCHAR(255);
-                    ALTER TABLE managers ALTER COLUMN email SET NOT NULL;
                 END IF;
             END $$;
         `);
@@ -78,14 +77,14 @@ const initializeDb = async () => {
             `, [dept]);
         }
 
-        // Step 4: Migrate manager data
+        // Step 4: Update existing manager records with email
         await client.query(`
             -- Update existing manager records with email from users table
             UPDATE managers m
             SET email = u.email
             FROM users u
             WHERE m.user_id = u.id
-            AND m.email IS NULL;
+            AND (m.email IS NULL OR m.email = '');
 
             -- Insert new manager records
             INSERT INTO managers (first_name, last_name, email, department_id, user_id)
@@ -121,11 +120,24 @@ const initializeDb = async () => {
             );
         `);
 
-        // Step 5: Create remaining indexes
+        // Step 5: Now that data is migrated, add NOT NULL constraint
+        await client.query(`
+            -- First verify all emails are populated
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM managers WHERE email IS NULL OR email = ''
+                ) THEN
+                    ALTER TABLE managers ALTER COLUMN email SET NOT NULL;
+                    ALTER TABLE managers ADD CONSTRAINT managers_email_unique UNIQUE (email);
+                END IF;
+            END $$;
+        `);
+
+        // Step 6: Create remaining indexes
         await client.query(`
             CREATE INDEX IF NOT EXISTS idx_users_department_id ON users(department_id);
             CREATE INDEX IF NOT EXISTS idx_managers_department_id ON managers(department_id);
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_managers_email ON managers(email);
         `);
 
         console.log('Database schema updated successfully');
