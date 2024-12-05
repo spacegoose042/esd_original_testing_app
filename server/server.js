@@ -26,53 +26,13 @@ app.use('/api/users', require('./routes/users'));
 const staticPath = path.join(__dirname, '../client/dist');
 
 // Configure static file serving
-app.use(express.static(staticPath, {
-    maxAge: '1y',
-    etag: true,
-    index: false,
-    setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.js')) {
-            res.set('Content-Type', 'application/javascript; charset=utf-8');
-        } else if (filePath.endsWith('.css')) {
-            res.set('Content-Type', 'text/css; charset=utf-8');
-        } else if (filePath.endsWith('.html')) {
-            res.set('Content-Type', 'text/html; charset=utf-8');
-        }
-    }
-}));
-
-// Debug route to check static files
-app.get('/debug/static-files', (req, res) => {
-    try {
-        const files = fs.readdirSync(staticPath);
-        const assetsPath = path.join(staticPath, 'assets');
-        const assetFiles = fs.existsSync(assetsPath) ? fs.readdirSync(assetsPath) : [];
-        
-        // Read the manifest file if it exists
-        const manifestPath = path.join(staticPath, 'manifest.json');
-        const manifest = fs.existsSync(manifestPath) 
-            ? JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
-            : null;
-            
-        res.json({ 
-            files, 
-            assetFiles, 
-            staticPath,
-            manifest 
-        });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
+app.use(express.static(staticPath));
 
 // Handle client-side routing
 app.get('*', (req, res) => {
-    // Don't handle API routes
     if (req.path.startsWith('/api')) {
         return res.status(404).json({ error: 'API endpoint not found' });
     }
-    
-    // Serve the main HTML file for all other routes
     res.sendFile(path.join(staticPath, 'index.html'));
 });
 
