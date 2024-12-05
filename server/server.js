@@ -3,7 +3,6 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const pool = require('./config/db');
-const fs = require('fs');
 
 const app = express();
 
@@ -25,25 +24,15 @@ app.use('/api/users', require('./routes/users'));
 // Serve static files from the React app
 const staticPath = path.join(__dirname, '../client/dist');
 
-// Set MIME types for JavaScript modules
-app.get('*.js', (req, res, next) => {
-    res.set('Content-Type', 'application/javascript');
-    next();
-});
-
-// Configure static file serving
+// Set proper MIME types
 app.use(express.static(staticPath, {
     setHeaders: (res, filePath) => {
         if (filePath.endsWith('.js')) {
-            res.set({
-                'Content-Type': 'application/javascript',
-                'Cache-Control': 'no-cache'
-            });
+            res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
         } else if (filePath.endsWith('.css')) {
-            res.set({
-                'Content-Type': 'text/css',
-                'Cache-Control': 'no-cache'
-            });
+            res.setHeader('Content-Type', 'text/css; charset=UTF-8');
+        } else if (filePath.endsWith('.html')) {
+            res.setHeader('Content-Type', 'text/html; charset=UTF-8');
         }
     }
 }));
