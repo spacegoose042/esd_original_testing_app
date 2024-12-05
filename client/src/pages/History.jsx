@@ -43,7 +43,14 @@ function History() {
 
         // Date range filter
         filtered = filtered.filter(test => {
-            const testDate = new Date(test.test_date).toISOString().split('T')[0];
+            // Convert test_date to local date string in YYYY-MM-DD format
+            const testDate = new Date(test.test_date + 'T00:00:00-08:00').toISOString().split('T')[0];
+            console.log('Comparing dates:', {
+                testDate,
+                start: filters.dateRange.start,
+                end: filters.dateRange.end,
+                original: test.test_date
+            });
             return testDate >= filters.dateRange.start && testDate <= filters.dateRange.end;
         });
 
@@ -183,10 +190,10 @@ function History() {
                                 } transition-colors duration-150`}
                             >
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    {new Date(test.test_date).toLocaleDateString()}
+                                    {new Date(test.test_date + 'T00:00:00-08:00').toLocaleDateString()}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    {test.test_time}
+                                    {new Date(test.test_time).toLocaleTimeString()}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     {test.first_name} {test.last_name}
