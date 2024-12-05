@@ -92,7 +92,7 @@ const initializeDb = async () => {
                 ('Production'),
                 ('Quality Assurance'),
                 ('Maintenance')
-            ON CONFLICT ON CONSTRAINT departments_name_key DO NOTHING;
+            ON CONFLICT (name) DO NOTHING;
         `;
         console.log('Inserting departments...');
         await client.query(insertDepartmentsSQL);
