@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const pool = require('./config/db');
+const fs = require('fs');
 
 const app = express();
 
@@ -31,30 +32,37 @@ app.use(express.static(staticPath, {
     index: false,
     setHeaders: (res, filePath) => {
         if (filePath.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-        } else if (filePath.endsWith('.mjs') || filePath.includes('.js?v=')) {
-            res.setHeader('Content-Type', 'text/javascript; charset=utf-8');
+            res.setHeader('Content-Type', 'application/javascript');
         } else if (filePath.endsWith('.css')) {
-            res.setHeader('Content-Type', 'text/css; charset=utf-8');
+            res.setHeader('Content-Type', 'text/css');
         } else if (filePath.endsWith('.html')) {
-            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            res.setHeader('Content-Type', 'text/html');
         }
     }
 }));
+
+// Debug route to check static files
+app.get('/debug/static-files', (req, res) => {
+    const files = fs.readdirSync(staticPath);
+    const assetsPath = path.join(staticPath, 'assets');
+    const assetFiles = fs.existsSync(assetsPath) ? fs.readdirSync(assetsPath) : [];
+    res.json({ files, assetFiles, staticPath });
+});
 
 // Handle React routing, return all requests to React app
 app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) {
         return next();
     }
-    if (req.path.includes('.js') || req.path.includes('.css') || req.path.includes('.map')) {
-        return next();
+    
+    // Check if the request is for a static file
+    const filePath = path.join(staticPath, req.path);
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+        return res.sendFile(filePath);
     }
-    res.sendFile(path.join(staticPath, 'index.html'), {
-        headers: {
-            'Content-Type': 'text/html; charset=utf-8'
-        }
-    });
+    
+    // For all other routes, send the index.html
+    res.sendFile(path.join(staticPath, 'index.html'));
 });
 
 const PORT = process.env.PORT || 3001;
