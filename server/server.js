@@ -25,20 +25,22 @@ app.use('/api/users', require('./routes/users'));
 // Serve static files from the React app
 const staticPath = path.join(__dirname, '../client/dist');
 
-// Configure static file serving with proper MIME types
+// Serve assets with proper MIME types
+app.get('/assets/*.js', (req, res, next) => {
+    res.set('Content-Type', 'application/javascript; charset=utf-8');
+    next();
+});
+
+app.get('/assets/*.css', (req, res, next) => {
+    res.set('Content-Type', 'text/css; charset=utf-8');
+    next();
+});
+
+// Configure static file serving
 app.use(express.static(staticPath, {
     maxAge: '1y',
     etag: true,
-    index: false,
-    setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-        } else if (filePath.endsWith('.css')) {
-            res.setHeader('Content-Type', 'text/css; charset=utf-8');
-        } else if (filePath.endsWith('.html')) {
-            res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        }
-    }
+    index: false
 }));
 
 // Debug route to check static files
@@ -65,13 +67,7 @@ app.get('/debug/static-files', (req, res) => {
     }
 });
 
-// Add this before your catch-all route
-app.get('*.js', (req, res, next) => {
-    res.type('application/javascript');
-    next();
-});
-
-// Update your catch-all route
+// Catch-all route - must be last
 app.get('*', (req, res) => {
     if (req.path.startsWith('/api')) {
         return next();
