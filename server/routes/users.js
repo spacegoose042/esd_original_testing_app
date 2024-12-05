@@ -32,6 +32,70 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Create new user
+router.post('/', async (req, res) => {
+    try {
+        const { first_name, last_name, manager_id, department_id, is_manager } = req.body;
+
+        console.log('Creating new user:', req.body);
+
+        // Insert the new user
+        const result = await pool.query(`
+            INSERT INTO users (
+                first_name,
+                last_name,
+                manager_id,
+                department_id,
+                is_manager,
+                email,
+                password
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING 
+                id, 
+                first_name, 
+                last_name, 
+                is_manager, 
+                department_id, 
+                manager_id
+        `, [
+            first_name,
+            last_name,
+            manager_id,
+            department_id,
+            is_manager,
+            null, // email is optional
+            null  // password is optional
+        ]);
+
+        // Fetch the complete user data with related information
+        const newUser = await pool.query(`
+            SELECT 
+                u.id,
+                u.first_name,
+                u.last_name,
+                u.is_manager,
+                d.name as department_name,
+                d.id as department_id,
+                m.first_name as manager_first_name,
+                m.last_name as manager_last_name,
+                m.id as manager_id
+            FROM users u
+            LEFT JOIN departments d ON u.department_id = d.id
+            LEFT JOIN users m ON u.manager_id = m.id
+            WHERE u.id = $1
+        `, [result.rows[0].id]);
+
+        res.status(201).json(newUser.rows[0]);
+    } catch (error) {
+        console.error('Error creating user:', error);
+        res.status(500).json({ 
+            error: 'Failed to create user',
+            details: error.message,
+            code: error.code
+        });
+    }
+});
+
 // Get all managers
 router.get('/managers', async (req, res) => {
     try {

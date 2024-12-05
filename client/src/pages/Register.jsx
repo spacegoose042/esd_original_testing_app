@@ -1,17 +1,54 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
 function Register() {
-    const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        email: '',
-        password: '',
-        isAdmin: false
-    });
-    const [error, setError] = useState('');
     const navigate = useNavigate();
+    const [formData, setFormData] = useState({
+        first_name: '',
+        last_name: '',
+        manager_id: '',
+        department_id: '',
+        is_manager: false
+    });
+    const [managers, setManagers] = useState([]);
+    const [departments, setDepartments] = useState([]);
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [managersRes, departmentsRes] = await Promise.all([
+                    api.get('/users/managers'),
+                    api.get('/users/departments')
+                ]);
+                setManagers(managersRes.data);
+                setDepartments(departmentsRes.data);
+            } catch (err) {
+                console.error('Error fetching data:', err);
+                setError('Failed to load required data');
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
+
+        try {
+            await api.post('/users', formData);
+            navigate('/users');
+        } catch (err) {
+            console.error('Registration error:', err);
+            setError(err.response?.data?.error || 'Failed to register user');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -21,112 +58,112 @@ function Register() {
         }));
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-
-        try {
-            await api.post('/auth/register', formData);
-            navigate('/users');
-        } catch (err) {
-            setError(err.response?.data?.error || 'Registration failed');
-        }
-    };
+    if (error) {
+        return (
+            <div className="text-red-500 text-center p-4">
+                {error}
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md w-full space-y-8">
+        <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
+            <h2 className="text-2xl font-bold mb-6 text-center">Register New User</h2>
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                        Register New User
-                    </h2>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        First Name
+                    </label>
+                    <input
+                        type="text"
+                        name="first_name"
+                        value={formData.first_name}
+                        onChange={handleChange}
+                        required
+                        className="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
+                    />
                 </div>
-                <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                    <div className="rounded-md shadow-sm -space-y-px">
-                        <div>
-                            <label htmlFor="firstName" className="sr-only">First Name</label>
-                            <input
-                                id="firstName"
-                                name="firstName"
-                                type="text"
-                                required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                placeholder="First Name"
-                                value={formData.firstName}
-                                onChange={handleChange}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="lastName" className="sr-only">Last Name</label>
-                            <input
-                                id="lastName"
-                                name="lastName"
-                                type="text"
-                                required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                placeholder="Last Name"
-                                value={formData.lastName}
-                                onChange={handleChange}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="email" className="sr-only">Email</label>
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                placeholder="Email address"
-                                value={formData.email}
-                                onChange={handleChange}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="password" className="sr-only">Password</label>
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                placeholder="Password"
-                                value={formData.password}
-                                onChange={handleChange}
-                            />
-                        </div>
-                    </div>
 
-                    <div className="flex items-center">
-                        <input
-                            id="isAdmin"
-                            name="isAdmin"
-                            type="checkbox"
-                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                            checked={formData.isAdmin}
-                            onChange={handleChange}
-                        />
-                        <label htmlFor="isAdmin" className="ml-2 block text-sm text-gray-900">
-                            Admin User
-                        </label>
-                    </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Last Name
+                    </label>
+                    <input
+                        type="text"
+                        name="last_name"
+                        value={formData.last_name}
+                        onChange={handleChange}
+                        required
+                        className="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
+                    />
+                </div>
 
-                    {error && (
-                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-                            {error}
-                        </div>
-                    )}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Department
+                    </label>
+                    <select
+                        name="department_id"
+                        value={formData.department_id}
+                        onChange={handleChange}
+                        required
+                        className="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
+                    >
+                        <option value="">Select Department</option>
+                        {departments.map(dept => (
+                            <option key={dept.id} value={dept.id}>
+                                {dept.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
 
-                    <div>
-                        <button
-                            type="submit"
-                            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                        >
-                            Register User
-                        </button>
-                    </div>
-                </form>
-            </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Manager
+                    </label>
+                    <select
+                        name="manager_id"
+                        value={formData.manager_id}
+                        onChange={handleChange}
+                        required
+                        className="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
+                    >
+                        <option value="">Select Manager</option>
+                        {managers.map(manager => (
+                            <option key={manager.id} value={manager.id}>
+                                {manager.first_name} {manager.last_name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="flex items-center">
+                    <input
+                        type="checkbox"
+                        name="is_manager"
+                        checked={formData.is_manager}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label className="ml-2 block text-sm text-gray-700">
+                        Is this user a manager?
+                    </label>
+                </div>
+
+                <div className="pt-4">
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                            loading ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                    >
+                        {loading ? 'Registering...' : 'Register User'}
+                    </button>
+                </div>
+            </form>
         </div>
     );
 }
