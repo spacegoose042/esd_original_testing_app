@@ -7,13 +7,13 @@ function History() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     
-    // Initialize date range to Pacific time
+    // Initialize date range to today
     const today = new Date();
-    const pacificDate = new Date(today.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+    const todayStr = today.toISOString().split('T')[0];
     const [filters, setFilters] = useState({
         dateRange: {
-            start: pacificDate.toISOString().split('T')[0],
-            end: pacificDate.toISOString().split('T')[0]
+            start: todayStr,
+            end: todayStr
         },
         user: '',
         period: '',
@@ -41,21 +41,6 @@ function History() {
 
         fetchTests();
     }, []);
-
-    const formatDate = (dateString) => {
-        try {
-            // Parse the date string in Pacific time
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) {
-                console.error('Invalid date:', dateString);
-                return null;
-            }
-            return date.toISOString().split('T')[0];
-        } catch (err) {
-            console.error('Error formatting date:', err);
-            return null;
-        }
-    };
 
     useEffect(() => {
         let filtered = [...tests];
@@ -218,12 +203,7 @@ function History() {
                                     {test.test_date}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    {new Date(test.test_time).toLocaleTimeString('en-US', { 
-                                        hour: 'numeric', 
-                                        minute: '2-digit', 
-                                        hour12: true,
-                                        timeZone: 'America/Los_Angeles'
-                                    })}
+                                    {test.test_time}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     {test.first_name} {test.last_name}

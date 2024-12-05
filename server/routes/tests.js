@@ -8,8 +8,9 @@ router.get('/history', async (req, res) => {
         const result = await pool.query(`
             SELECT 
                 t.id,
-                to_char(t.test_date AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles', 'YYYY-MM-DD') as test_date,
-                t.test_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles' as test_time,
+                to_char(CURRENT_DATE AT TIME ZONE 'America/Los_Angeles', 'YYYY-MM-DD') as today,
+                to_char(t.test_date AT TIME ZONE 'America/Los_Angeles', 'YYYY-MM-DD') as test_date,
+                to_char(t.test_time AT TIME ZONE 'America/Los_Angeles', 'HH12:MI AM') as test_time,
                 t.test_period,
                 t.passed,
                 t.notes,
@@ -39,11 +40,10 @@ router.post('/submit', async (req, res) => {
         // Ensure consistent period values
         const normalizedPeriod = test_period.startsWith('AM') ? 'AM' : 'PM';
 
-        // Get current time in Los Angeles timezone
+        // Insert test using LA timezone
         const result = await pool.query(`
             WITH current_la_time AS (
-                SELECT 
-                    CURRENT_TIMESTAMP AT TIME ZONE 'America/Los_Angeles' as la_timestamp
+                SELECT CURRENT_TIMESTAMP AT TIME ZONE 'America/Los_Angeles' as la_timestamp
             )
             INSERT INTO esd_tests (
                 user_id, 
@@ -67,8 +67,8 @@ router.post('/submit', async (req, res) => {
                 test_period,
                 passed,
                 notes,
-                to_char(test_date AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles', 'YYYY-MM-DD') as test_date,
-                test_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles' as test_time
+                to_char(test_date AT TIME ZONE 'America/Los_Angeles', 'YYYY-MM-DD') as test_date,
+                to_char(test_time AT TIME ZONE 'America/Los_Angeles', 'HH12:MI AM') as test_time
         `, [user_id, normalizedPeriod, passed, notes]);
 
         console.log('Test submitted:', result.rows[0]);
