@@ -30,7 +30,7 @@ app.use(express.static(staticPath, {
     etag: true,
     index: false,
     setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.js')) {
+        if (filePath.endsWith('.mjs') || filePath.endsWith('.js')) {
             res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
         } else if (filePath.endsWith('.css')) {
             res.setHeader('Content-Type', 'text/css; charset=utf-8');
@@ -41,9 +41,9 @@ app.use(express.static(staticPath, {
 }));
 
 // Handle React routing, return all requests to React app
-app.get('*', (req, res) => {
+app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) {
-        return res.status(404).json({ error: 'API endpoint not found' });
+        return next();
     }
     res.sendFile(path.join(staticPath, 'index.html'), {
         headers: {
