@@ -69,6 +69,8 @@ router.put('/:id', async (req, res) => {
         const { id } = req.params;
         const { first_name, last_name, email, is_admin, is_manager, department_id, manager_id } = req.body;
 
+        console.log('Updating user:', { id, ...req.body });
+
         const result = await pool.query(`
             UPDATE users
             SET 
@@ -78,20 +80,51 @@ router.put('/:id', async (req, res) => {
                 is_admin = $4,
                 is_manager = $5,
                 department_id = $6,
-                manager_id = $7,
-                updated_at = CURRENT_TIMESTAMP
+                manager_id = $7
             WHERE id = $8
-            RETURNING *
+            RETURNING 
+                id, 
+                first_name, 
+                last_name, 
+                email, 
+                is_admin, 
+                is_manager, 
+                department_id, 
+                manager_id
         `, [first_name, last_name, email, is_admin, is_manager, department_id, manager_id, id]);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        res.json(result.rows[0]);
+        // Fetch the updated user with all related information
+        const updatedUser = await pool.query(`
+            SELECT 
+                u.id,
+                u.first_name,
+                u.last_name,
+                u.email,
+                u.is_admin,
+                u.is_manager,
+                d.name as department_name,
+                d.id as department_id,
+                m.first_name as manager_first_name,
+                m.last_name as manager_last_name,
+                m.id as manager_id
+            FROM users u
+            LEFT JOIN departments d ON u.department_id = d.id
+            LEFT JOIN users m ON u.manager_id = m.id
+            WHERE u.id = $1
+        `, [id]);
+
+        res.json(updatedUser.rows[0]);
     } catch (error) {
         console.error('Error updating user:', error);
-        res.status(500).json({ error: 'Failed to update user' });
+        res.status(500).json({ 
+            error: 'Failed to update user',
+            details: error.message,
+            code: error.code
+        });
     }
 });
 

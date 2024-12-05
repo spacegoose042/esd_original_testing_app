@@ -94,14 +94,17 @@ function Users() {
 
     const handleUpdate = async () => {
         try {
+            console.log('Updating user:', editingUser);
             const response = await api.put(`/users/${editingUser.id}`, editingUser);
+            console.log('Update response:', response.data);
+            
             setUsers(users.map(user => 
                 user.id === editingUser.id ? response.data : user
             ));
             setEditingUser(null);
         } catch (err) {
-            console.error('Error updating user:', err);
-            alert('Failed to update user');
+            console.error('Error updating user:', err.response?.data || err);
+            alert(`Failed to update user: ${err.response?.data?.details || err.message}`);
         }
     };
 
