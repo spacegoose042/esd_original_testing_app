@@ -4,7 +4,7 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
-  base: '',
+  base: '/',
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
@@ -12,15 +12,11 @@ export default defineConfig({
     manifest: true,
     rollupOptions: {
       output: {
+        format: 'es',
         entryFileNames: `assets/[name].[hash].js`,
         chunkFileNames: `assets/[name].[hash].js`,
         assetFileNames: `assets/[name].[hash].[ext]`
       }
-    }
-  },
-  optimizeDeps: {
-    esbuildOptions: {
-      target: 'es2020'
     }
   },
   server: {
