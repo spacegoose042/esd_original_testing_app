@@ -57,7 +57,7 @@ router.post('/', async (req, res) => {
             });
         }
 
-        // Validate email for managers and admins
+        // Only require email for managers and admins
         if ((is_manager || is_admin) && !email) {
             return res.status(400).json({
                 error: 'Email required',

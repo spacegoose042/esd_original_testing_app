@@ -7,7 +7,7 @@ CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    email VARCHAR(255) NULL,
+    email VARCHAR(255),
     password VARCHAR(255) NULL,
     is_admin BOOLEAN DEFAULT false,
     is_manager BOOLEAN DEFAULT false,
