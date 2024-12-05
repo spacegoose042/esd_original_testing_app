@@ -57,8 +57,12 @@ function History() {
         // Period filter
         if (filters.period) {
             filtered = filtered.filter(test => {
-                if (!test.test_period) return false;
-                return test.test_period.toLowerCase() === filters.period.toLowerCase();
+                console.log('Testing period filter:', { 
+                    testPeriod: test.test_period, 
+                    filterPeriod: filters.period,
+                    test 
+                });
+                return test.test_period === filters.period;
             });
         }
 

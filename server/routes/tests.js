@@ -10,6 +10,7 @@ router.get('/history', async (req, res) => {
                 t.id,
                 t.test_date,
                 t.test_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles' as test_time,
+                t.test_period,
                 t.passed,
                 t.notes,
                 u.first_name,
@@ -18,6 +19,10 @@ router.get('/history', async (req, res) => {
             LEFT JOIN users u ON t.user_id = u.id
             ORDER BY t.test_date DESC, t.test_time DESC
         `);
+        
+        // Log the first few results for debugging
+        console.log('First few test results:', result.rows.slice(0, 3));
+        
         res.json(result.rows);
     } catch (error) {
         console.error('Error in /tests/history:', error);
