@@ -25,13 +25,25 @@ app.use('/api/users', require('./routes/users'));
 // Serve static files from the React app
 const staticPath = path.join(__dirname, '../client/dist');
 
-// Configure static file serving with proper MIME types
+// Set MIME types for JavaScript modules
+app.get('*.js', (req, res, next) => {
+    res.set('Content-Type', 'application/javascript');
+    next();
+});
+
+// Configure static file serving
 app.use(express.static(staticPath, {
     setHeaders: (res, filePath) => {
         if (filePath.endsWith('.js')) {
-            res.set('Content-Type', 'application/javascript; charset=utf-8');
+            res.set({
+                'Content-Type': 'application/javascript',
+                'Cache-Control': 'no-cache'
+            });
         } else if (filePath.endsWith('.css')) {
-            res.set('Content-Type', 'text/css; charset=utf-8');
+            res.set({
+                'Content-Type': 'text/css',
+                'Cache-Control': 'no-cache'
+            });
         }
     }
 }));
