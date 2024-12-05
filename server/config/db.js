@@ -16,8 +16,8 @@ const initializeDb = async () => {
         const client = await pool.connect();
         console.log('Starting database initialization...');
 
-        // Read and execute the migration SQL
-        const migrationSQL = `
+        // First, create tables and basic structure
+        const setupSQL = `
             -- Create departments table
             CREATE TABLE IF NOT EXISTS departments (
                 id SERIAL PRIMARY KEY,
@@ -32,24 +32,6 @@ const initializeDb = async () => {
                 ADD COLUMN IF NOT EXISTS is_manager BOOLEAN DEFAULT false,
                 ADD COLUMN IF NOT EXISTS manager_email VARCHAR(255);
 
-            -- Create indexes for better performance
-            CREATE INDEX IF NOT EXISTS idx_users_manager_id ON users(manager_id);
-            CREATE INDEX IF NOT EXISTS idx_users_department_id ON users(department_id);
-
-            -- Insert default departments
-            INSERT INTO departments (name) VALUES 
-                ('Engineering'),
-                ('Production'),
-                ('Quality Assurance'),
-                ('Maintenance')
-            ON CONFLICT DO NOTHING;
-
-            -- Update existing admin user to be a manager
-            UPDATE users 
-            SET is_manager = true,
-                department_id = (SELECT id FROM departments WHERE name = 'Engineering')
-            WHERE email = 'matt.miers@sandyindustries.com';
-
             -- Create managers table
             CREATE TABLE IF NOT EXISTS managers (
                 id SERIAL PRIMARY KEY,
@@ -61,25 +43,56 @@ const initializeDb = async () => {
             );
 
             -- Create indexes
+            CREATE INDEX IF NOT EXISTS idx_users_manager_id ON users(manager_id);
+            CREATE INDEX IF NOT EXISTS idx_users_department_id ON users(department_id);
             CREATE INDEX IF NOT EXISTS idx_managers_department_id ON managers(department_id);
             CREATE INDEX IF NOT EXISTS idx_managers_user_id ON managers(user_id);
+        `;
 
-            -- Insert admin as manager if not exists
+        console.log('Creating tables and indexes...');
+        await client.query(setupSQL);
+
+        // Insert departments
+        const departmentsSQL = `
+            INSERT INTO departments (name) 
+            VALUES 
+                ('Engineering'),
+                ('Production'),
+                ('Quality Assurance'),
+                ('Maintenance')
+            ON CONFLICT DO NOTHING
+            RETURNING id, name;
+        `;
+
+        console.log('Inserting departments...');
+        const deptResult = await client.query(departmentsSQL);
+
+        // Update admin user and create manager record
+        const updateAdminSQL = `
+            WITH updated_user AS (
+                UPDATE users 
+                SET 
+                    is_manager = true,
+                    department_id = (
+                        SELECT id FROM departments WHERE name = 'Engineering' LIMIT 1
+                    )
+                WHERE email = 'matt.miers@sandyindustries.com'
+                RETURNING id, first_name, last_name, department_id
+            )
             INSERT INTO managers (first_name, last_name, department_id, user_id)
             SELECT 
                 first_name,
                 last_name,
                 department_id,
                 id as user_id
-            FROM users 
-            WHERE email = 'matt.miers@sandyindustries.com'
+            FROM updated_user
             ON CONFLICT (user_id) DO NOTHING;
         `;
 
-        console.log('Executing database migrations...');
-        await client.query(migrationSQL);
-        console.log('Database schema updated successfully');
+        console.log('Updating admin user and creating manager record...');
+        await client.query(updateAdminSQL);
 
+        console.log('Database schema updated successfully');
         client.release();
     } catch (err) {
         console.error('Database initialization error:', err);
