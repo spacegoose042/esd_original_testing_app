@@ -4,6 +4,46 @@ const cors = require('cors');
 const path = require('path');
 const pool = require('./config/db');
 
+// Add migration function
+async function runEmailMigration() {
+    const client = await pool.connect();
+    try {
+        console.log('Starting email constraint migration...');
+        
+        await client.query('BEGIN');
+
+        // Drop existing constraints
+        await client.query(`
+            ALTER TABLE users 
+            DROP CONSTRAINT IF EXISTS users_email_key,
+            DROP CONSTRAINT IF EXISTS users_email_unique,
+            DROP CONSTRAINT IF EXISTS users_email_not_null;
+        `);
+
+        // Modify email column to allow NULL
+        await client.query(`
+            ALTER TABLE users 
+            ALTER COLUMN email DROP NOT NULL;
+        `);
+
+        // Add conditional unique constraint
+        await client.query(`
+            ALTER TABLE users 
+            ADD CONSTRAINT users_email_unique UNIQUE (email) 
+            WHERE email IS NOT NULL;
+        `);
+
+        await client.query('COMMIT');
+        console.log('Email migration completed successfully');
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Email migration failed:', error);
+        // Don't throw error - allow server to start anyway
+    } finally {
+        client.release();
+    }
+}
+
 const app = express();
 
 // Configure CORS
@@ -48,14 +88,28 @@ app.get('*', (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 
-pool.query('SELECT NOW()', (err) => {
-    if (err) {
-        console.error('Error connecting to database:', err);
+// Initialize server
+async function startServer() {
+    try {
+        // Run migration before starting server
+        await runEmailMigration();
+        
+        pool.query('SELECT NOW()', (err) => {
+            if (err) {
+                console.error('Error connecting to database:', err);
+                process.exit(1);
+            }
+            app.listen(PORT, () => {
+                console.log(`Server running on port ${PORT}`);
+                console.log('Environment:', process.env.NODE_ENV);
+                console.log('Database connected');
+            });
+        });
+    } catch (err) {
+        console.error('Server startup error:', err);
         process.exit(1);
     }
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-        console.log('Environment:', process.env.NODE_ENV);
-        console.log('Database connected');
-    });
-});
+}
+
+// Start server
+startServer();
