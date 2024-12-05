@@ -32,11 +32,13 @@ app.use(express.static(staticPath, {
     index: false,
     setHeaders: (res, filePath) => {
         if (filePath.endsWith('.js')) {
-            res.setHeader('Content-Type', 'text/javascript; charset=utf-8');
+            res.setHeader('Content-Type', 'application/javascript');
+        } else if (filePath.endsWith('.mjs')) {
+            res.setHeader('Content-Type', 'application/javascript');
         } else if (filePath.endsWith('.css')) {
-            res.setHeader('Content-Type', 'text/css; charset=utf-8');
+            res.setHeader('Content-Type', 'text/css');
         } else if (filePath.endsWith('.html')) {
-            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            res.setHeader('Content-Type', 'text/html');
         }
     }
 }));
@@ -65,7 +67,7 @@ app.get('/debug/static-files', (req, res) => {
     }
 });
 
-// Handle all routes
+// Serve index.html for all non-API routes
 app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) {
         return next();
@@ -78,19 +80,18 @@ app.get('*', (req, res, next) => {
         const ext = path.extname(filePath);
         
         // Set appropriate content type
-        if (ext === '.js') {
-            res.setHeader('Content-Type', 'text/javascript; charset=utf-8');
+        if (ext === '.js' || ext === '.mjs') {
+            res.setHeader('Content-Type', 'application/javascript');
         } else if (ext === '.css') {
-            res.setHeader('Content-Type', 'text/css; charset=utf-8');
+            res.setHeader('Content-Type', 'text/css');
         } else if (ext === '.html') {
-            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            res.setHeader('Content-Type', 'text/html');
         }
         
         return res.sendFile(filePath);
     }
     
     // For all other routes, send index.html
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.sendFile(path.join(staticPath, 'index.html'));
 });
 
@@ -105,15 +106,5 @@ pool.query('SELECT NOW()', (err) => {
         console.log(`Server running on port ${PORT}`);
         console.log('Environment:', process.env.NODE_ENV);
         console.log('Database connected');
-        
-        // Log static file path on startup
-        console.log('Static files path:', staticPath);
-        if (fs.existsSync(staticPath)) {
-            console.log('Static directory exists');
-            const files = fs.readdirSync(staticPath);
-            console.log('Static files:', files);
-        } else {
-            console.log('Static directory does not exist');
-        }
     });
 });
