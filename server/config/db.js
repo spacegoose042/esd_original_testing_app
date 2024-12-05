@@ -21,7 +21,7 @@ const initializeDb = async () => {
             -- Create departments table
             CREATE TABLE IF NOT EXISTS departments (
                 id SERIAL PRIMARY KEY,
-                name VARCHAR(100) NOT NULL,
+                name VARCHAR(100) NOT NULL UNIQUE,
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -91,6 +91,18 @@ const initializeDb = async () => {
 
         console.log('Updating admin user and creating manager record...');
         await client.query(updateAdminSQL);
+
+        // Clean up duplicate departments
+        const cleanupSQL = `
+            -- Delete duplicate departments, keeping the ones with the lowest IDs
+            DELETE FROM departments d1 
+            USING departments d2 
+            WHERE d1.name = d2.name 
+            AND d1.id > d2.id;
+        `;
+
+        console.log('Cleaning up duplicate departments...');
+        await client.query(cleanupSQL);
 
         console.log('Database schema updated successfully');
         client.release();
