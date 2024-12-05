@@ -16,8 +16,8 @@ const initializeDb = async () => {
         const client = await pool.connect();
         console.log('Starting database initialization...');
 
-        // First, create tables and basic structure
-        const setupSQL = `
+        // Step 1: Create tables
+        const createTablesSQL = `
             -- Create departments table
             CREATE TABLE IF NOT EXISTS departments (
                 id SERIAL PRIMARY KEY,
@@ -25,7 +25,7 @@ const initializeDb = async () => {
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
 
-            -- Create users table if it doesn't exist (adding this for safety)
+            -- Create users table if it doesn't exist
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
                 email VARCHAR(255) UNIQUE NOT NULL,
@@ -37,7 +37,7 @@ const initializeDb = async () => {
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
 
-            -- Create managers table with all required fields
+            -- Create managers table
             CREATE TABLE IF NOT EXISTS managers (
                 id SERIAL PRIMARY KEY,
                 first_name VARCHAR(100) NOT NULL,
@@ -47,14 +47,24 @@ const initializeDb = async () => {
                 user_id INTEGER REFERENCES users(id) UNIQUE,
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
+        `;
 
-            -- Create indexes
+        console.log('Creating tables...');
+        await client.query(createTablesSQL);
+
+        // Step 2: Create indexes
+        const createIndexesSQL = `
             CREATE INDEX IF NOT EXISTS idx_users_department_id ON users(department_id);
             CREATE INDEX IF NOT EXISTS idx_managers_department_id ON managers(department_id);
             CREATE INDEX IF NOT EXISTS idx_managers_user_id ON managers(user_id);
             CREATE INDEX IF NOT EXISTS idx_managers_email ON managers(email);
+        `;
 
-            -- Insert departments
+        console.log('Creating indexes...');
+        await client.query(createIndexesSQL);
+
+        // Step 3: Insert departments
+        const insertDepartmentsSQL = `
             INSERT INTO departments (name) 
             VALUES 
                 ('Engineering'),
@@ -62,36 +72,12 @@ const initializeDb = async () => {
                 ('Quality Assurance'),
                 ('Maintenance')
             ON CONFLICT (name) DO NOTHING;
-
-            -- Update existing manager data
-            WITH manager_users AS (
-                SELECT 
-                    id,
-                    first_name,
-                    last_name,
-                    email,
-                    department_id
-                FROM users
-                WHERE is_manager = true
-            )
-            INSERT INTO managers (first_name, last_name, email, department_id, user_id)
-            SELECT 
-                first_name,
-                last_name,
-                email,
-                department_id,
-                id
-            FROM manager_users
-            ON CONFLICT (user_id) 
-            DO UPDATE SET
-                email = EXCLUDED.email,
-                department_id = EXCLUDED.department_id;
         `;
 
-        console.log('Creating tables and indexes...');
-        await client.query(setupSQL);
+        console.log('Inserting departments...');
+        await client.query(insertDepartmentsSQL);
 
-        // Update admin user specifically
+        // Step 4: Update admin user
         const updateAdminSQL = `
             WITH updated_user AS (
                 UPDATE users 
@@ -117,20 +103,28 @@ const initializeDb = async () => {
                 department_id = EXCLUDED.department_id;
         `;
 
-        console.log('Updating admin user and creating manager record...');
+        console.log('Updating admin user...');
         await client.query(updateAdminSQL);
 
-        // Clean up duplicate departments
-        const cleanupSQL = `
-            -- Delete duplicate departments, keeping the ones with the lowest IDs
-            DELETE FROM departments d1 
-            USING departments d2 
-            WHERE d1.name = d2.name 
-            AND d1.id > d2.id;
+        // Step 5: Migrate existing managers
+        const migrateManagersSQL = `
+            INSERT INTO managers (first_name, last_name, email, department_id, user_id)
+            SELECT 
+                first_name,
+                last_name,
+                email,
+                department_id,
+                id
+            FROM users
+            WHERE is_manager = true
+            ON CONFLICT (user_id) 
+            DO UPDATE SET
+                email = EXCLUDED.email,
+                department_id = EXCLUDED.department_id;
         `;
 
-        console.log('Cleaning up duplicate departments...');
-        await client.query(cleanupSQL);
+        console.log('Migrating existing managers...');
+        await client.query(migrateManagersSQL);
 
         console.log('Database schema updated successfully');
         client.release();
