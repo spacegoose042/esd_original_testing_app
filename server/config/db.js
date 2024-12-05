@@ -1,5 +1,7 @@
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
+const fs = require('fs').promises;
+const path = require('path');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -14,31 +16,44 @@ const initializeDb = async () => {
         const client = await pool.connect();
         console.log('Successfully connected to database');
 
-        // Create tables if they don't exist
-        await client.query(`
-            CREATE TABLE IF NOT EXISTS users (
+        // Read and execute the migration SQL
+        const migrationSQL = `
+            -- Create departments table
+            CREATE TABLE IF NOT EXISTS departments (
                 id SERIAL PRIMARY KEY,
-                first_name VARCHAR(100) NOT NULL,
-                last_name VARCHAR(100) NOT NULL,
-                email VARCHAR(255) UNIQUE NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                is_admin BOOLEAN DEFAULT false,
+                name VARCHAR(100) NOT NULL,
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
-        `);
 
-        // Create default admin user if it doesn't exist
-        const adminEmail = 'matt.miers@sandyindustries.com';
-        const adminPassword = 'Admin123!';
-        const hashedPassword = await bcrypt.hash(adminPassword, 10);
+            -- Add new columns to users table
+            ALTER TABLE users 
+                ADD COLUMN IF NOT EXISTS manager_id INTEGER REFERENCES users(id),
+                ADD COLUMN IF NOT EXISTS department_id INTEGER REFERENCES departments(id),
+                ADD COLUMN IF NOT EXISTS is_manager BOOLEAN DEFAULT false,
+                ADD COLUMN IF NOT EXISTS manager_email VARCHAR(255);
 
-        await client.query(`
-            INSERT INTO users (first_name, last_name, email, password, is_admin)
-            VALUES ($1, $2, $3, $4, $5)
-            ON CONFLICT (email) DO NOTHING
-        `, ['Matt', 'Miers', adminEmail, hashedPassword, true]);
+            -- Create indexes for better performance
+            CREATE INDEX IF NOT EXISTS idx_users_manager_id ON users(manager_id);
+            CREATE INDEX IF NOT EXISTS idx_users_department_id ON users(department_id);
 
-        console.log('Database initialized with admin user');
+            -- Insert default departments
+            INSERT INTO departments (name) VALUES 
+                ('Engineering'),
+                ('Production'),
+                ('Quality Assurance'),
+                ('Maintenance')
+            ON CONFLICT DO NOTHING;
+
+            -- Update existing admin user to be a manager
+            UPDATE users 
+            SET is_manager = true,
+                department_id = (SELECT id FROM departments WHERE name = 'Engineering')
+            WHERE email = 'matt.miers@sandyindustries.com';
+        `;
+
+        await client.query(migrationSQL);
+        console.log('Database schema updated successfully');
+
         client.release();
     } catch (err) {
         console.error('Database initialization error:', err);

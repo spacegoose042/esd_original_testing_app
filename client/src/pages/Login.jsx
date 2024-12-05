@@ -1,13 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
 function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [managerId, setManagerId] = useState('');
+    const [managers, setManagers] = useState([]);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        // Fetch managers list
+        const fetchManagers = async () => {
+            try {
+                const response = await api.get('/auth/managers');
+                setManagers(response.data);
+            } catch (err) {
+                console.error('Error fetching managers:', err);
+            }
+        };
+        fetchManagers();
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -15,23 +30,16 @@ function Login() {
         setLoading(true);
 
         try {
-            console.log('Attempting login with:', { email });
             const response = await api.post('/auth/login', {
                 email,
-                password
+                password,
+                manager_id: managerId
             });
 
-            console.log('Login successful:', response.data);
             localStorage.setItem('token', response.data.token);
             navigate('/');
-            window.location.reload();
         } catch (err) {
-            console.error('Login error:', err);
-            setError(
-                err.response?.data?.error || 
-                err.response?.data?.details || 
-                'Failed to login. Please try again.'
-            );
+            setError(err.response?.data?.error || 'Failed to login');
         } finally {
             setLoading(false);
         }
@@ -42,7 +50,7 @@ function Login() {
             <div className="max-w-md w-full space-y-8">
                 <div>
                     <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                        Admin Login
+                        Sign in to your account
                     </h2>
                 </div>
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -75,6 +83,25 @@ function Login() {
                                 disabled={loading}
                             />
                         </div>
+                    </div>
+
+                    <div>
+                        <label htmlFor="manager" className="block text-sm font-medium text-gray-700">
+                            Manager
+                        </label>
+                        <select
+                            id="manager"
+                            value={managerId}
+                            onChange={(e) => setManagerId(e.target.value)}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        >
+                            <option value="">Select a manager</option>
+                            {managers.map(manager => (
+                                <option key={manager.id} value={manager.id}>
+                                    {manager.first_name} {manager.last_name}
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
                     {error && (

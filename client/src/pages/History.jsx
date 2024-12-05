@@ -55,6 +55,9 @@ function History() {
                             <th className="px-6 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                 Notes
                             </th>
+                            <th className="px-6 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Manager
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -85,6 +88,9 @@ function History() {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     {test.notes}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    {test.manager_name || 'N/A'}
                                 </td>
                             </tr>
                         ))}

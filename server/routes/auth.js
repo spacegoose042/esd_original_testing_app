@@ -96,7 +96,11 @@ router.post('/login', async (req, res) => {
                 email: user.email,
                 first_name: user.first_name,
                 last_name: user.last_name,
-                is_admin: user.is_admin
+                is_admin: user.is_admin,
+                is_manager: user.is_manager,
+                manager_id: user.manager_id,
+                manager_email: user.manager_email,
+                department_id: user.department_id
             }
         });
     } catch (error) {
@@ -107,6 +111,22 @@ router.post('/login', async (req, res) => {
             details: error.message,
             stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
+    }
+});
+
+// Add a new route to get managers list
+router.get('/managers', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT id, first_name, last_name, email, department_id 
+            FROM users 
+            WHERE is_manager = true OR is_admin = true
+            ORDER BY first_name, last_name
+        `);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching managers:', error);
+        res.status(500).json({ error: 'Failed to fetch managers' });
     }
 });
 

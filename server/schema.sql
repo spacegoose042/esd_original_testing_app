@@ -28,3 +28,29 @@ CREATE INDEX IF NOT EXISTS idx_esd_tests_date ON esd_tests(test_date);
 -- Update users table if needed
 ALTER TABLE users 
 RENAME COLUMN password_hash TO password;
+
+-- Create departments table
+CREATE TABLE IF NOT EXISTS departments (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Modify users table to add manager relationship and department
+ALTER TABLE users 
+    ADD COLUMN IF NOT EXISTS manager_id INTEGER REFERENCES users(id),
+    ADD COLUMN IF NOT EXISTS department_id INTEGER REFERENCES departments(id),
+    ADD COLUMN IF NOT EXISTS is_manager BOOLEAN DEFAULT false,
+    ADD COLUMN IF NOT EXISTS manager_email VARCHAR(255);
+
+-- Create index for better query performance
+CREATE INDEX IF NOT EXISTS idx_users_manager_id ON users(manager_id);
+CREATE INDEX IF NOT EXISTS idx_users_department_id ON users(department_id);
+
+-- Insert some default departments
+INSERT INTO departments (name) VALUES 
+    ('Engineering'),
+    ('Production'),
+    ('Quality Assurance'),
+    ('Maintenance')
+ON CONFLICT DO NOTHING;
