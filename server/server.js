@@ -20,6 +20,7 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/tests', require('./routes/tests'));
 app.use('/api/users', require('./routes/users'));
+app.use('/api/debug', require('./routes/debug'));
 
 // Serve static files from the React app
 const staticPath = path.join(__dirname, '../client/dist');
