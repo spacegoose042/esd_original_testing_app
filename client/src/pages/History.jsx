@@ -20,9 +20,7 @@ function History() {
     useEffect(() => {
         const fetchTests = async () => {
             try {
-                console.log('Fetching test history...');
                 const response = await api.get('/tests/history');
-                console.log('History response:', response.data);
                 const testData = Array.isArray(response.data) ? response.data : [];
                 setTests(testData);
                 setFilteredTests(testData);
