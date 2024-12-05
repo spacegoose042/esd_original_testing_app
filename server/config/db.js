@@ -40,36 +40,31 @@ const initializeDb = async () => {
             );
         `);
 
-        // Step 2: Insert departments one by one
+        // Step 2: Insert departments one by one with explicit type casting
         const departments = ['Engineering', 'Production', 'Quality Assurance', 'Maintenance'];
         for (const dept of departments) {
             await client.query(`
                 INSERT INTO departments (name)
-                SELECT $1
+                SELECT $1::VARCHAR(100)
                 WHERE NOT EXISTS (
-                    SELECT 1 FROM departments WHERE name = $1
+                    SELECT 1 FROM departments WHERE name = $1::VARCHAR(100)
                 );
             `, [dept]);
         }
 
         // Step 3: Create or modify managers table
         await client.query(`
-            -- Drop existing managers table if it exists
-            DROP TABLE IF EXISTS managers;
-
-            -- Create new managers table with email
-            CREATE TABLE managers (
+            -- Create managers table if it doesn't exist
+            CREATE TABLE IF NOT EXISTS managers (
                 id SERIAL PRIMARY KEY,
                 first_name VARCHAR(100) NOT NULL,
                 last_name VARCHAR(100) NOT NULL,
                 email VARCHAR(255) NOT NULL,
                 department_id INTEGER REFERENCES departments(id),
                 user_id INTEGER REFERENCES users(id) UNIQUE,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT managers_email_unique UNIQUE (email)
             );
-
-            -- Create unique constraint on email
-            CREATE UNIQUE INDEX idx_managers_email ON managers(email);
         `);
 
         // Step 4: Migrate manager data
@@ -83,7 +78,10 @@ const initializeDb = async () => {
                 department_id,
                 id
             FROM users
-            WHERE is_manager = true;
+            WHERE is_manager = true
+            AND NOT EXISTS (
+                SELECT 1 FROM managers WHERE user_id = users.id
+            );
 
             -- Ensure admin user is set up
             WITH admin_update AS (
