@@ -32,11 +32,11 @@ app.use(express.static(staticPath, {
     index: false,
     setHeaders: (res, filePath) => {
         if (filePath.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript');
+            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
         } else if (filePath.endsWith('.css')) {
-            res.setHeader('Content-Type', 'text/css');
+            res.setHeader('Content-Type', 'text/css; charset=utf-8');
         } else if (filePath.endsWith('.html')) {
-            res.setHeader('Content-Type', 'text/html');
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
         }
     }
 }));
@@ -49,7 +49,7 @@ app.get('/debug/static-files', (req, res) => {
     res.json({ files, assetFiles, staticPath });
 });
 
-// Handle React routing, return all requests to React app
+// Serve index.html for all non-API routes
 app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) {
         return next();
@@ -58,10 +58,23 @@ app.get('*', (req, res, next) => {
     // Check if the request is for a static file
     const filePath = path.join(staticPath, req.path);
     if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+        const ext = path.extname(filePath);
+        let contentType = 'text/plain';
+        
+        if (ext === '.js') {
+            contentType = 'application/javascript; charset=utf-8';
+        } else if (ext === '.css') {
+            contentType = 'text/css; charset=utf-8';
+        } else if (ext === '.html') {
+            contentType = 'text/html; charset=utf-8';
+        }
+        
+        res.setHeader('Content-Type', contentType);
         return res.sendFile(filePath);
     }
     
-    // For all other routes, send the index.html
+    // For all other routes, send index.html
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.sendFile(path.join(staticPath, 'index.html'));
 });
 
