@@ -25,7 +25,17 @@ const initializeDb = async () => {
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
 
-            -- Modify users table - remove manager_email and keep other columns
+            -- Create users table if it doesn't exist (adding this for safety)
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                first_name VARCHAR(100),
+                last_name VARCHAR(100),
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+
+            -- Modify users table - remove manager_email and add other columns
             ALTER TABLE users 
                 ADD COLUMN IF NOT EXISTS manager_id INTEGER REFERENCES users(id),
                 ADD COLUMN IF NOT EXISTS department_id INTEGER REFERENCES departments(id),
@@ -45,7 +55,7 @@ const initializeDb = async () => {
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
 
-            -- Create indexes
+            -- Create indexes after all tables and columns exist
             CREATE INDEX IF NOT EXISTS idx_users_manager_id ON users(manager_id);
             CREATE INDEX IF NOT EXISTS idx_users_department_id ON users(department_id);
             CREATE INDEX IF NOT EXISTS idx_managers_department_id ON managers(department_id);
