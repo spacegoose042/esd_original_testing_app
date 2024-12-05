@@ -36,6 +36,9 @@ router.post('/submit', async (req, res) => {
         const { user_id, test_period, passed, notes } = req.body;
         console.log('Received test submission:', req.body);
 
+        // Ensure consistent period values
+        const normalizedPeriod = test_period.startsWith('AM') ? 'AM' : 'PM';
+
         const result = await pool.query(`
             INSERT INTO esd_tests (
                 user_id, 
@@ -60,7 +63,7 @@ router.post('/submit', async (req, res) => {
                 notes,
                 test_date,
                 test_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles' as test_time
-        `, [user_id, test_period, passed, notes]);
+        `, [user_id, normalizedPeriod, passed, notes]);
 
         console.log('Test submitted:', result.rows[0]);
         res.json({ 

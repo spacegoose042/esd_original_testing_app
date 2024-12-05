@@ -21,6 +21,7 @@ function History() {
             try {
                 const response = await api.get('/tests/history');
                 const testData = Array.isArray(response.data) ? response.data : [];
+                console.log('Fetched test data:', testData.slice(0, 3)); // Log first 3 tests
                 setTests(testData);
                 setFilteredTests(testData);
                 setError('');
@@ -62,7 +63,7 @@ function History() {
                     filterPeriod: filters.period,
                     test 
                 });
-                return test.test_period === filters.period;
+                return test.test_period && test.test_period.startsWith(filters.period);
             });
         }
 
@@ -191,7 +192,7 @@ function History() {
                                     {test.first_name} {test.last_name}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    {test.test_period === 'AM' ? 'Morning' : 'Evening'}
+                                    {test.test_period}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span
