@@ -36,7 +36,7 @@ router.get('/', async (req, res) => {
 // Create new user
 router.post('/', async (req, res) => {
     try {
-        const { first_name, last_name, email, manager_id, department_id, is_manager } = req.body;
+        const { first_name, last_name, email, manager_id, department_id, is_manager, is_admin } = req.body;
 
         console.log('Received registration request:', {
             first_name,
@@ -44,20 +44,32 @@ router.post('/', async (req, res) => {
             email,
             manager_id,
             department_id,
-            is_manager
+            is_manager,
+            is_admin
         });
 
         // Validate required fields
-        if (!first_name || !last_name || !email || !department_id) {
+        if (!first_name || !last_name || !department_id) {
             return res.status(400).json({ 
                 error: 'Missing required fields',
-                details: 'First name, last name, email, and department are required'
+                details: 'First name, last name, and department are required'
             });
         }
 
-        // Generate a random password for the user
-        const tempPassword = Math.random().toString(36).slice(-8);
-        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+        // Validate email for managers and admins
+        if ((is_manager || is_admin) && !email) {
+            return res.status(400).json({
+                error: 'Email required',
+                details: 'Email is required for managers and admins'
+            });
+        }
+
+        // Generate a random password for the user if they are a manager or admin
+        let hashedPassword = null;
+        if (is_manager || is_admin) {
+            const tempPassword = Math.random().toString(36).slice(-8);
+            hashedPassword = await bcrypt.hash(tempPassword, 10);
+        }
 
         // Insert the new user
         const result = await pool.query(`
@@ -68,14 +80,16 @@ router.post('/', async (req, res) => {
                 password,
                 manager_id,
                 department_id,
-                is_manager
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                is_manager,
+                is_admin
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING 
                 id, 
                 first_name, 
                 last_name,
                 email,
-                is_manager, 
+                is_manager,
+                is_admin,
                 department_id, 
                 manager_id
         `, [
@@ -85,7 +99,8 @@ router.post('/', async (req, res) => {
             hashedPassword,
             manager_id || null,
             department_id,
-            is_manager || false
+            is_manager || false,
+            is_admin || false
         ]);
 
         // Log successful creation
@@ -93,7 +108,7 @@ router.post('/', async (req, res) => {
 
         res.status(201).json({
             ...result.rows[0],
-            tempPassword // Include temporary password in response
+            tempPassword: hashedPassword ? tempPassword : undefined // Only include password for managers/admins
         });
     } catch (error) {
         console.error('Error creating user:', {

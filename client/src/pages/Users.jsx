@@ -51,10 +51,10 @@ function Users() {
             );
         }
 
-        if (filters.email) {
+        if (filters.email && (filters.role === 'admin' || filters.role === 'manager')) {
             const searchTerm = filters.email.toLowerCase();
             filtered = filtered.filter(user => 
-                user.email.toLowerCase().includes(searchTerm)
+                user.email?.toLowerCase().includes(searchTerm)
             );
         }
 
@@ -131,16 +131,18 @@ function Users() {
                         placeholder="Search by name"
                     />
                 </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input
-                        type="text"
-                        value={filters.email}
-                        onChange={(e) => handleFilterChange('email', e.target.value)}
-                        className="w-full p-2 border rounded"
-                        placeholder="Search by email"
-                    />
-                </div>
+                {(filters.role === 'admin' || filters.role === 'manager') && (
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input
+                            type="text"
+                            value={filters.email}
+                            onChange={(e) => handleFilterChange('email', e.target.value)}
+                            className="w-full p-2 border rounded"
+                            placeholder="Search by email"
+                        />
+                    </div>
+                )}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
                     <select
@@ -240,17 +242,20 @@ function Users() {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     {editingUser?.id === user.id ? (
-                                        <input
-                                            type="email"
-                                            value={editingUser.email}
-                                            onChange={(e) => setEditingUser({
-                                                ...editingUser,
-                                                email: e.target.value
-                                            })}
-                                            className="w-full p-1 border rounded"
-                                        />
+                                        (user.is_admin || user.is_manager) && (
+                                            <input
+                                                type="email"
+                                                value={editingUser.email || ''}
+                                                onChange={(e) => setEditingUser({
+                                                    ...editingUser,
+                                                    email: e.target.value
+                                                })}
+                                                className="w-full p-1 border rounded"
+                                                required={user.is_admin || user.is_manager}
+                                            />
+                                        )
                                     ) : (
-                                        user.email
+                                        (user.is_admin || user.is_manager) ? user.email : '-'
                                     )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">

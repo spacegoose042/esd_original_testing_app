@@ -10,7 +10,8 @@ function Register() {
         email: '',
         manager_id: '',
         department_id: '',
-        is_manager: false
+        is_manager: false,
+        is_admin: false
     });
     const [managers, setManagers] = useState([]);
     const [departments, setDepartments] = useState([]);
@@ -41,9 +42,15 @@ function Register() {
         setLoading(true);
 
         try {
-            console.log('Submitting registration:', formData);
+            // Only include email if user is manager or admin
+            const submitData = {
+                ...formData,
+                email: formData.is_manager || formData.is_admin ? formData.email : null
+            };
+
+            console.log('Submitting registration:', submitData);
             
-            const response = await api.post('/users', formData);
+            const response = await api.post('/users', submitData);
             console.log('Registration successful:', response.data);
             
             navigate('/users');
@@ -113,19 +120,21 @@ function Register() {
                     />
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Email
-                    </label>
-                    <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        required
-                        className="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
-                    />
-                </div>
+                {(formData.is_manager || formData.is_admin) && (
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Email
+                        </label>
+                        <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            required
+                            className="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
+                        />
+                    </div>
+                )}
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -167,17 +176,31 @@ function Register() {
                     </select>
                 </div>
 
-                <div className="flex items-center">
-                    <input
-                        type="checkbox"
-                        name="is_manager"
-                        checked={formData.is_manager}
-                        onChange={handleChange}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <label className="ml-2 block text-sm text-gray-700">
-                        Is this user a manager?
-                    </label>
+                <div className="flex items-center space-x-4">
+                    <div className="flex items-center">
+                        <input
+                            type="checkbox"
+                            name="is_manager"
+                            checked={formData.is_manager}
+                            onChange={handleChange}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <label className="ml-2 block text-sm text-gray-700">
+                            Is Manager
+                        </label>
+                    </div>
+                    <div className="flex items-center">
+                        <input
+                            type="checkbox"
+                            name="is_admin"
+                            checked={formData.is_admin}
+                            onChange={handleChange}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <label className="ml-2 block text-sm text-gray-700">
+                            Is Admin
+                        </label>
+                    </div>
                 </div>
 
                 <div className="pt-4">
