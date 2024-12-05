@@ -48,6 +48,18 @@ const initializeDb = async () => {
                 user_id INTEGER REFERENCES users(id) UNIQUE,
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
+
+            -- Create esd_tests table
+            CREATE TABLE IF NOT EXISTS esd_tests (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id),
+                test_date DATE NOT NULL,
+                test_time TIMESTAMP WITH TIME ZONE NOT NULL,
+                test_period VARCHAR(20) NOT NULL CHECK (test_period IN ('morning', 'evening')),
+                passed BOOLEAN NOT NULL,
+                notes TEXT,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
         `);
 
         // Step 2: Add email column to managers table if it doesn't exist
@@ -138,6 +150,9 @@ const initializeDb = async () => {
         await client.query(`
             CREATE INDEX IF NOT EXISTS idx_users_department_id ON users(department_id);
             CREATE INDEX IF NOT EXISTS idx_managers_department_id ON managers(department_id);
+            CREATE INDEX IF NOT EXISTS idx_esd_tests_user_id ON esd_tests(user_id);
+            CREATE INDEX IF NOT EXISTS idx_esd_tests_date ON esd_tests(test_date);
+            CREATE INDEX IF NOT EXISTS idx_esd_tests_time ON esd_tests(test_time);
         `);
 
         console.log('Database schema updated successfully');

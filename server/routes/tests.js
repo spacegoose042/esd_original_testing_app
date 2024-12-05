@@ -9,7 +9,7 @@ router.get('/history', async (req, res) => {
             SELECT 
                 t.id,
                 t.test_date,
-                t.test_time,
+                t.test_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles' as test_time,
                 t.passed,
                 t.notes,
                 u.first_name,
@@ -39,8 +39,22 @@ router.post('/submit', async (req, res) => {
                 notes,
                 test_date,
                 test_time
-            ) VALUES ($1, $2, $3, $4, CURRENT_DATE, CURRENT_TIME)
-            RETURNING *
+            ) VALUES (
+                $1, 
+                $2, 
+                $3, 
+                $4, 
+                CURRENT_DATE AT TIME ZONE 'America/Los_Angeles',
+                CURRENT_TIMESTAMP AT TIME ZONE 'America/Los_Angeles'
+            )
+            RETURNING 
+                id,
+                user_id,
+                test_period,
+                passed,
+                notes,
+                test_date,
+                test_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles' as test_time
         `, [user_id, test_period, passed, notes]);
 
         console.log('Test submitted:', result.rows[0]);
