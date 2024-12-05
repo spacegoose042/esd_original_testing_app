@@ -8,9 +8,9 @@ router.get('/history', async (req, res) => {
         const result = await pool.query(`
             SELECT 
                 t.id,
-                to_char(CURRENT_DATE AT TIME ZONE 'America/Los_Angeles', 'YYYY-MM-DD') as today,
-                to_char(t.test_date AT TIME ZONE 'America/Los_Angeles', 'YYYY-MM-DD') as test_date,
-                to_char(t.test_time AT TIME ZONE 'America/Los_Angeles', 'HH12:MI AM') as test_time,
+                to_char(CURRENT_DATE AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD') as today,
+                to_char(t.test_date AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD') as test_date,
+                to_char(t.test_time AT TIME ZONE 'America/Chicago', 'HH:MI AM') as test_time,
                 t.test_period,
                 t.passed,
                 t.notes,
@@ -40,10 +40,10 @@ router.post('/submit', async (req, res) => {
         // Ensure consistent period values
         const normalizedPeriod = test_period.startsWith('AM') ? 'AM' : 'PM';
 
-        // Insert test using LA timezone
+        // Insert test using Chicago timezone
         const result = await pool.query(`
-            WITH current_la_time AS (
-                SELECT CURRENT_TIMESTAMP AT TIME ZONE 'America/Los_Angeles' as la_timestamp
+            WITH current_chicago_time AS (
+                SELECT CURRENT_TIMESTAMP AT TIME ZONE 'America/Chicago' as chicago_timestamp
             )
             INSERT INTO esd_tests (
                 user_id, 
@@ -58,17 +58,17 @@ router.post('/submit', async (req, res) => {
                 $2, 
                 $3, 
                 $4,
-                la_timestamp::date,
-                la_timestamp
-            FROM current_la_time
+                chicago_timestamp::date,
+                chicago_timestamp
+            FROM current_chicago_time
             RETURNING 
                 id,
                 user_id,
                 test_period,
                 passed,
                 notes,
-                to_char(test_date AT TIME ZONE 'America/Los_Angeles', 'YYYY-MM-DD') as test_date,
-                to_char(test_time AT TIME ZONE 'America/Los_Angeles', 'HH12:MI AM') as test_time
+                to_char(test_date AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD') as test_date,
+                to_char(test_time AT TIME ZONE 'America/Chicago', 'HH:MI AM') as test_time
         `, [user_id, normalizedPeriod, passed, notes]);
 
         console.log('Test submitted:', result.rows[0]);
