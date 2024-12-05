@@ -32,7 +32,7 @@ app.use(express.static(staticPath, {
     index: false,
     setHeaders: (res, filePath) => {
         if (filePath.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+            res.setHeader('Content-Type', 'text/javascript; charset=utf-8');
         } else if (filePath.endsWith('.css')) {
             res.setHeader('Content-Type', 'text/css; charset=utf-8');
         } else if (filePath.endsWith('.html')) {
@@ -43,33 +43,49 @@ app.use(express.static(staticPath, {
 
 // Debug route to check static files
 app.get('/debug/static-files', (req, res) => {
-    const files = fs.readdirSync(staticPath);
-    const assetsPath = path.join(staticPath, 'assets');
-    const assetFiles = fs.existsSync(assetsPath) ? fs.readdirSync(assetsPath) : [];
-    res.json({ files, assetFiles, staticPath });
+    try {
+        const files = fs.readdirSync(staticPath);
+        const assetsPath = path.join(staticPath, 'assets');
+        const assetFiles = fs.existsSync(assetsPath) ? fs.readdirSync(assetsPath) : [];
+        
+        // Read the manifest file if it exists
+        const manifestPath = path.join(staticPath, 'manifest.json');
+        const manifest = fs.existsSync(manifestPath) 
+            ? JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
+            : null;
+            
+        res.json({ 
+            files, 
+            assetFiles, 
+            staticPath,
+            manifest 
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
-// Serve index.html for all non-API routes
+// Handle all routes
 app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) {
         return next();
     }
-    
+
     // Check if the request is for a static file
-    const filePath = path.join(staticPath, req.path);
+    const filePath = path.join(staticPath, req.path.replace(/^\/+/, ''));
+    
     if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
         const ext = path.extname(filePath);
-        let contentType = 'text/plain';
         
+        // Set appropriate content type
         if (ext === '.js') {
-            contentType = 'application/javascript; charset=utf-8';
+            res.setHeader('Content-Type', 'text/javascript; charset=utf-8');
         } else if (ext === '.css') {
-            contentType = 'text/css; charset=utf-8';
+            res.setHeader('Content-Type', 'text/css; charset=utf-8');
         } else if (ext === '.html') {
-            contentType = 'text/html; charset=utf-8';
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
         }
         
-        res.setHeader('Content-Type', contentType);
         return res.sendFile(filePath);
     }
     
@@ -89,5 +105,15 @@ pool.query('SELECT NOW()', (err) => {
         console.log(`Server running on port ${PORT}`);
         console.log('Environment:', process.env.NODE_ENV);
         console.log('Database connected');
+        
+        // Log static file path on startup
+        console.log('Static files path:', staticPath);
+        if (fs.existsSync(staticPath)) {
+            console.log('Static directory exists');
+            const files = fs.readdirSync(staticPath);
+            console.log('Static files:', files);
+        } else {
+            console.log('Static directory does not exist');
+        }
     });
 });
