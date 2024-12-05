@@ -8,7 +8,7 @@ router.get('/history', async (req, res) => {
         const result = await pool.query(`
             SELECT 
                 t.id,
-                t.test_date,
+                to_char(t.test_date, 'YYYY-MM-DD') as test_date,
                 t.test_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles' as test_time,
                 t.test_period,
                 t.passed,
@@ -68,7 +68,7 @@ router.post('/submit', async (req, res) => {
                 test_period,
                 passed,
                 notes,
-                test_date,
+                to_char(test_date, 'YYYY-MM-DD') as test_date,
                 test_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles' as test_time
         `, [user_id, normalizedPeriod, passed, notes]);
 

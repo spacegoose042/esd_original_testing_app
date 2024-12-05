@@ -38,20 +38,43 @@ function History() {
         fetchTests();
     }, []);
 
+    const formatDate = (dateString) => {
+        try {
+            // Try to parse the date string
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) {
+                console.error('Invalid date:', dateString);
+                return null;
+            }
+            // Return YYYY-MM-DD format
+            return date.toISOString().split('T')[0];
+        } catch (err) {
+            console.error('Error formatting date:', err);
+            return null;
+        }
+    };
+
     useEffect(() => {
         let filtered = [...tests];
 
         // Date range filter
         filtered = filtered.filter(test => {
-            // Convert test_date to local date string in YYYY-MM-DD format
-            const testDate = new Date(test.test_date + 'T00:00:00-08:00').toISOString().split('T')[0];
-            console.log('Comparing dates:', {
-                testDate,
-                start: filters.dateRange.start,
-                end: filters.dateRange.end,
-                original: test.test_date
-            });
-            return testDate >= filters.dateRange.start && testDate <= filters.dateRange.end;
+            try {
+                const testDate = formatDate(test.test_date);
+                if (!testDate) return false;
+
+                console.log('Comparing dates:', {
+                    testDate,
+                    start: filters.dateRange.start,
+                    end: filters.dateRange.end,
+                    original: test.test_date
+                });
+                
+                return testDate >= filters.dateRange.start && testDate <= filters.dateRange.end;
+            } catch (err) {
+                console.error('Error filtering date:', err);
+                return false;
+            }
         });
 
         // User filter
@@ -190,10 +213,10 @@ function History() {
                                 } transition-colors duration-150`}
                             >
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    {new Date(test.test_date + 'T00:00:00-08:00').toLocaleDateString()}
+                                    {formatDate(test.test_date) ? new Date(test.test_date).toLocaleDateString() : 'Invalid Date'}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    {new Date(test.test_time).toLocaleTimeString()}
+                                    {test.test_time ? new Date(test.test_time).toLocaleTimeString() : 'Invalid Time'}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     {test.first_name} {test.last_name}
