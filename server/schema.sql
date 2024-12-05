@@ -1,4 +1,9 @@
--- Create users table
+-- Drop existing constraints first
+ALTER TABLE users 
+    DROP CONSTRAINT IF EXISTS users_email_key,
+    DROP CONSTRAINT IF EXISTS users_email_unique;
+
+-- Create users table if it doesn't exist
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     first_name VARCHAR(100) NOT NULL,
@@ -51,12 +56,11 @@ INSERT INTO departments (name) VALUES
     ('Maintenance')
 ON CONFLICT DO NOTHING;
 
--- Make email and password nullable
+-- Make sure email and password are nullable
 ALTER TABLE users 
     ALTER COLUMN email DROP NOT NULL,
     ALTER COLUMN password DROP NOT NULL;
 
 -- Add unique constraint to email (while allowing NULL)
 ALTER TABLE users 
-    DROP CONSTRAINT IF EXISTS users_email_unique,
     ADD CONSTRAINT users_email_unique UNIQUE (email);

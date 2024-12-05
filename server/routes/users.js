@@ -71,6 +71,17 @@ router.post('/', async (req, res) => {
             hashedPassword = await bcrypt.hash(tempPassword, 10);
         }
 
+        // Check if email exists (if provided)
+        if (email) {
+            const emailCheck = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+            if (emailCheck.rows.length > 0) {
+                return res.status(400).json({
+                    error: 'Email already exists',
+                    details: 'This email is already registered'
+                });
+            }
+        }
+
         // Insert the new user
         const result = await pool.query(`
             INSERT INTO users (
