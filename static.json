@@ -1,0 +1,14 @@
+{
+  "headers": {
+    "/**": {
+      "Content-Type": "application/javascript",
+      "X-Content-Type-Options": "nosniff"
+    },
+    "/*.css": {
+      "Content-Type": "text/css"
+    },
+    "/*.html": {
+      "Content-Type": "text/html"
+    }
+  }
+} 

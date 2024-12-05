@@ -5,9 +5,9 @@
     "node": ">=14.0.0"
   },
   "scripts": {
-    "build": "cd client && npm install && npm run build && cd ../server && npm install",
+    "build": "vite build --mode production",
     "start": "cd server && npm start",
-    "dev": "cd server && npm run dev"
+    "dev": "vite"
   },
   "dependencies": {
     "express": "^4.17.1",
