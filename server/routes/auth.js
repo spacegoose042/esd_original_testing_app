@@ -99,7 +99,6 @@ router.post('/login', async (req, res) => {
                 is_admin: user.is_admin,
                 is_manager: user.is_manager,
                 manager_id: user.manager_id,
-                manager_email: user.manager_email,
                 department_id: user.department_id
             }
         });
@@ -123,10 +122,9 @@ router.get('/managers', async (req, res) => {
                 m.first_name,
                 m.last_name,
                 m.department_id,
-                d.name as department_name,
-                u.email
+                m.email,
+                d.name as department_name
             FROM managers m
-            INNER JOIN users u ON m.user_id = u.id
             LEFT JOIN departments d ON m.department_id = d.id
             ORDER BY m.first_name, m.last_name
         `);
