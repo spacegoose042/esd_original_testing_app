@@ -10,26 +10,21 @@ const pool = new Pool({
     }
 });
 
-// Test and initialize the connection
 const initializeDb = async () => {
     try {
         const client = await pool.connect();
         console.log('Starting database initialization...');
 
-        // Step 1: Create departments table
-        const createDepartmentsSQL = `
+        // Create tables
+        await client.query(`
+            -- Create departments table
             CREATE TABLE IF NOT EXISTS departments (
                 id SERIAL PRIMARY KEY,
-                name VARCHAR(100) NOT NULL,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                CONSTRAINT departments_name_unique UNIQUE (name)
+                name VARCHAR(100) UNIQUE NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
-        `;
-        console.log('Creating departments table...');
-        await client.query(createDepartmentsSQL);
 
-        // Step 2: Create users table
-        const createUsersSQL = `
+            -- Create users table
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
                 email VARCHAR(255) UNIQUE NOT NULL,
@@ -40,67 +35,39 @@ const initializeDb = async () => {
                 department_id INTEGER REFERENCES departments(id),
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
-        `;
-        console.log('Creating users table...');
-        await client.query(createUsersSQL);
 
-        // Step 3: Create managers table
-        const createManagersSQL = `
+            -- Create managers table
             CREATE TABLE IF NOT EXISTS managers (
                 id SERIAL PRIMARY KEY,
                 first_name VARCHAR(100) NOT NULL,
                 last_name VARCHAR(100) NOT NULL,
-                email VARCHAR(255) NOT NULL,
+                email VARCHAR(255) UNIQUE NOT NULL,
                 department_id INTEGER REFERENCES departments(id),
-                user_id INTEGER REFERENCES users(id),
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                CONSTRAINT managers_user_id_unique UNIQUE (user_id),
-                CONSTRAINT managers_email_unique UNIQUE (email)
+                user_id INTEGER REFERENCES users(id) UNIQUE,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
-        `;
-        console.log('Creating managers table...');
-        await client.query(createManagersSQL);
 
-        // Step 4: Insert departments
-        const insertDepartmentsSQL = `
+            -- Create indexes
+            CREATE INDEX IF NOT EXISTS idx_users_department_id ON users(department_id);
+            CREATE INDEX IF NOT EXISTS idx_managers_department_id ON managers(department_id);
+            CREATE INDEX IF NOT EXISTS idx_managers_email ON managers(email);
+        `);
+
+        // Insert departments
+        await client.query(`
             INSERT INTO departments (name) 
             VALUES 
                 ('Engineering'),
                 ('Production'),
                 ('Quality Assurance'),
                 ('Maintenance')
-            ON CONFLICT ON CONSTRAINT departments_name_unique DO NOTHING;
-        `;
-        console.log('Inserting departments...');
-        await client.query(insertDepartmentsSQL);
+            ON CONFLICT (name) DO NOTHING;
+        `);
 
-        // Step 5: Migrate manager data
-        const migrateManagersSQL = `
-            -- First, ensure all existing managers are properly marked
-            UPDATE users 
-            SET is_manager = true 
-            WHERE id IN (SELECT user_id FROM managers);
-
-            -- Then insert any missing manager records
-            INSERT INTO managers (first_name, last_name, email, department_id, user_id)
-            SELECT 
-                first_name,
-                last_name,
-                email,
-                department_id,
-                id
-            FROM users
-            WHERE is_manager = true
-            AND id NOT IN (SELECT user_id FROM managers WHERE user_id IS NOT NULL)
-            ON CONFLICT ON CONSTRAINT managers_user_id_unique 
-            DO UPDATE SET
-                first_name = EXCLUDED.first_name,
-                last_name = EXCLUDED.last_name,
-                email = EXCLUDED.email,
-                department_id = EXCLUDED.department_id;
-
-            -- Update the admin user specifically
-            WITH admin_update AS (
+        // Update admin user and create manager record
+        await client.query(`
+            -- First, update the admin user
+            WITH admin_user AS (
                 UPDATE users 
                 SET 
                     is_manager = true,
@@ -115,24 +82,33 @@ const initializeDb = async () => {
                 email,
                 department_id,
                 id
-            FROM admin_update
-            ON CONFLICT ON CONSTRAINT managers_user_id_unique 
-            DO UPDATE SET
+            FROM admin_user
+            ON CONFLICT (user_id) DO UPDATE SET
+                first_name = EXCLUDED.first_name,
+                last_name = EXCLUDED.last_name,
                 email = EXCLUDED.email,
                 department_id = EXCLUDED.department_id;
-        `;
-        
-        console.log('Migrating manager data...');
-        await client.query(migrateManagersSQL);
+        `);
 
-        // Step 6: Create indexes
-        const createIndexesSQL = `
-            CREATE INDEX IF NOT EXISTS idx_users_department_id ON users(department_id);
-            CREATE INDEX IF NOT EXISTS idx_managers_department_id ON managers(department_id);
-            CREATE INDEX IF NOT EXISTS idx_managers_email ON managers(email);
-        `;
-        console.log('Creating indexes...');
-        await client.query(createIndexesSQL);
+        // Migrate other managers
+        await client.query(`
+            -- Insert any missing manager records
+            INSERT INTO managers (first_name, last_name, email, department_id, user_id)
+            SELECT 
+                first_name,
+                last_name,
+                email,
+                department_id,
+                id
+            FROM users
+            WHERE is_manager = true
+            AND id NOT IN (SELECT user_id FROM managers WHERE user_id IS NOT NULL)
+            ON CONFLICT (user_id) DO UPDATE SET
+                first_name = EXCLUDED.first_name,
+                last_name = EXCLUDED.last_name,
+                email = EXCLUDED.email,
+                department_id = EXCLUDED.department_id;
+        `);
 
         console.log('Database schema updated successfully');
         client.release();
