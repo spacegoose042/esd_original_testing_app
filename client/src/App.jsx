@@ -14,8 +14,9 @@ function App() {
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
-            api.get('/api/auth/verify')
+            api.get('/auth/verify')
                 .then(response => {
+                    console.log('Auth verification response:', response.data);
                     setIsAdmin(response.data.isAdmin);
                 })
                 .catch(error => {

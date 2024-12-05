@@ -9,6 +9,37 @@ router.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Verify token route
+router.get('/verify', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        
+        if (!token) {
+            return res.status(401).json({ error: 'No token provided' });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        // Get latest user data from database
+        const result = await pool.query(
+            'SELECT is_admin FROM users WHERE id = $1',
+            [decoded.id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json({ 
+            isAdmin: result.rows[0].is_admin,
+            userId: decoded.id
+        });
+    } catch (error) {
+        console.error('Token verification error:', error);
+        res.status(401).json({ error: 'Invalid token' });
+    }
+});
+
 // Login route
 router.post('/login', async (req, res) => {
     try {
