@@ -13,8 +13,7 @@ function History() {
         },
         user: '',
         period: '',
-        result: '',
-        notes: ''
+        result: ''
     });
 
     useEffect(() => {
@@ -57,9 +56,10 @@ function History() {
 
         // Period filter
         if (filters.period) {
-            filtered = filtered.filter(test => 
-                test.test_period.toLowerCase().includes(filters.period.toLowerCase())
-            );
+            filtered = filtered.filter(test => {
+                if (!test.test_period) return false;
+                return test.test_period.toLowerCase() === filters.period.toLowerCase();
+            });
         }
 
         // Result filter
@@ -68,13 +68,6 @@ function History() {
                 const testResult = test.passed ? 'pass' : 'fail';
                 return testResult === filters.result.toLowerCase();
             });
-        }
-
-        // Notes filter
-        if (filters.notes) {
-            filtered = filtered.filter(test => 
-                test.notes?.toLowerCase().includes(filters.notes.toLowerCase())
-            );
         }
 
         setFilteredTests(filtered);
@@ -96,7 +89,7 @@ function History() {
             <h1 className="text-2xl font-bold mb-4">Test History</h1>
 
             {/* Filters */}
-            <div className="mb-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="mb-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
                     <div className="flex gap-2">
@@ -132,8 +125,8 @@ function History() {
                         className="w-full p-2 text-sm border border-gray-300 rounded bg-white hover:border-gray-400 focus:outline-none focus:border-blue-500"
                     >
                         <option value="">All</option>
-                        <option value="morning">Morning</option>
-                        <option value="evening">Evening</option>
+                        <option value="AM">Morning</option>
+                        <option value="PM">Evening</option>
                     </select>
                 </div>
                 <div>
@@ -147,16 +140,6 @@ function History() {
                         <option value="pass">Pass</option>
                         <option value="fail">Fail</option>
                     </select>
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                    <input
-                        type="text"
-                        value={filters.notes}
-                        onChange={(e) => handleFilterChange('notes', e.target.value)}
-                        placeholder="Search notes"
-                        className="w-full p-2 text-sm border border-gray-300 rounded bg-white hover:border-gray-400 focus:outline-none focus:border-blue-500"
-                    />
                 </div>
             </div>
 
@@ -182,9 +165,6 @@ function History() {
                             <th className="px-6 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                 Notes
                             </th>
-                            <th className="px-6 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Manager
-                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -207,7 +187,7 @@ function History() {
                                     {test.first_name} {test.last_name}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    {test.test_period}
+                                    {test.test_period === 'AM' ? 'Morning' : 'Evening'}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span
@@ -221,10 +201,7 @@ function History() {
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    {test.notes}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    {test.manager_name || 'N/A'}
+                                    {test.notes || ''}
                                 </td>
                             </tr>
                         ))}
