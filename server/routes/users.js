@@ -37,9 +37,23 @@ router.post('/', async (req, res) => {
     try {
         const { first_name, last_name, manager_id, department_id, is_manager } = req.body;
 
-        console.log('Creating new user:', req.body);
+        console.log('Received registration request:', {
+            first_name,
+            last_name,
+            manager_id,
+            department_id,
+            is_manager
+        });
 
-        // Insert the new user
+        // Validate required fields
+        if (!first_name || !last_name || !department_id) {
+            return res.status(400).json({ 
+                error: 'Missing required fields',
+                details: 'First name, last name, and department are required'
+            });
+        }
+
+        // Insert the new user with better error handling
         const result = await pool.query(`
             INSERT INTO users (
                 first_name,
@@ -60,34 +74,26 @@ router.post('/', async (req, res) => {
         `, [
             first_name,
             last_name,
-            manager_id,
+            manager_id || null,
             department_id,
-            is_manager,
-            null, // email is optional
-            null  // password is optional
+            is_manager || false,
+            null, // email is optional for non-admin users
+            null  // password is optional for non-admin users
         ]);
 
-        // Fetch the complete user data with related information
-        const newUser = await pool.query(`
-            SELECT 
-                u.id,
-                u.first_name,
-                u.last_name,
-                u.is_manager,
-                d.name as department_name,
-                d.id as department_id,
-                m.first_name as manager_first_name,
-                m.last_name as manager_last_name,
-                m.id as manager_id
-            FROM users u
-            LEFT JOIN departments d ON u.department_id = d.id
-            LEFT JOIN users m ON u.manager_id = m.id
-            WHERE u.id = $1
-        `, [result.rows[0].id]);
+        // Log successful creation
+        console.log('User created successfully:', result.rows[0]);
 
-        res.status(201).json(newUser.rows[0]);
+        res.status(201).json(result.rows[0]);
     } catch (error) {
-        console.error('Error creating user:', error);
+        console.error('Error creating user:', {
+            message: error.message,
+            stack: error.stack,
+            code: error.code,
+            detail: error.detail
+        });
+
+        // Send appropriate error response
         res.status(500).json({ 
             error: 'Failed to create user',
             details: error.message,

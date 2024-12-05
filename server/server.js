@@ -31,12 +31,14 @@ app.use(express.static(staticPath, {
     etag: true,
     index: false,
     setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        if (filePath.endsWith('.mjs')) {
+            res.setHeader('Content-Type', 'application/javascript');
+        } else if (filePath.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript');
         } else if (filePath.endsWith('.css')) {
-            res.setHeader('Content-Type', 'text/css; charset=utf-8');
+            res.setHeader('Content-Type', 'text/css');
         } else if (filePath.endsWith('.html')) {
-            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            res.setHeader('Content-Type', 'text/html');
         }
     }
 }));
@@ -78,12 +80,12 @@ app.get('*', (req, res, next) => {
         const ext = path.extname(filePath);
         
         // Set appropriate content type
-        if (ext === '.js') {
-            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        if (ext === '.mjs' || ext === '.js') {
+            res.setHeader('Content-Type', 'application/javascript');
         } else if (ext === '.css') {
-            res.setHeader('Content-Type', 'text/css; charset=utf-8');
+            res.setHeader('Content-Type', 'text/css');
         } else if (ext === '.html') {
-            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            res.setHeader('Content-Type', 'text/html');
         }
         
         return res.sendFile(filePath);

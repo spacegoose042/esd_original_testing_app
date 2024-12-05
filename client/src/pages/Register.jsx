@@ -40,11 +40,24 @@ function Register() {
         setLoading(true);
 
         try {
-            await api.post('/users', formData);
+            console.log('Submitting registration:', formData);
+            
+            const response = await api.post('/users', formData);
+            console.log('Registration successful:', response.data);
+            
             navigate('/users');
         } catch (err) {
-            console.error('Registration error:', err);
-            setError(err.response?.data?.error || 'Failed to register user');
+            console.error('Registration error:', {
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status
+            });
+            
+            setError(
+                err.response?.data?.details || 
+                err.response?.data?.error || 
+                'Failed to register user'
+            );
         } finally {
             setLoading(false);
         }

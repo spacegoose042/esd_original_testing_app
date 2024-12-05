@@ -54,3 +54,14 @@ INSERT INTO departments (name) VALUES
     ('Quality Assurance'),
     ('Maintenance')
 ON CONFLICT DO NOTHING;
+
+-- Add this to your schema.sql if not already present
+ALTER TABLE users 
+    ALTER COLUMN email DROP NOT NULL,
+    ALTER COLUMN password DROP NOT NULL;
+
+-- Add any missing columns
+ALTER TABLE users 
+    ADD COLUMN IF NOT EXISTS manager_id INTEGER REFERENCES users(id),
+    ADD COLUMN IF NOT EXISTS department_id INTEGER REFERENCES departments(id),
+    ADD COLUMN IF NOT EXISTS is_manager BOOLEAN DEFAULT false;
