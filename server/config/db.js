@@ -32,16 +32,12 @@ const initializeDb = async () => {
                 password VARCHAR(255) NOT NULL,
                 first_name VARCHAR(100),
                 last_name VARCHAR(100),
+                is_manager BOOLEAN DEFAULT false,
+                department_id INTEGER REFERENCES departments(id),
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
 
-            -- Add manager-related columns to users table
-            ALTER TABLE users 
-                ADD COLUMN IF NOT EXISTS manager_id INTEGER REFERENCES users(id),
-                ADD COLUMN IF NOT EXISTS department_id INTEGER REFERENCES departments(id),
-                ADD COLUMN IF NOT EXISTS is_manager BOOLEAN DEFAULT false;
-
-            -- Create managers table with email field
+            -- Create managers table with all required fields
             CREATE TABLE IF NOT EXISTS managers (
                 id SERIAL PRIMARY KEY,
                 first_name VARCHAR(100) NOT NULL,
@@ -52,47 +48,50 @@ const initializeDb = async () => {
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
 
-            -- Migrate existing manager data
-            INSERT INTO managers (first_name, last_name, email, department_id, user_id)
-            SELECT 
-                u.first_name,
-                u.last_name,
-                u.email,
-                u.department_id,
-                u.id
-            FROM users u
-            WHERE u.is_manager = true
-            ON CONFLICT (user_id) DO UPDATE SET
-                email = EXCLUDED.email,
-                department_id = EXCLUDED.department_id;
-
-            -- Create indexes after all tables and columns exist
-            CREATE INDEX IF NOT EXISTS idx_users_manager_id ON users(manager_id);
+            -- Create indexes
             CREATE INDEX IF NOT EXISTS idx_users_department_id ON users(department_id);
             CREATE INDEX IF NOT EXISTS idx_managers_department_id ON managers(department_id);
             CREATE INDEX IF NOT EXISTS idx_managers_user_id ON managers(user_id);
             CREATE INDEX IF NOT EXISTS idx_managers_email ON managers(email);
-        `;
 
-        console.log('Creating tables and indexes...');
-        await client.query(setupSQL);
-
-        // Insert departments
-        const departmentsSQL = `
+            -- Insert departments
             INSERT INTO departments (name) 
             VALUES 
                 ('Engineering'),
                 ('Production'),
                 ('Quality Assurance'),
                 ('Maintenance')
-            ON CONFLICT DO NOTHING
-            RETURNING id, name;
+            ON CONFLICT (name) DO NOTHING;
+
+            -- Update existing manager data
+            WITH manager_users AS (
+                SELECT 
+                    id,
+                    first_name,
+                    last_name,
+                    email,
+                    department_id
+                FROM users
+                WHERE is_manager = true
+            )
+            INSERT INTO managers (first_name, last_name, email, department_id, user_id)
+            SELECT 
+                first_name,
+                last_name,
+                email,
+                department_id,
+                id
+            FROM manager_users
+            ON CONFLICT (user_id) 
+            DO UPDATE SET
+                email = EXCLUDED.email,
+                department_id = EXCLUDED.department_id;
         `;
 
-        console.log('Inserting departments...');
-        const deptResult = await client.query(departmentsSQL);
+        console.log('Creating tables and indexes...');
+        await client.query(setupSQL);
 
-        // Update admin user and create manager record
+        // Update admin user specifically
         const updateAdminSQL = `
             WITH updated_user AS (
                 UPDATE users 
@@ -102,7 +101,7 @@ const initializeDb = async () => {
                         SELECT id FROM departments WHERE name = 'Engineering' LIMIT 1
                     )
                 WHERE email = 'matt.miers@sandyindustries.com'
-                RETURNING id, first_name, last_name, department_id, email
+                RETURNING id, first_name, last_name, email, department_id
             )
             INSERT INTO managers (first_name, last_name, email, department_id, user_id)
             SELECT 
@@ -110,9 +109,10 @@ const initializeDb = async () => {
                 last_name,
                 email,
                 department_id,
-                id as user_id
+                id
             FROM updated_user
-            ON CONFLICT (user_id) DO UPDATE SET
+            ON CONFLICT (user_id) 
+            DO UPDATE SET
                 email = EXCLUDED.email,
                 department_id = EXCLUDED.department_id;
         `;
