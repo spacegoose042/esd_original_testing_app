@@ -49,6 +49,31 @@ const initializeDb = async () => {
             SET is_manager = true,
                 department_id = (SELECT id FROM departments WHERE name = 'Engineering')
             WHERE email = 'matt.miers@sandyindustries.com';
+
+            -- Create managers table
+            CREATE TABLE IF NOT EXISTS managers (
+                id SERIAL PRIMARY KEY,
+                first_name VARCHAR(100) NOT NULL,
+                last_name VARCHAR(100) NOT NULL,
+                department_id INTEGER REFERENCES departments(id),
+                user_id INTEGER REFERENCES users(id) UNIQUE,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+
+            -- Create indexes
+            CREATE INDEX IF NOT EXISTS idx_managers_department_id ON managers(department_id);
+            CREATE INDEX IF NOT EXISTS idx_managers_user_id ON managers(user_id);
+
+            -- Insert admin as manager if not exists
+            INSERT INTO managers (first_name, last_name, department_id, user_id)
+            SELECT 
+                first_name,
+                last_name,
+                department_id,
+                id as user_id
+            FROM users 
+            WHERE email = 'matt.miers@sandyindustries.com'
+            ON CONFLICT (user_id) DO NOTHING;
         `;
 
         await client.query(migrationSQL);

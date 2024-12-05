@@ -114,14 +114,21 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// Add a new route to get managers list
+// Update the managers list endpoint
 router.get('/managers', async (req, res) => {
     try {
         const result = await pool.query(`
-            SELECT id, first_name, last_name, email, department_id 
-            FROM users 
-            WHERE is_manager = true OR is_admin = true
-            ORDER BY first_name, last_name
+            SELECT 
+                m.id,
+                m.first_name,
+                m.last_name,
+                m.department_id,
+                d.name as department_name,
+                u.email
+            FROM managers m
+            INNER JOIN users u ON m.user_id = u.id
+            LEFT JOIN departments d ON m.department_id = d.id
+            ORDER BY m.first_name, m.last_name
         `);
         res.json(result.rows);
     } catch (error) {
