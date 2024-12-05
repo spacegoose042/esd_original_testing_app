@@ -8,7 +8,7 @@ router.get('/history', async (req, res) => {
         const result = await pool.query(`
             SELECT 
                 t.id,
-                to_char(t.test_date, 'YYYY-MM-DD') as test_date,
+                to_char(t.test_date AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles', 'YYYY-MM-DD') as test_date,
                 t.test_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles' as test_time,
                 t.test_period,
                 t.passed,
@@ -43,8 +43,7 @@ router.post('/submit', async (req, res) => {
         const result = await pool.query(`
             WITH current_la_time AS (
                 SELECT 
-                    (CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles')::DATE as la_date,
-                    CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles' as la_timestamp
+                    CURRENT_TIMESTAMP AT TIME ZONE 'America/Los_Angeles' as la_timestamp
             )
             INSERT INTO esd_tests (
                 user_id, 
@@ -59,7 +58,7 @@ router.post('/submit', async (req, res) => {
                 $2, 
                 $3, 
                 $4,
-                la_date,
+                la_timestamp::date,
                 la_timestamp
             FROM current_la_time
             RETURNING 
@@ -68,7 +67,7 @@ router.post('/submit', async (req, res) => {
                 test_period,
                 passed,
                 notes,
-                to_char(test_date, 'YYYY-MM-DD') as test_date,
+                to_char(test_date AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles', 'YYYY-MM-DD') as test_date,
                 test_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles' as test_time
         `, [user_id, normalizedPeriod, passed, notes]);
 

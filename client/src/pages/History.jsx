@@ -6,10 +6,14 @@ function History() {
     const [filteredTests, setFilteredTests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    
+    // Initialize date range to Pacific time
+    const today = new Date();
+    const pacificDate = new Date(today.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
     const [filters, setFilters] = useState({
         dateRange: {
-            start: new Date().toISOString().split('T')[0],
-            end: new Date().toISOString().split('T')[0]
+            start: pacificDate.toISOString().split('T')[0],
+            end: pacificDate.toISOString().split('T')[0]
         },
         user: '',
         period: '',
@@ -40,13 +44,12 @@ function History() {
 
     const formatDate = (dateString) => {
         try {
-            // Try to parse the date string
+            // Parse the date string in Pacific time
             const date = new Date(dateString);
             if (isNaN(date.getTime())) {
                 console.error('Invalid date:', dateString);
                 return null;
             }
-            // Return YYYY-MM-DD format
             return date.toISOString().split('T')[0];
         } catch (err) {
             console.error('Error formatting date:', err);
@@ -60,14 +63,13 @@ function History() {
         // Date range filter
         filtered = filtered.filter(test => {
             try {
-                const testDate = formatDate(test.test_date);
+                const testDate = test.test_date;
                 if (!testDate) return false;
 
                 console.log('Comparing dates:', {
                     testDate,
                     start: filters.dateRange.start,
-                    end: filters.dateRange.end,
-                    original: test.test_date
+                    end: filters.dateRange.end
                 });
                 
                 return testDate >= filters.dateRange.start && testDate <= filters.dateRange.end;
@@ -213,10 +215,15 @@ function History() {
                                 } transition-colors duration-150`}
                             >
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    {formatDate(test.test_date) ? new Date(test.test_date).toLocaleDateString() : 'Invalid Date'}
+                                    {test.test_date}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    {test.test_time ? new Date(test.test_time).toLocaleTimeString() : 'Invalid Time'}
+                                    {new Date(test.test_time).toLocaleTimeString('en-US', { 
+                                        hour: 'numeric', 
+                                        minute: '2-digit', 
+                                        hour12: true,
+                                        timeZone: 'America/Los_Angeles'
+                                    })}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     {test.first_name} {test.last_name}
