@@ -35,6 +35,7 @@ router.get('/', async (req, res) => {
 
 // Create new user
 router.post('/', async (req, res) => {
+    const client = await pool.connect();
     try {
         const { first_name, last_name, email, manager_id, department_id, is_manager, is_admin } = req.body;
 
@@ -64,17 +65,14 @@ router.post('/', async (req, res) => {
             });
         }
 
-        // Generate a random password only for managers and admins
-        let hashedPassword = null;
-        if (is_manager || is_admin) {
-            const tempPassword = Math.random().toString(36).slice(-8);
-            hashedPassword = await bcrypt.hash(tempPassword, 10);
-        }
+        // Start transaction
+        await client.query('BEGIN');
 
         // Check if email exists (if provided)
         if (email) {
-            const emailCheck = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+            const emailCheck = await client.query('SELECT id FROM users WHERE email = $1', [email]);
             if (emailCheck.rows.length > 0) {
+                await client.query('ROLLBACK');
                 return res.status(400).json({
                     error: 'Email already exists',
                     details: 'This email is already registered'
@@ -82,8 +80,15 @@ router.post('/', async (req, res) => {
             }
         }
 
+        // Generate a random password only for managers and admins
+        let hashedPassword = null;
+        if (is_manager || is_admin) {
+            const tempPassword = Math.random().toString(36).slice(-8);
+            hashedPassword = await bcrypt.hash(tempPassword, 10);
+        }
+
         // Insert the new user
-        const result = await pool.query(`
+        const result = await client.query(`
             INSERT INTO users (
                 first_name,
                 last_name,
@@ -114,6 +119,9 @@ router.post('/', async (req, res) => {
             is_admin || false
         ]);
 
+        // Commit transaction
+        await client.query('COMMIT');
+
         // Log successful creation
         console.log('User created successfully:', result.rows[0]);
 
@@ -128,6 +136,9 @@ router.post('/', async (req, res) => {
 
         res.status(201).json(response);
     } catch (error) {
+        // Rollback transaction on error
+        await client.query('ROLLBACK');
+
         console.error('Error creating user:', {
             message: error.message,
             stack: error.stack,
@@ -141,6 +152,8 @@ router.post('/', async (req, res) => {
             details: error.message,
             code: error.code
         });
+    } finally {
+        client.release();
     }
 });
 

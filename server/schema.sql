@@ -1,21 +1,24 @@
--- Drop existing constraints first
-ALTER TABLE users 
-    DROP CONSTRAINT IF EXISTS users_email_key,
-    DROP CONSTRAINT IF EXISTS users_email_unique;
+-- Drop and recreate the users table
+DROP TABLE IF EXISTS esd_tests;
+DROP TABLE IF EXISTS users CASCADE;
 
--- Create users table if it doesn't exist
-CREATE TABLE IF NOT EXISTS users (
+-- Create users table with correct constraints from the start
+CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    email VARCHAR(255),
-    password VARCHAR(255),
+    email VARCHAR(255) NULL,
+    password VARCHAR(255) NULL,
     is_admin BOOLEAN DEFAULT false,
+    is_manager BOOLEAN DEFAULT false,
+    manager_id INTEGER,
+    department_id INTEGER,
+    manager_email VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create esd_tests table
-CREATE TABLE IF NOT EXISTS esd_tests (
+CREATE TABLE esd_tests (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id),
     test_date DATE DEFAULT CURRENT_DATE,
@@ -26,41 +29,36 @@ CREATE TABLE IF NOT EXISTS esd_tests (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create indexes
-CREATE INDEX IF NOT EXISTS idx_esd_tests_user_id ON esd_tests(user_id);
-CREATE INDEX IF NOT EXISTS idx_esd_tests_date ON esd_tests(test_date); 
-
--- Create departments table
+-- Create departments table if it doesn't exist
 CREATE TABLE IF NOT EXISTS departments (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Modify users table to add manager relationship and department
+-- Create indexes
+CREATE INDEX idx_esd_tests_user_id ON esd_tests(user_id);
+CREATE INDEX idx_esd_tests_date ON esd_tests(test_date);
+CREATE INDEX idx_users_manager_id ON users(manager_id);
+CREATE INDEX idx_users_department_id ON users(department_id);
+
+-- Add foreign key constraints
 ALTER TABLE users 
-    ADD COLUMN IF NOT EXISTS manager_id INTEGER REFERENCES users(id),
-    ADD COLUMN IF NOT EXISTS department_id INTEGER REFERENCES departments(id),
-    ADD COLUMN IF NOT EXISTS is_manager BOOLEAN DEFAULT false,
-    ADD COLUMN IF NOT EXISTS manager_email VARCHAR(255);
+    ADD CONSTRAINT fk_users_manager 
+    FOREIGN KEY (manager_id) REFERENCES users(id);
 
--- Create index for better query performance
-CREATE INDEX IF NOT EXISTS idx_users_manager_id ON users(manager_id);
-CREATE INDEX IF NOT EXISTS idx_users_department_id ON users(department_id);
+ALTER TABLE users 
+    ADD CONSTRAINT fk_users_department 
+    FOREIGN KEY (department_id) REFERENCES departments(id);
 
--- Insert some default departments
+-- Add unique constraint to email (while allowing NULL)
+ALTER TABLE users 
+    ADD CONSTRAINT users_email_unique UNIQUE (email) WHERE email IS NOT NULL;
+
+-- Insert default departments
 INSERT INTO departments (name) VALUES 
     ('Engineering'),
     ('Production'),
     ('Quality Assurance'),
     ('Maintenance')
 ON CONFLICT DO NOTHING;
-
--- Make sure email and password are nullable
-ALTER TABLE users 
-    ALTER COLUMN email DROP NOT NULL,
-    ALTER COLUMN password DROP NOT NULL;
-
--- Add unique constraint to email (while allowing NULL)
-ALTER TABLE users 
-    ADD CONSTRAINT users_email_unique UNIQUE (email);
