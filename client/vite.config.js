@@ -4,7 +4,7 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
-  base: './',
+  base: '/',
   server: {
     proxy: {
       '/api': {
@@ -21,7 +21,9 @@ export default defineConfig({
     assetsDir: 'assets',
     sourcemap: true,
     rollupOptions: {
-      input: path.resolve(__dirname, 'index.html')
+      output: {
+        manualChunks: undefined
+      }
     }
   }
 })
