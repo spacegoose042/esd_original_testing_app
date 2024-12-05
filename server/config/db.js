@@ -58,7 +58,7 @@ const initializeDb = async () => {
         console.log('Creating managers table...');
         await client.query(createManagersSQL);
 
-        // Step 4: Create basic indexes (excluding email for now)
+        // Step 4: Create basic indexes
         const createBasicIndexesSQL = `
             CREATE INDEX IF NOT EXISTS idx_users_department_id ON users(department_id);
             CREATE INDEX IF NOT EXISTS idx_managers_department_id ON managers(department_id);
@@ -71,14 +71,12 @@ const initializeDb = async () => {
         const verifyAndCreateEmailIndexSQL = `
             DO $$
             BEGIN
-                -- Check if the email column exists
                 IF EXISTS (
                     SELECT 1
                     FROM information_schema.columns
                     WHERE table_name = 'managers'
                     AND column_name = 'email'
                 ) THEN
-                    -- Create the email index only if the column exists
                     EXECUTE 'CREATE INDEX IF NOT EXISTS idx_managers_email ON managers(email)';
                 END IF;
             END $$;
@@ -94,7 +92,7 @@ const initializeDb = async () => {
                 ('Production'),
                 ('Quality Assurance'),
                 ('Maintenance')
-            ON CONFLICT (name) DO NOTHING;
+            ON CONFLICT ON CONSTRAINT departments_name_key DO NOTHING;
         `;
         console.log('Inserting departments...');
         await client.query(insertDepartmentsSQL);
