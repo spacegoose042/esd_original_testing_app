@@ -5,6 +5,7 @@ const auth = require('../middleware/auth');
 
 // Get all users with optional active status filter
 router.get('/', auth, async (req, res) => {
+    const client = await pool.connect();
     try {
         console.log('Fetching users with params:', req.query);
         const { showInactive } = req.query;
@@ -14,17 +15,19 @@ router.get('/', auth, async (req, res) => {
                 u.id, 
                 u.first_name, 
                 u.last_name, 
-                u.email, 
+                COALESCE(u.email, '') as email,
                 u.is_admin, 
                 u.is_active,
-                u.created_at::text as created_at
+                u.created_at::text as created_at,
+                d.name as department_name
             FROM users u
-            ${showInactive === 'true' ? '' : 'WHERE u.is_active = true'}
+            LEFT JOIN departments d ON u.department_id = d.id
+            ${showInactive === 'true' ? '' : 'WHERE COALESCE(u.is_active, true) = true'}
             ORDER BY u.created_at DESC
         `;
         
         console.log('Executing query:', query);
-        const result = await pool.query(query);
+        const result = await client.query(query);
         console.log(`Found ${result.rows.length} users`);
         
         res.json(result.rows);
@@ -34,20 +37,23 @@ router.get('/', auth, async (req, res) => {
             error: 'Server error',
             details: err.message
         });
+    } finally {
+        client.release();
     }
 });
 
 // Toggle user active status
 router.patch('/:id/toggle-active', auth, async (req, res) => {
+    const client = await pool.connect();
     try {
         console.log('Toggling user status for ID:', req.params.id);
         
         const { id } = req.params;
-        const result = await pool.query(
+        const result = await client.query(
             `UPDATE users 
-             SET is_active = NOT is_active 
+             SET is_active = NOT COALESCE(is_active, true) 
              WHERE id = $1 
-             RETURNING id, first_name, last_name, email, is_admin, is_active`,
+             RETURNING id, first_name, last_name, COALESCE(email, '') as email, is_admin, is_active`,
             [id]
         );
 
@@ -64,6 +70,8 @@ router.patch('/:id/toggle-active', auth, async (req, res) => {
             error: 'Server error',
             details: err.message
         });
+    } finally {
+        client.release();
     }
 });
 
