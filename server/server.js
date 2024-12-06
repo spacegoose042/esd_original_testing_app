@@ -113,8 +113,14 @@ app.use('/api/debug', require('./routes/debug'));
 
 const staticPath = path.join(__dirname, '../client/dist');
 
-// Serve static files
-app.use(express.static(staticPath));
+// Serve static files with proper MIME types for ES modules
+app.use(express.static(staticPath, {
+    setHeaders: (res, filepath) => {
+        if (filepath.endsWith('.js')) {
+            res.set('Content-Type', 'application/javascript; charset=utf-8');
+        }
+    }
+}));
 
 // Handle client-side routing
 app.get('*', (req, res) => {
