@@ -193,41 +193,33 @@ router.put('/:id', auth, async (req, res) => {
             }
         }
 
-        // Build the update query dynamically based on provided fields
-        const updates = [];
+        // Build update fields and values array
+        const updateFields = [];
         const values = [];
         let paramCount = 1;
 
-        console.log('Building update query with fields:', {
-            first_name,
-            last_name,
-            manager_id,
-            is_admin,
-            is_active
-        });
-
         if (first_name !== undefined) {
-            updates.push(`first_name = $${paramCount}`);
+            updateFields.push(`first_name = $${paramCount}`);
             values.push(first_name);
             paramCount++;
         }
         if (last_name !== undefined) {
-            updates.push(`last_name = $${paramCount}`);
+            updateFields.push(`last_name = $${paramCount}`);
             values.push(last_name);
             paramCount++;
         }
         if (manager_id !== undefined) {
-            updates.push(`manager_id = $${paramCount}`);
-            values.push(manager_id || null);
+            updateFields.push(`manager_id = $${paramCount}`);
+            values.push(manager_id === '' ? null : manager_id);
             paramCount++;
         }
         if (is_admin !== undefined) {
-            updates.push(`is_admin = $${paramCount}`);
+            updateFields.push(`is_admin = $${paramCount}`);
             values.push(is_admin);
             paramCount++;
         }
         if (is_active !== undefined) {
-            updates.push(`is_active = $${paramCount}`);
+            updateFields.push(`is_active = $${paramCount}`);
             values.push(is_active);
             paramCount++;
         }
@@ -235,9 +227,13 @@ router.put('/:id', auth, async (req, res) => {
         // Add the user ID as the last parameter
         values.push(id);
 
+        if (updateFields.length === 0) {
+            return res.status(400).json({ error: 'No fields to update' });
+        }
+
         const query = `
             UPDATE users 
-            SET ${updates.join(', ')}
+            SET ${updateFields.join(', ')}
             WHERE id = $${paramCount}
             RETURNING 
                 id, 
@@ -252,10 +248,16 @@ router.put('/:id', auth, async (req, res) => {
 
         console.log('Executing update query:', {
             query,
-            values
+            values,
+            paramCount
         });
 
         const result = await pool.query(query, values);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found after update' });
+        }
+
         console.log('User updated successfully:', result.rows[0]);
         res.json(result.rows[0]);
     } catch (err) {
