@@ -48,4 +48,85 @@ router.get('/', auth, async (req, res) => {
     }
 });
 
+// Get single user
+router.get('/:id', auth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await pool.query(`
+            SELECT 
+                u.id, 
+                u.first_name, 
+                u.last_name, 
+                u.email,
+                u.is_admin,
+                u.is_manager,
+                u.manager_id,
+                u.department_id,
+                u.created_at::text as created_at
+            FROM users u
+            WHERE u.id = $1
+        `, [id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error fetching user:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Get all managers
+router.get('/managers', auth, async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                u.id,
+                u.first_name,
+                u.last_name,
+                d.name as department_name
+            FROM users u
+            LEFT JOIN departments d ON u.department_id = d.id
+            WHERE u.is_manager = true
+            ORDER BY u.first_name, u.last_name
+        `);
+        
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error fetching managers:', err);
+        res.status(500).json({ error: 'Failed to fetch managers' });
+    }
+});
+
+// Update user
+router.put('/:id', auth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { first_name, last_name, manager_id, is_admin } = req.body;
+
+        const result = await pool.query(`
+            UPDATE users 
+            SET 
+                first_name = $1,
+                last_name = $2,
+                manager_id = $3,
+                is_admin = $4,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $5
+            RETURNING *
+        `, [first_name, last_name, manager_id, is_admin, id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error updating user:', err);
+        res.status(500).json({ error: 'Failed to update user' });
+    }
+});
+
 module.exports = router;

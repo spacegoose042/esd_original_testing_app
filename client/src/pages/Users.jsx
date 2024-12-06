@@ -20,12 +20,10 @@ function UserEdit({ userId, onClose, onUpdate }) {
                 // Fetch both user data and managers list
                 const [userResponse, managersResponse] = await Promise.all([
                     api.get(`/users/${userId}`),
-                    api.get('/users')
+                    api.get('/users/managers')
                 ]);
 
-                // Filter managers from all users
-                const managersList = managersResponse.data.filter(user => user.is_manager);
-                setManagers(managersList);
+                setManagers(managersResponse.data);
 
                 // Set user data
                 setFormData({
