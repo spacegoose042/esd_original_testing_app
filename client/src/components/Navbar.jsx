@@ -1,10 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom';
 
-function Navbar({ isAdmin }) {
+function Navbar({ isAdmin, isAuthenticated }) {
     const navigate = useNavigate();
     
     const handleLogout = () => {
         localStorage.removeItem('token');
+        navigate('/login');
         window.location.reload();
     };
 
@@ -22,9 +23,11 @@ function Navbar({ isAdmin }) {
                             <Link to="/" className="py-4 px-2 text-gray-500 hover:text-gray-900">
                                 Home
                             </Link>
-                            <Link to="/history" className="py-4 px-2 text-gray-500 hover:text-gray-900">
-                                History
-                            </Link>
+                            {isAuthenticated && (
+                                <Link to="/history" className="py-4 px-2 text-gray-500 hover:text-gray-900">
+                                    History
+                                </Link>
+                            )}
                             {isAdmin && (
                                 <>
                                     <Link to="/users" className="py-4 px-2 text-gray-500 hover:text-gray-900">
@@ -38,7 +41,7 @@ function Navbar({ isAdmin }) {
                         </div>
                     </div>
                     <div className="flex items-center space-x-3">
-                        {!localStorage.getItem('token') ? (
+                        {!isAuthenticated ? (
                             <Link
                                 to="/login"
                                 className="py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300"

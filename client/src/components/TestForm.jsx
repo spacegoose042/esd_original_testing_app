@@ -11,19 +11,28 @@ function TestForm() {
     const [users, setUsers] = useState([]);
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Fetch users when component mounts
+        const token = localStorage.getItem('token');
+        if (!token) {
+            setLoading(false);
+            return;
+        }
+
         const fetchUsers = async () => {
             try {
                 console.log('Fetching users...');
                 const response = await api.get('/users');
                 console.log('Users response:', response.data);
-                setUsers(response.data);
-                setError(''); // Clear any previous errors
+                setUsers(Array.isArray(response.data) ? response.data : []);
+                setError('');
             } catch (err) {
                 console.error('Error fetching users:', err);
                 setError(err.response?.data?.error || 'Failed to load users');
+                setUsers([]);
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -44,9 +53,6 @@ function TestForm() {
                 passed: false,
                 notes: ''
             });
-            
-            // Optional: Refresh the page after 2 seconds
-            setTimeout(() => window.location.reload(), 2000);
         } catch (err) {
             console.error('Submit error:', err);
             setError(err.response?.data?.error || 'Failed to submit test');
@@ -60,6 +66,10 @@ function TestForm() {
             [name]: type === 'checkbox' ? checked : value
         }));
     };
+
+    if (loading) {
+        return <div>Loading users...</div>;
+    }
 
     return (
         <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md">
