@@ -4,236 +4,122 @@
     margin: 0 auto;
 }
 
-.users-container h2 {
-    color: #333;
+.filters-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
     margin-bottom: 20px;
-    font-size: 24px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.filter-input, .filter-select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    width: 100%;
+}
+
+.filter-input:focus, .filter-select:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
 }
 
 .table-container {
     overflow-x: auto;
-    background: white;
+    background-color: white;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.users-table {
+table {
     width: 100%;
     border-collapse: collapse;
-    margin: 0;
-    padding: 0;
-    background-color: white;
 }
 
-.users-table th,
-.users-table td {
+th, td {
     padding: 12px 15px;
     text-align: left;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid #eee;
 }
 
-.users-table th {
-    background-color: #f5f5f5;
+th {
+    background-color: #f8f9fa;
     font-weight: 600;
     color: #333;
-    text-transform: uppercase;
-    font-size: 0.85em;
-    letter-spacing: 0.5px;
 }
 
-.users-table tbody tr:hover {
+tr:hover {
     background-color: #f8f9fa;
 }
 
-.name-cell {
-    font-weight: 500;
-    color: #2c3e50;
-}
-
-.admin-badge {
-    display: inline-block;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.85em;
-    font-weight: 500;
-    background-color: #e0e0e0;
+.inactive-user {
+    background-color: #f8f9fa;
     color: #666;
 }
 
-.admin-badge.is-admin {
-    background-color: #4CAF50;
-    color: white;
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
 }
 
-.edit-button {
+.status-badge.active {
+    background-color: #e6f4ea;
+    color: #1e7e34;
+}
+
+.status-badge.inactive {
+    background-color: #feeced;
+    color: #dc3545;
+}
+
+.status-toggle-btn {
     padding: 6px 12px;
-    background-color: #007bff;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.status-toggle-btn.activate {
+    background-color: #28a745;
     color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9em;
-    transition: background-color 0.2s;
 }
 
-.edit-button:hover {
-    background-color: #0056b3;
-}
-
-/* Modal Styles */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.modal-content {
-    background: white;
-    padding: 2rem;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 500px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.modal-content h2 {
-    margin-bottom: 1.5rem;
-    color: #333;
-    font-size: 1.5rem;
-}
-
-.form-group {
-    margin-bottom: 1rem;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    color: #555;
-    font-size: 0.9rem;
-}
-
-.form-group input[type="text"],
-.form-group input[type="email"],
-.form-group select.manager-select {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    background-color: white;
-}
-
-.form-group select.manager-select {
-    cursor: pointer;
-    appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 0.5rem center;
-    background-size: 1em;
-    padding-right: 2.5rem;
-}
-
-.form-group select.manager-select:hover {
-    border-color: #aaa;
-}
-
-.form-group select.manager-select:focus {
-    border-color: #007bff;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
-}
-
-.form-group.checkbox {
-    display: flex;
-    align-items: center;
-}
-
-.form-group.checkbox label {
-    margin-bottom: 0;
-    margin-left: 0.5rem;
-}
-
-.button-group {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-    margin-top: 2rem;
-}
-
-.cancel-button {
-    padding: 0.5rem 1rem;
-    background-color: #e0e0e0;
-    border: none;
-    border-radius: 4px;
-    color: #333;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.save-button {
-    padding: 0.5rem 1rem;
-    background-color: #007bff;
-    border: none;
-    border-radius: 4px;
+.status-toggle-btn.deactivate {
+    background-color: #dc3545;
     color: white;
-    cursor: pointer;
-    transition: background-color 0.2s;
 }
 
-.cancel-button:hover {
-    background-color: #d0d0d0;
-}
-
-.save-button:hover {
-    background-color: #0056b3;
+.status-toggle-btn:hover {
+    opacity: 0.9;
 }
 
 .error-message {
-    background-color: #fee;
-    color: #c00;
-    padding: 0.75rem;
-    border-radius: 4px;
-    margin-bottom: 1rem;
-}
-
-.success-message {
-    background-color: #efe;
-    color: #0a0;
-    padding: 0.75rem;
-    border-radius: 4px;
-    margin-bottom: 1rem;
-}
-
-.loading {
-    text-align: center;
-    padding: 20px;
-    font-size: 18px;
-    color: #666;
-}
-
-.error {
-    text-align: center;
-    padding: 20px;
+    padding: 12px;
+    background-color: #feeced;
     color: #dc3545;
-    background-color: #f8d7da;
     border-radius: 4px;
-    margin: 20px;
+    margin-bottom: 20px;
 }
 
-.no-data {
-    text-align: center;
-    padding: 40px;
-    color: #666;
-    font-size: 18px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    margin: 20px;
+@media (max-width: 768px) {
+    .filters-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .table-container {
+        font-size: 14px;
+    }
+    
+    th, td {
+        padding: 8px 10px;
+    }
 } 
