@@ -113,8 +113,16 @@ app.use('/api/debug', require('./routes/debug'));
 
 const staticPath = path.join(__dirname, '../client/dist');
 
-// Serve static files
-app.use(express.static(staticPath));
+// Serve static files with proper MIME types
+app.use(express.static(staticPath, {
+    setHeaders: (res, filepath) => {
+        if (filepath.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        } else if (filepath.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css; charset=utf-8');
+        }
+    }
+}));
 
 // Handle client-side routing
 app.get('*', (req, res) => {
@@ -125,7 +133,7 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(staticPath, 'index.html'));
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 8080;
 
 // Initialize server
 async function startServer() {
@@ -141,11 +149,10 @@ async function startServer() {
             app.listen(PORT, () => {
                 console.log(`Server running on port ${PORT}`);
                 console.log('Environment:', process.env.NODE_ENV);
-                console.log('Database connected');
             });
         });
-    } catch (err) {
-        console.error('Server startup error:', err);
+    } catch (error) {
+        console.error('Server startup error:', error);
         process.exit(1);
     }
 }

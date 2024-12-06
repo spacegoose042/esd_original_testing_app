@@ -3,11 +3,10 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '',
+  base: '/',
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    assetsDir: 'assets',
     rollupOptions: {
       output: {
         entryFileNames: 'assets/[name].[hash].js',
@@ -19,8 +18,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true
+        target: process.env.NODE_ENV === 'production'
+          ? 'https://esdoriginaltestingapp-production.up.railway.app'
+          : 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false
       }
     }
   }
