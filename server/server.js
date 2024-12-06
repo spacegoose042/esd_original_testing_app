@@ -70,6 +70,29 @@ async function runEmailMigration() {
     }
 }
 
+// Add this near the top with other initialization code
+async function makeEmailNullable() {
+    const client = await pool.connect();
+    try {
+        console.log('Attempting to make email nullable...');
+        await client.query(`
+            DO $$ 
+            BEGIN
+                -- First try to drop the not null constraint
+                ALTER TABLE users ALTER COLUMN email DROP NOT NULL;
+            EXCEPTION 
+                WHEN others THEN
+                    RAISE NOTICE 'Could not drop not null constraint: %', SQLERRM;
+            END $$;
+        `);
+        console.log('Email column modification attempted');
+    } catch (error) {
+        console.error('Failed to modify email column:', error);
+    } finally {
+        client.release();
+    }
+}
+
 const app = express();
 
 // Configure CORS
@@ -117,8 +140,8 @@ const PORT = process.env.PORT || 3001;
 // Initialize server
 async function startServer() {
     try {
-        // Run migration before starting server
-        await runEmailMigration();
+        // Try to make email nullable before starting server
+        await makeEmailNullable();
         
         pool.query('SELECT NOW()', (err) => {
             if (err) {

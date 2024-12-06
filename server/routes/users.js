@@ -57,27 +57,20 @@ router.post('/', async (req, res) => {
             });
         }
 
-        // Only require email for managers and admins
-        if ((is_manager || is_admin) && !email) {
-            return res.status(400).json({
-                error: 'Email required',
-                details: 'Email is required for managers and admins'
-            });
-        }
+        // Since email is required in the database, generate a placeholder email for non-admin users
+        const userEmail = email || `${first_name.toLowerCase()}.${last_name.toLowerCase()}.${Date.now()}@placeholder.com`;
 
         // Start transaction
         await client.query('BEGIN');
 
-        // Check if email exists (if provided)
-        if (email) {
-            const emailCheck = await client.query('SELECT id FROM users WHERE email = $1', [email]);
-            if (emailCheck.rows.length > 0) {
-                await client.query('ROLLBACK');
-                return res.status(400).json({
-                    error: 'Email already exists',
-                    details: 'This email is already registered'
-                });
-            }
+        // Check if email exists
+        const emailCheck = await client.query('SELECT id FROM users WHERE email = $1', [userEmail]);
+        if (emailCheck.rows.length > 0) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({
+                error: 'Email already exists',
+                details: 'This email is already registered'
+            });
         }
 
         // Generate a random password only for managers and admins
@@ -85,6 +78,9 @@ router.post('/', async (req, res) => {
         if (is_manager || is_admin) {
             const tempPassword = Math.random().toString(36).slice(-8);
             hashedPassword = await bcrypt.hash(tempPassword, 10);
+        } else {
+            // For regular users, use a standard placeholder password hash
+            hashedPassword = await bcrypt.hash('placeholder', 10);
         }
 
         // Insert the new user
@@ -111,7 +107,7 @@ router.post('/', async (req, res) => {
         `, [
             first_name,
             last_name,
-            email || null,
+            userEmail,
             hashedPassword,
             manager_id || null,
             department_id,
@@ -122,31 +118,26 @@ router.post('/', async (req, res) => {
         // Commit transaction
         await client.query('COMMIT');
 
-        // Log successful creation
         console.log('User created successfully:', result.rows[0]);
 
         const response = {
             ...result.rows[0]
         };
 
-        // Only include temporary password for managers and admins
-        if (hashedPassword) {
+        // Only include temporary password for managers and admins with real emails
+        if (hashedPassword && email) {
             response.tempPassword = tempPassword;
         }
 
         res.status(201).json(response);
     } catch (error) {
-        // Rollback transaction on error
         await client.query('ROLLBACK');
-
         console.error('Error creating user:', {
             message: error.message,
             stack: error.stack,
             code: error.code,
             detail: error.detail
         });
-
-        // Send appropriate error response
         res.status(500).json({ 
             error: 'Failed to create user',
             details: error.message,
