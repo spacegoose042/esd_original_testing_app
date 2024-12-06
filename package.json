@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "force-nullable": "cd server && node scripts/force_email_nullable.js",
-    "start": "cd server && npm start",
+    "build": "cd client && npm install && npm run build",
+    "start": "npm run build && cd server && npm start",
     "dev": "cd server && npm run dev"
   }
 }
