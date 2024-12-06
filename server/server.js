@@ -105,7 +105,7 @@ app.use(cors({
 
 app.use(express.json());
 
-// API routes
+// API routes first
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/tests', require('./routes/tests'));
 app.use('/api/users', require('./routes/users'));
@@ -114,38 +114,26 @@ app.use('/api/debug', require('./routes/debug'));
 // Serve static files from the React app
 const staticPath = path.join(__dirname, '../client/dist');
 
-// Serve index.html for the root path
-app.get('/', (req, res) => {
-    res.sendFile(path.join(staticPath, 'index.html'), {
-        headers: {
-            'Content-Type': 'text/html; charset=utf-8'
-        }
-    });
-});
-
-// Serve static assets
+// Serve static files
 app.use(express.static(staticPath, {
     setHeaders: (res, filePath) => {
         if (filePath.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+            res.setHeader('Content-Type', 'application/javascript');
         } else if (filePath.endsWith('.css')) {
-            res.setHeader('Content-Type', 'text/css; charset=utf-8');
+            res.setHeader('Content-Type', 'text/css');
         } else if (filePath.endsWith('.html')) {
-            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            res.setHeader('Content-Type', 'text/html');
         }
     }
 }));
 
-// Handle client-side routing
+// All other routes serve index.html
 app.get('*', (req, res) => {
-    if (req.path.startsWith('/api')) {
-        return res.status(404).json({ error: 'API endpoint not found' });
+    if (!req.path.startsWith('/api')) {
+        res.sendFile(path.join(staticPath, 'index.html'));
+    } else {
+        res.status(404).json({ error: 'API endpoint not found' });
     }
-    res.sendFile(path.join(staticPath, 'index.html'), {
-        headers: {
-            'Content-Type': 'text/html; charset=utf-8'
-        }
-    });
 });
 
 const PORT = process.env.PORT || 3001;
