@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import './Users.css';
 
 function Users() {
     const [users, setUsers] = useState([]);
-    const [showInactive, setShowInactive] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
@@ -12,11 +12,8 @@ function Users() {
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const response = await api.get('/users', {
-                params: { showInactive }
-            });
+            const response = await api.get('/users');
             
-            // Check if response.data is an array
             if (Array.isArray(response.data)) {
                 setUsers(response.data);
                 setError(null);
@@ -40,73 +37,57 @@ function Users() {
 
     useEffect(() => {
         fetchUsers();
-    }, [showInactive]);
-
-    const handleToggleActive = async (userId) => {
-        try {
-            await api.patch(`/users/${userId}/toggle-active`);
-            await fetchUsers();
-        } catch (err) {
-            console.error('Error updating user status:', err);
-            if (err.response?.status === 401) {
-                navigate('/login');
-                return;
-            }
-            setError(err.response?.data?.error || 'Failed to update user status');
-        }
-    };
+    }, []);
 
     if (loading) {
-        return <div>Loading...</div>;
+        return <div className="loading">Loading...</div>;
     }
 
     if (error) {
-        return <div>{error}</div>;
+        return <div className="error">{error}</div>;
     }
 
     if (!Array.isArray(users) || users.length === 0) {
-        return <div>No users found.</div>;
+        return <div className="no-data">No users found.</div>;
     }
 
     return (
-        <div>
-            <div>
-                <label>
-                    <input
-                        type="checkbox"
-                        checked={showInactive}
-                        onChange={(e) => setShowInactive(e.target.checked)}
-                    />
-                    Show Inactive Users
-                </label>
-            </div>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Status</th>
-                        <th>Role</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {users.map((user) => (
-                        <tr key={user.id}>
-                            <td>{user.first_name} {user.last_name}</td>
-                            <td>{user.email}</td>
-                            <td>{user.is_active ? 'Active' : 'Inactive'}</td>
-                            <td>{user.is_admin ? 'Admin' : 'User'}</td>
-                            <td>
-                                <button onClick={() => handleToggleActive(user.id)}>
-                                    {user.is_active ? 'Deactivate' : 'Activate'}
-                                </button>
-                            </td>
+        <div className="users-container">
+            <h2>User Management</h2>
+            <div className="table-container">
+                <table className="users-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Department</th>
+                            <th>Role</th>
+                            <th>Manager</th>
+                            <th>Admin</th>
+                            <th>Created</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {users.map((user) => (
+                            <tr key={user.id}>
+                                <td className="name-cell">
+                                    {user.first_name} {user.last_name}
+                                </td>
+                                <td>{user.email || 'N/A'}</td>
+                                <td>{user.department_name || 'N/A'}</td>
+                                <td>{user.role}</td>
+                                <td>{user.manager_name}</td>
+                                <td>
+                                    <span className={`admin-badge ${user.is_admin ? 'is-admin' : ''}`}>
+                                        {user.is_admin ? 'Yes' : 'No'}
+                                    </span>
+                                </td>
+                                <td>{new Date(user.created_at).toLocaleDateString()}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }
