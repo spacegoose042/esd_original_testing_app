@@ -358,4 +358,56 @@ router.post('/', auth, async (req, res) => {
     }
 });
 
+// Reset user password (admin only)
+router.post('/:id/reset-password', auth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // Verify the requester is an admin
+        const authResponse = await pool.query(
+            'SELECT is_admin FROM users WHERE id = $1',
+            [req.user.id]
+        );
+
+        if (!authResponse.rows[0]?.is_admin) {
+            return res.status(403).json({ error: 'Only administrators can reset passwords' });
+        }
+
+        // Generate a new random password
+        const newPassword = Math.random().toString(36).slice(-8);
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Update the user's password
+        const result = await pool.query(
+            'UPDATE users SET password = $1 WHERE id = $2 RETURNING id, email, first_name, last_name',
+            [hashedPassword, id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const user = result.rows[0];
+
+        // If user has email, send the new password
+        if (user.email) {
+            // Here you would typically send an email with the new password
+            console.log(`Password reset for user ${user.first_name} ${user.last_name}: ${newPassword}`);
+        }
+
+        res.json({
+            message: 'Password reset successful',
+            newPassword,
+            userId: user.id,
+            email: user.email
+        });
+    } catch (err) {
+        console.error('Error resetting password:', err);
+        res.status(500).json({ 
+            error: 'Failed to reset password',
+            details: err.message
+        });
+    }
+});
+
 module.exports = router;

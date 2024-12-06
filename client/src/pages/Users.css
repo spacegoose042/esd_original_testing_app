@@ -243,4 +243,31 @@ tr:hover {
     th, td {
         padding: 8px 10px;
     }
-} 
+}
+
+.reset-button {
+    background-color: #f59e0b;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.reset-button:hover {
+    background-color: #d97706;
+}
+
+.reset-button:disabled {
+    background-color: #fcd34d;
+    cursor: not-allowed;
+}
+
+.ml-2 {
+    margin-left: 0.5rem;
+}
+ 

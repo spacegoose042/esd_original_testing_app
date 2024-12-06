@@ -175,11 +175,79 @@ function UserEdit({ userId, onClose, onUpdate }) {
     );
 }
 
+function ResetPasswordModal({ userId, userName, onClose, onReset }) {
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleReset = async () => {
+        try {
+            setLoading(true);
+            setError('');
+            
+            const response = await api.post(`/users/${userId}/reset-password`);
+            setNewPassword(response.data.newPassword);
+            setSuccess('Password reset successful');
+            
+            setTimeout(() => {
+                onReset();
+                onClose();
+            }, 5000);
+        } catch (err) {
+            setError(err.response?.data?.error || 'Failed to reset password');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="modal-overlay">
+            <div className="modal-content">
+                <h2>Reset Password</h2>
+                <p>Are you sure you want to reset the password for {userName}?</p>
+                
+                {error && <div className="error-message">{error}</div>}
+                {success && (
+                    <div className="success-message">
+                        <p>{success}</p>
+                        <p>New password: <strong>{newPassword}</strong></p>
+                        <p>Please provide this password to the user.</p>
+                        <p>This modal will close in 5 seconds.</p>
+                    </div>
+                )}
+
+                {!success && (
+                    <div className="button-group">
+                        <button 
+                            type="button" 
+                            onClick={onClose}
+                            className="cancel-button"
+                            disabled={loading}
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            type="button" 
+                            onClick={handleReset}
+                            className="reset-button"
+                            disabled={loading}
+                        >
+                            {loading ? 'Resetting...' : 'Reset Password'}
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
 function Users() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [editingUserId, setEditingUserId] = useState(null);
+    const [resettingUserId, setResettingUserId] = useState(null);
     const [filters, setFilters] = useState({
         first_name: '',
         last_name: '',
@@ -225,6 +293,14 @@ function Users() {
 
     const handleCloseEdit = () => {
         setEditingUserId(null);
+    };
+
+    const handleResetPassword = (userId) => {
+        setResettingUserId(userId);
+    };
+
+    const handleCloseReset = () => {
+        setResettingUserId(null);
     };
 
     const handleFilterChange = (field, value) => {
@@ -329,6 +405,14 @@ function Users() {
                                     >
                                         Edit
                                     </button>
+                                    {user.email && (
+                                        <button
+                                            className="reset-button ml-2"
+                                            onClick={() => handleResetPassword(user.id)}
+                                        >
+                                            Reset Password
+                                        </button>
+                                    )}
                                 </td>
                             </tr>
                         ))}
@@ -341,6 +425,15 @@ function Users() {
                     userId={editingUserId}
                     onClose={handleCloseEdit}
                     onUpdate={fetchUsers}
+                />
+            )}
+
+            {resettingUserId && (
+                <ResetPasswordModal
+                    userId={resettingUserId}
+                    userName={users.find(u => u.id === resettingUserId)?.first_name + ' ' + users.find(u => u.id === resettingUserId)?.last_name}
+                    onClose={handleCloseReset}
+                    onReset={fetchUsers}
                 />
             )}
         </div>
