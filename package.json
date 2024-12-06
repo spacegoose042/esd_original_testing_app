@@ -1,19 +1,9 @@
 {
   "name": "esd-testing-app",
   "version": "1.0.0",
-  "engines": {
-    "node": ">=14.0.0"
-  },
   "scripts": {
-    "build": "cd client && npm install && npm run build && cd ../server && npm install",
+    "force-nullable": "cd server && node scripts/force_email_nullable.js",
     "start": "cd server && npm start",
     "dev": "cd server && npm run dev"
-  },
-  "dependencies": {
-    "express": "^4.17.1",
-    "@prisma/client": "^5.22.0"
-  },
-  "devDependencies": {
-    "prisma": "^5.22.0"
   }
 }
