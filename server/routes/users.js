@@ -171,6 +171,12 @@ router.put('/:id', auth, async (req, res) => {
             headers: req.headers
         });
 
+        // Validate ID is a number
+        const userId = parseInt(id, 10);
+        if (isNaN(userId)) {
+            return res.status(400).json({ error: 'Invalid user ID' });
+        }
+
         const { 
             first_name, 
             last_name, 
@@ -182,20 +188,26 @@ router.put('/:id', auth, async (req, res) => {
         await client.query('BEGIN');
 
         // First check if the user exists
-        const checkUser = await client.query('SELECT id, email FROM users WHERE id = $1', [id]);
+        const checkUser = await client.query('SELECT id, email FROM users WHERE id = $1', [userId]);
         if (checkUser.rows.length === 0) {
-            console.log('User not found:', id);
+            console.log('User not found:', userId);
             await client.query('ROLLBACK');
             return res.status(404).json({ error: 'User not found' });
         }
 
         console.log('Found user:', checkUser.rows[0]);
 
-        // If manager_id is provided, check if the manager exists
-        if (manager_id) {
-            const checkManager = await client.query('SELECT id FROM users WHERE id = $1', [manager_id]);
+        // If manager_id is provided, check if the manager exists and validate it's a number
+        let managerId = null;
+        if (manager_id !== undefined && manager_id !== '') {
+            managerId = parseInt(manager_id, 10);
+            if (isNaN(managerId)) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({ error: 'Invalid manager ID' });
+            }
+            const checkManager = await client.query('SELECT id FROM users WHERE id = $1', [managerId]);
             if (checkManager.rows.length === 0) {
-                console.log('Manager not found:', manager_id);
+                console.log('Manager not found:', managerId);
                 await client.query('ROLLBACK');
                 return res.status(400).json({ error: 'Selected manager does not exist' });
             }
@@ -210,24 +222,24 @@ router.put('/:id', auth, async (req, res) => {
         console.log('Building update query with fields:', {
             first_name,
             last_name,
-            manager_id,
+            managerId,
             is_admin,
             is_active
         });
 
         if (first_name !== undefined) {
             updateFields.push(`first_name = $${paramCount}`);
-            values.push(first_name);
+            values.push(String(first_name).trim());
             paramCount++;
         }
         if (last_name !== undefined) {
             updateFields.push(`last_name = $${paramCount}`);
-            values.push(last_name);
+            values.push(String(last_name).trim());
             paramCount++;
         }
         if (manager_id !== undefined) {
             updateFields.push(`manager_id = $${paramCount}`);
-            values.push(manager_id === '' ? null : manager_id);
+            values.push(managerId);  // This will be null if manager_id was empty string
             paramCount++;
         }
         if (is_admin !== undefined) {
@@ -242,7 +254,7 @@ router.put('/:id', auth, async (req, res) => {
         }
 
         // Add the user ID as the last parameter
-        values.push(id);
+        values.push(userId);
 
         if (updateFields.length === 0) {
             await client.query('ROLLBACK');
@@ -267,7 +279,8 @@ router.put('/:id', auth, async (req, res) => {
         console.log('Executing update query:', {
             query,
             values,
-            paramCount
+            paramCount,
+            valueTypes: values.map(v => typeof v)
         });
 
         const result = await client.query(query, values);
