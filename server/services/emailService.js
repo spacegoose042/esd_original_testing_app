@@ -55,10 +55,24 @@ const transporter = nodemailer.createTransport({
         pass: process.env.EMAIL_PASSWORD
     },
     tls: {
-        rejectUnauthorized: false
+        rejectUnauthorized: false,
+        ciphers: 'SSLv3'
     },
     debug: true,
     logger: true
+});
+
+// Verify connection configuration
+transporter.verify(function(error, success) {
+    if (error) {
+        console.error('Email server connection error:', {
+            error: error.message,
+            code: error.code,
+            command: error.command
+        });
+    } else {
+        console.log("Email server connection verified");
+    }
 });
 
 const sendMissingTestAlert = async (userName, period, managerEmail) => {

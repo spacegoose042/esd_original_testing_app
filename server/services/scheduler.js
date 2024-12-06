@@ -1,5 +1,5 @@
 const cron = require('node-cron');
-const pool = require('../db');
+const pool = require('../config/db');
 const { sendMissingTestAlert } = require('./emailService');
 
 // Utility function to check if it's a holiday or weekend
