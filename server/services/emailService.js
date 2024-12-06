@@ -1,5 +1,4 @@
 const nodemailer = require('nodemailer');
-const { stringify } = require('csv-stringify');
 const pool = require('../config/db');
 
 // Email templates
@@ -119,7 +118,7 @@ async function sendWeeklyReport() {
             manager_email: 'Manager Email'
         };
 
-        // Create CSV string synchronously
+        // Create CSV string manually
         let csvContent = '';
         // Add headers
         csvContent += Object.values(columns).join(',') + '\n';
