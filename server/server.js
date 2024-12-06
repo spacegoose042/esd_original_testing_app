@@ -114,43 +114,29 @@ app.use('/api/debug', require('./routes/debug'));
 // Serve static files from the React app
 const staticPath = path.join(__dirname, '../client/dist');
 
-// Serve static files with proper MIME types
+// Serve index.html for the root path
+app.get('/', (req, res) => {
+    res.sendFile(path.join(staticPath, 'index.html'), {
+        headers: {
+            'Content-Type': 'text/html; charset=utf-8'
+        }
+    });
+});
+
+// Serve static assets
 app.use(express.static(staticPath, {
     setHeaders: (res, filePath) => {
         if (filePath.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-        } else if (filePath.endsWith('.mjs')) {
             res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
         } else if (filePath.endsWith('.css')) {
             res.setHeader('Content-Type', 'text/css; charset=utf-8');
         } else if (filePath.endsWith('.html')) {
             res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        } else if (filePath.endsWith('.json')) {
-            res.setHeader('Content-Type', 'application/json; charset=utf-8');
         }
-    },
-    // Add caching headers
-    maxAge: '1h',
-    immutable: true,
-    // Enable compression
-    compress: true
+    }
 }));
 
-// Add this before the catch-all route
-app.use('/assets', express.static(path.join(staticPath, 'assets'), {
-    setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-        } else if (filePath.endsWith('.css')) {
-            res.setHeader('Content-Type', 'text/css; charset=utf-8');
-        }
-    },
-    maxAge: '1y',
-    immutable: true,
-    compress: true
-}));
-
-// Handle client-side routing (keep this last)
+// Handle client-side routing
 app.get('*', (req, res) => {
     if (req.path.startsWith('/api')) {
         return res.status(404).json({ error: 'API endpoint not found' });

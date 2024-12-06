@@ -11,9 +11,14 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       output: {
-        entryFileNames: `assets/[name].[hash].js`,
-        chunkFileNames: `assets/[name].[hash].js`,
-        assetFileNames: `assets/[name].[hash].[ext]`
+        manualChunks: undefined,
+        entryFileNames: (chunkInfo) => {
+          return chunkInfo.name === 'main' 
+            ? 'assets/[name].js' 
+            : 'assets/[name].[hash].js';
+        },
+        chunkFileNames: 'assets/[name].[hash].js',
+        assetFileNames: 'assets/[name].[hash].[ext]'
       }
     }
   },
@@ -27,8 +32,5 @@ export default defineConfig({
         secure: false
       }
     }
-  },
-  optimizeDeps: {
-    include: ['react', 'react-dom']
   }
 })
