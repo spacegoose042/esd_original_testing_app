@@ -3,21 +3,29 @@ const router = express.Router();
 const pool = require('../config/db');
 const auth = require('../middleware/auth');
 
-// Get all users
+// Get all users with department info
 router.get('/', auth, async (req, res) => {
     try {
-        console.log('Fetching users');
+        console.log('Fetching users with department info');
         
         const query = `
             SELECT 
-                id, 
-                first_name, 
-                last_name, 
-                COALESCE(email, '') as email,
-                COALESCE(is_admin, false) as is_admin,
-                created_at::text as created_at
-            FROM users
-            ORDER BY created_at DESC
+                u.id, 
+                u.first_name, 
+                u.last_name, 
+                COALESCE(u.email, '') as email,
+                COALESCE(u.is_admin, false) as is_admin,
+                u.created_at::text as created_at,
+                d.name as department_name,
+                CASE 
+                    WHEN u.is_manager THEN 'Manager'
+                    ELSE 'Employee'
+                END as role,
+                COALESCE(m.first_name || ' ' || m.last_name, 'None') as manager_name
+            FROM users u
+            LEFT JOIN departments d ON u.department_id = d.id
+            LEFT JOIN users m ON u.manager_id = m.id
+            ORDER BY u.created_at DESC
         `;
         
         console.log('Executing query:', query);
