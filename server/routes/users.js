@@ -169,69 +169,64 @@ router.put('/:id', auth, async (req, res) => {
             body: req.body
         });
 
-        const { 
-            first_name, 
-            last_name, 
-            manager_id, 
-            is_admin,
-            is_active 
-        } = req.body;
-
         // First check if the user exists
-        const checkUser = await pool.query('SELECT id FROM users WHERE id = $1', [id]);
+        const checkUser = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
         if (checkUser.rows.length === 0) {
             console.log('User not found:', id);
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Prepare update data
-        const updates = [];
-        const values = [];
-        let paramCount = 1;
+        console.log('Current user data:', checkUser.rows[0]);
 
-        if (first_name !== undefined && first_name !== null) {
-            updates.push(`first_name = $${paramCount}`);
-            values.push(first_name);
-            paramCount++;
-        }
+        // Get the current user data
+        const currentUser = checkUser.rows[0];
 
-        if (last_name !== undefined && last_name !== null) {
-            updates.push(`last_name = $${paramCount}`);
-            values.push(last_name);
-            paramCount++;
-        }
+        // Prepare the update data, keeping existing values if not provided
+        const updateData = {
+            first_name: req.body.first_name ?? currentUser.first_name,
+            last_name: req.body.last_name ?? currentUser.last_name,
+            manager_id: req.body.manager_id === '' ? null : (req.body.manager_id ?? currentUser.manager_id),
+            is_admin: req.body.is_admin ?? currentUser.is_admin,
+            is_active: req.body.is_active ?? currentUser.is_active,
+            email: currentUser.email, // preserve existing email
+            department_id: currentUser.department_id, // preserve existing department
+            is_manager: currentUser.is_manager // preserve existing manager status
+        };
 
-        if (manager_id !== undefined) {
-            updates.push(`manager_id = $${paramCount}`);
-            values.push(manager_id === '' ? null : manager_id);
-            paramCount++;
-        }
+        console.log('Update data prepared:', updateData);
 
-        if (is_admin !== undefined) {
-            updates.push(`is_admin = $${paramCount}`);
-            values.push(is_admin);
-            paramCount++;
-        }
-
-        if (is_active !== undefined) {
-            updates.push(`is_active = $${paramCount}`);
-            values.push(is_active);
-            paramCount++;
-        }
-
-        // Add the user ID as the last parameter
-        values.push(id);
-
+        // Perform the update with all fields explicitly set
         const query = `
             UPDATE users 
-            SET ${updates.join(', ')}
-            WHERE id = $${paramCount}
+            SET 
+                first_name = $1,
+                last_name = $2,
+                manager_id = $3,
+                is_admin = $4,
+                is_active = $5,
+                email = $6,
+                department_id = $7,
+                is_manager = $8
+            WHERE id = $9
             RETURNING *
         `;
 
-        console.log('Update query:', {
+        const values = [
+            updateData.first_name,
+            updateData.last_name,
+            updateData.manager_id,
+            updateData.is_admin,
+            updateData.is_active,
+            updateData.email,
+            updateData.department_id,
+            updateData.is_manager,
+            id
+        ];
+
+        console.log('Executing update query:', {
             text: query,
-            values: values
+            values: values,
+            valueTypes: values.map(v => typeof v)
         });
 
         const result = await pool.query(query, values);
@@ -245,7 +240,9 @@ router.put('/:id', auth, async (req, res) => {
             detail: err.detail,
             table: err.table,
             constraint: err.constraint,
-            stack: err.stack
+            stack: err.stack,
+            query: err.query,
+            parameters: err.parameters
         });
 
         // Send a more detailed error response
