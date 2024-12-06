@@ -48,7 +48,7 @@ const templates = {
 
 const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
+    port: parseInt(process.env.EMAIL_PORT),
     secure: false,
     auth: {
         user: process.env.EMAIL_USER,
@@ -56,11 +56,20 @@ const transporter = nodemailer.createTransport({
     },
     tls: {
         rejectUnauthorized: false
-    }
+    },
+    debug: true,
+    logger: true
 });
 
 const sendMissingTestAlert = async (userName, period, managerEmail) => {
-    console.log(`Sending ${period} alert for ${userName} to ${managerEmail}`);
+    console.log('Email Configuration:', {
+        host: process.env.EMAIL_HOST,
+        port: process.env.EMAIL_PORT,
+        user: process.env.EMAIL_USER,
+        tls: true
+    });
+    
+    console.log(`Attempting to send ${period} alert for ${userName} to ${managerEmail}`);
     
     const template = period === 'morning' 
         ? templates.morningMissing(userName)
@@ -73,13 +82,30 @@ const sendMissingTestAlert = async (userName, period, managerEmail) => {
         html: template.html
     };
 
+    console.log('Mail options:', {
+        from: mailOptions.from,
+        to: mailOptions.to,
+        subject: mailOptions.subject
+    });
+
     try {
+        console.log('Attempting to send email...');
         const info = await transporter.sendMail(mailOptions);
-        console.log('Email sent:', info.response);
+        console.log('Email sent successfully:', {
+            messageId: info.messageId,
+            response: info.response,
+            accepted: info.accepted,
+            rejected: info.rejected
+        });
         return true;
     } catch (error) {
-        console.error('Email sending failed:', error);
-        return false;
+        console.error('Email sending failed:', {
+            error: error.message,
+            code: error.code,
+            command: error.command,
+            stack: error.stack
+        });
+        throw error;
     }
 };
 

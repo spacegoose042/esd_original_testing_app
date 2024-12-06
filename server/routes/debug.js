@@ -19,8 +19,19 @@ router.get('/table-info', async (req, res) => {
 // Test email functionality
 router.post('/test-email', async (req, res) => {
     try {
+        console.log('Received test email request:', req.body);
         const { emailType = 'morning' } = req.body;
         let result;
+
+        // Verify email configuration
+        const requiredVars = ['EMAIL_HOST', 'EMAIL_PORT', 'EMAIL_USER', 'EMAIL_PASSWORD'];
+        const missing = requiredVars.filter(varName => !process.env[varName]);
+        if (missing.length > 0) {
+            return res.status(500).json({
+                error: 'Missing email configuration',
+                details: `Missing variables: ${missing.join(', ')}`
+            });
+        }
 
         switch (emailType) {
             case 'morning':
@@ -49,21 +60,23 @@ router.post('/test-email', async (req, res) => {
                 });
         }
 
-        if (result) {
-            res.json({ 
-                message: `Test ${emailType} email sent successfully`,
-                sentTo: process.env.EMAIL_USER
-            });
-        } else {
-            res.status(500).json({ 
-                error: `Failed to send ${emailType} test email` 
-            });
-        }
+        res.json({ 
+            message: `Test ${emailType} email sent successfully`,
+            sentTo: process.env.EMAIL_USER
+        });
     } catch (error) {
-        console.error('Email test error:', error);
+        console.error('Detailed email test error:', {
+            message: error.message,
+            code: error.code,
+            command: error.command,
+            stack: error.stack
+        });
+        
         res.status(500).json({ 
             error: 'Failed to send test email',
-            details: error.message
+            details: error.message,
+            code: error.code,
+            command: error.command
         });
     }
 });
