@@ -65,21 +65,14 @@ function App() {
             <Navbar isAdmin={isAdmin} isAuthenticated={isAuthenticated} />
             <main className="container mx-auto px-4 py-8">
                 <Routes>
-                    <Route path="/" element={<Home isAuthenticated={isAuthenticated} />} />
+                    <Route path="/" element={<Home />} />
+                    <Route path="/history" element={<History />} />
                     <Route 
                         path="/login" 
                         element={
                             isAuthenticated ? 
                             <Navigate to="/" /> : 
                             <Login setIsAdmin={setIsAdmin} />
-                        } 
-                    />
-                    <Route 
-                        path="/history" 
-                        element={
-                            <ProtectedRoute>
-                                <History />
-                            </ProtectedRoute>
                         } 
                     />
                     <Route 

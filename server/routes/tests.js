@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/db');
 
-// Get test history
+// Get test history - no auth required
 router.get('/history', async (req, res) => {
     try {
         const result = await pool.query(`
