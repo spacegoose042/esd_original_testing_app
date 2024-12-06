@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/db');
 const auth = require('../middleware/auth');
+const bcrypt = require('bcryptjs');
 
 // Get all users with department info
 router.get('/', auth, async (req, res) => {
@@ -263,16 +264,31 @@ router.post('/', auth, async (req, res) => {
             }
         }
 
+        // Generate a random password for managers and admins
+        let password_hash = null;
+        if (is_manager || is_admin) {
+            if (!email) {
+                return res.status(400).json({ 
+                    error: 'Email is required for managers and admins'
+                });
+            }
+            // Generate a random password
+            const tempPassword = Math.random().toString(36).slice(-8);
+            password_hash = await bcrypt.hash(tempPassword, 10);
+            console.log('Generated temporary password for new manager/admin:', tempPassword);
+        }
+
         const query = `
             INSERT INTO users (
                 first_name,
                 last_name,
                 email,
+                password_hash,
                 manager_id,
                 department_id,
                 is_manager,
                 is_admin
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING 
                 id,
                 first_name,
@@ -288,15 +304,23 @@ router.post('/', auth, async (req, res) => {
         const result = await pool.query(query, [
             first_name,
             last_name,
-            email || null,  // Convert empty string to null
-            manager_id || null,  // Convert empty string to null
-            department_id || null,  // Convert empty string to null
+            email || null,
+            password_hash,
+            manager_id || null,
+            department_id || null,
             is_manager || false,
             is_admin || false
         ]);
 
-        console.log('User created successfully:', result.rows[0]);
-        res.status(201).json(result.rows[0]);
+        const response = {
+            ...result.rows[0],
+            ...(password_hash && { 
+                message: 'User created with temporary password. Please change it upon first login.'
+            })
+        };
+
+        console.log('User created successfully:', response);
+        res.status(201).json(response);
     } catch (err) {
         console.error('Error creating user:', {
             error: err,
