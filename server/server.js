@@ -113,16 +113,15 @@ app.use('/api/debug', require('./routes/debug'));
 
 const staticPath = path.join(__dirname, '../client/dist');
 
-// Serve static files with proper MIME types
-app.use(express.static(staticPath, {
-    setHeaders: (res, filepath) => {
-        if (filepath.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-        } else if (filepath.endsWith('.css')) {
-            res.setHeader('Content-Type', 'text/css; charset=utf-8');
-        }
-    }
-}));
+// Serve module scripts with correct MIME type
+app.get('*/index.*.js', (req, res, next) => {
+    const filePath = path.join(staticPath, req.path.replace(/^\//, ''));
+    res.set('Content-Type', 'text/javascript');
+    res.sendFile(filePath);
+});
+
+// Serve static files
+app.use(express.static(staticPath));
 
 // Handle client-side routing
 app.get('*', (req, res) => {
