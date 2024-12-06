@@ -14,14 +14,12 @@ router.get('/history', async (req, res) => {
                 t.test_period,
                 t.passed,
                 t.notes,
-                u.first_name,
-                u.last_name
+                t.first_name,
+                t.last_name
             FROM esd_tests t
-            LEFT JOIN users u ON t.user_id = u.id
             ORDER BY t.test_date DESC, t.test_time DESC
         `);
         
-        // Log the first few results for debugging
         console.log('First few test results:', result.rows.slice(0, 3));
         
         res.json(result.rows);
@@ -34,7 +32,7 @@ router.get('/history', async (req, res) => {
 // Submit test result
 router.post('/submit', async (req, res) => {
     try {
-        const { user_id, test_period, passed, notes } = req.body;
+        const { first_name, last_name, test_period, passed, notes } = req.body;
         console.log('Received test submission:', req.body);
 
         // Ensure consistent period values
@@ -43,7 +41,8 @@ router.post('/submit', async (req, res) => {
         // Insert test using current timestamp
         const result = await pool.query(`
             INSERT INTO esd_tests (
-                user_id, 
+                first_name,
+                last_name,
                 test_period, 
                 passed, 
                 notes,
@@ -51,22 +50,24 @@ router.post('/submit', async (req, res) => {
                 test_time
             ) 
             VALUES (
-                $1, 
-                $2, 
+                $1,
+                $2,
                 $3, 
-                $4,
+                $4, 
+                $5,
                 CURRENT_DATE,
                 CURRENT_TIME
             )
             RETURNING 
                 id,
-                user_id,
+                first_name,
+                last_name,
                 test_period,
                 passed,
                 notes,
                 test_date::text as test_date,
                 to_char(test_time::time, 'HH12:MI AM') as test_time
-        `, [user_id, normalizedPeriod, passed, notes]);
+        `, [first_name, last_name, normalizedPeriod, passed, notes]);
 
         console.log('Test submitted:', result.rows[0]);
         res.json({ 

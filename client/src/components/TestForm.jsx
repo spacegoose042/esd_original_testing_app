@@ -1,43 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import api from '../services/api';
 
 function TestForm() {
     const [formData, setFormData] = useState({
-        user_id: '',
+        first_name: '',
+        last_name: '',
         test_period: 'AM Test',
         passed: false,
         notes: ''
     });
-    const [users, setUsers] = useState([]);
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            setLoading(false);
-            return;
-        }
-
-        const fetchUsers = async () => {
-            try {
-                console.log('Fetching users...');
-                const response = await api.get('/users');
-                console.log('Users response:', response.data);
-                setUsers(Array.isArray(response.data) ? response.data : []);
-                setError('');
-            } catch (err) {
-                console.error('Error fetching users:', err);
-                setError(err.response?.data?.error || 'Failed to load users');
-                setUsers([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchUsers();
-    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -48,7 +21,8 @@ function TestForm() {
             
             setMessage(response.data.message || 'Test submitted successfully');
             setFormData({
-                user_id: '',
+                first_name: '',
+                last_name: '',
                 test_period: 'AM Test',
                 passed: false,
                 notes: ''
@@ -66,10 +40,6 @@ function TestForm() {
             [name]: type === 'checkbox' ? checked : value
         }));
     };
-
-    if (loading) {
-        return <div>Loading users...</div>;
-    }
 
     return (
         <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md">
@@ -90,22 +60,30 @@ function TestForm() {
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                     <label className="block text-gray-700 text-sm font-bold mb-2">
-                        User
+                        First Name
                     </label>
-                    <select
-                        name="user_id"
-                        value={formData.user_id}
+                    <input
+                        type="text"
+                        name="first_name"
+                        value={formData.first_name}
                         onChange={handleChange}
                         required
                         className="w-full px-3 py-2 border rounded-md"
-                    >
-                        <option value="">Select a user</option>
-                        {users.map(user => (
-                            <option key={user.id} value={user.id}>
-                                {user.first_name} {user.last_name}
-                            </option>
-                        ))}
-                    </select>
+                    />
+                </div>
+
+                <div>
+                    <label className="block text-gray-700 text-sm font-bold mb-2">
+                        Last Name
+                    </label>
+                    <input
+                        type="text"
+                        name="last_name"
+                        value={formData.last_name}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-3 py-2 border rounded-md"
+                    />
                 </div>
 
                 <div>
