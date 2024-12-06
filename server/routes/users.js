@@ -9,13 +9,17 @@ router.get('/', auth, async (req, res) => {
         console.log('Fetching users with params:', req.query);
         const { showInactive } = req.query;
         
+        // Log the database connection status
+        const testConnection = await pool.query('SELECT NOW()');
+        console.log('Database connection test successful:', testConnection.rows[0]);
+        
         const query = `
             SELECT 
                 id, 
                 first_name, 
                 last_name, 
                 COALESCE(email, '') as email,
-                is_admin, 
+                COALESCE(is_admin, false) as is_admin, 
                 COALESCE(is_active, true) as is_active,
                 created_at::text as created_at
             FROM users
@@ -25,14 +29,20 @@ router.get('/', auth, async (req, res) => {
         
         console.log('Executing query:', query);
         const result = await pool.query(query);
-        console.log(`Found ${result.rows.length} users`);
+        console.log(`Found ${result.rows.length} users:`, result.rows);
         
         res.json(result.rows);
     } catch (err) {
-        console.error('Error in GET /users:', err);
+        console.error('Detailed error in GET /users:', {
+            error: err,
+            message: err.message,
+            stack: err.stack,
+            query: err.query
+        });
         res.status(500).json({ 
             error: 'Server error',
-            details: err.message
+            details: err.message,
+            query: err.query
         });
     }
 });
@@ -47,7 +57,9 @@ router.patch('/:id/toggle-active', auth, async (req, res) => {
             `UPDATE users 
              SET is_active = NOT COALESCE(is_active, true) 
              WHERE id = $1 
-             RETURNING id, first_name, last_name, COALESCE(email, '') as email, is_admin, is_active`,
+             RETURNING id, first_name, last_name, COALESCE(email, '') as email, 
+                       COALESCE(is_admin, false) as is_admin, 
+                       COALESCE(is_active, true) as is_active`,
             [id]
         );
 
@@ -59,7 +71,12 @@ router.patch('/:id/toggle-active', auth, async (req, res) => {
         console.log('Successfully toggled user status:', result.rows[0]);
         res.json(result.rows[0]);
     } catch (err) {
-        console.error('Error in PATCH /users/:id/toggle-active:', err);
+        console.error('Error in PATCH /users/:id/toggle-active:', {
+            error: err,
+            message: err.message,
+            stack: err.stack,
+            query: err.query
+        });
         res.status(500).json({ 
             error: 'Server error',
             details: err.message
