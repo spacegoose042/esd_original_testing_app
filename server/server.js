@@ -118,19 +118,48 @@ const staticPath = path.join(__dirname, '../client/dist');
 app.use(express.static(staticPath, {
     setHeaders: (res, filePath) => {
         if (filePath.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript');
+            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        } else if (filePath.endsWith('.mjs')) {
+            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
         } else if (filePath.endsWith('.css')) {
-            res.setHeader('Content-Type', 'text/css');
+            res.setHeader('Content-Type', 'text/css; charset=utf-8');
+        } else if (filePath.endsWith('.html')) {
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        } else if (filePath.endsWith('.json')) {
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
         }
-    }
+    },
+    // Add caching headers
+    maxAge: '1h',
+    immutable: true,
+    // Enable compression
+    compress: true
 }));
 
-// Handle client-side routing
+// Add this before the catch-all route
+app.use('/assets', express.static(path.join(staticPath, 'assets'), {
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        } else if (filePath.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css; charset=utf-8');
+        }
+    },
+    maxAge: '1y',
+    immutable: true,
+    compress: true
+}));
+
+// Handle client-side routing (keep this last)
 app.get('*', (req, res) => {
     if (req.path.startsWith('/api')) {
         return res.status(404).json({ error: 'API endpoint not found' });
     }
-    res.sendFile(path.join(staticPath, 'index.html'));
+    res.sendFile(path.join(staticPath, 'index.html'), {
+        headers: {
+            'Content-Type': 'text/html; charset=utf-8'
+        }
+    });
 });
 
 const PORT = process.env.PORT || 3001;
