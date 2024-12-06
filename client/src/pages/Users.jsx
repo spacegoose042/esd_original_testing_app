@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
 function Users() {
@@ -6,6 +7,7 @@ function Users() {
     const [showInactive, setShowInactive] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const navigate = useNavigate();
 
     const fetchUsers = async () => {
         try {
@@ -13,11 +15,23 @@ function Users() {
             const response = await api.get('/users', {
                 params: { showInactive }
             });
-            setUsers(response.data || []);
-            setError(null);
+            
+            // Check if response.data is an array
+            if (Array.isArray(response.data)) {
+                setUsers(response.data);
+                setError(null);
+            } else {
+                console.error('Invalid response format:', response.data);
+                setUsers([]);
+                setError('Invalid data format received');
+            }
         } catch (err) {
             console.error('Error fetching users:', err);
-            setError('Failed to fetch users');
+            if (err.response?.status === 401) {
+                navigate('/login');
+                return;
+            }
+            setError(err.response?.data?.error || 'Failed to fetch users');
             setUsers([]);
         } finally {
             setLoading(false);
@@ -34,7 +48,11 @@ function Users() {
             await fetchUsers();
         } catch (err) {
             console.error('Error updating user status:', err);
-            setError('Failed to update user status');
+            if (err.response?.status === 401) {
+                navigate('/login');
+                return;
+            }
+            setError(err.response?.data?.error || 'Failed to update user status');
         }
     };
 
@@ -44,6 +62,10 @@ function Users() {
 
     if (error) {
         return <div>{error}</div>;
+    }
+
+    if (!Array.isArray(users) || users.length === 0) {
+        return <div>No users found.</div>;
     }
 
     return (
