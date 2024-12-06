@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const baseURL = process.env.NODE_ENV === 'production' 
-    ? 'https://esdoriginaltestingapp-production.up.railway.app'
-    : '';
+    ? 'https://esdoriginaltestingapp-production.up.railway.app/api'
+    : '/api';
 
 const api = axios.create({
     baseURL,
@@ -22,10 +22,6 @@ api.interceptors.request.use(
             config.headers.Authorization = `Bearer ${token}`;
         }
         
-        if (config.url.startsWith('/api/')) {
-            config.url = config.url.replace('/api/', '/');
-        }
-        
         console.log('API Request:', {
             method: config.method,
             url: config.url,
@@ -42,7 +38,14 @@ api.interceptors.request.use(
 );
 
 api.interceptors.response.use(
-    response => response,
+    response => {
+        console.log('API Response:', {
+            url: response.config.url,
+            status: response.status,
+            data: response.data
+        });
+        return response;
+    },
     error => {
         console.error('API Response Error:', {
             message: error.message,

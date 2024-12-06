@@ -10,15 +10,20 @@ function Users() {
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const response = await api.get('/api/users', {
+            const response = await api.get('/users', {
                 params: { showInactive }
             });
+            
+            // Log the response for debugging
+            console.log('Users response:', response.data);
+            
+            // Ensure we always set an array
             setUsers(Array.isArray(response.data) ? response.data : []);
             setError(null);
         } catch (err) {
             console.error('Error fetching users:', err);
             setError('Failed to fetch users');
-            setUsers([]);
+            setUsers([]); // Reset to empty array on error
         } finally {
             setLoading(false);
         }
@@ -30,8 +35,8 @@ function Users() {
 
     const handleToggleActive = async (userId) => {
         try {
-            await api.patch(`/api/users/${userId}/toggle-active`);
-            await fetchUsers();
+            await api.patch(`/users/${userId}/toggle-active`);
+            await fetchUsers(); // Refresh the list
         } catch (err) {
             console.error('Error updating user status:', err);
             setError('Failed to update user status');
