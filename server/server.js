@@ -114,26 +114,34 @@ app.use('/api/debug', require('./routes/debug'));
 // Serve static files from the React app
 const staticPath = path.join(__dirname, '../client/dist');
 
-// Serve static files with proper MIME types
-app.use(express.static(staticPath, {
+// Serve assets directory first with strict MIME types
+app.use('/assets', express.static(path.join(staticPath, 'assets'), {
     setHeaders: (res, filePath) => {
         if (filePath.endsWith('.js')) {
-            // Ensure module scripts are served with the correct MIME type
             res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
         } else if (filePath.endsWith('.css')) {
             res.setHeader('Content-Type', 'text/css; charset=utf-8');
-        } else if (filePath.endsWith('.html')) {
+        }
+    },
+    maxAge: '1y',
+    immutable: true
+}));
+
+// Then serve other static files
+app.use(express.static(staticPath, {
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.html')) {
             res.setHeader('Content-Type', 'text/html; charset=utf-8');
         }
     }
 }));
 
-// Serve index.html for all non-API routes
+// Handle all other routes by serving index.html
 app.get('*', (req, res) => {
-    if (!req.path.startsWith('/api')) {
-        res.sendFile(path.join(staticPath, 'index.html'));
-    } else {
+    if (req.path.startsWith('/api')) {
         res.status(404).json({ error: 'API endpoint not found' });
+    } else {
+        res.sendFile(path.join(staticPath, 'index.html'));
     }
 });
 
