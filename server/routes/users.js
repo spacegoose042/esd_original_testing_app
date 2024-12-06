@@ -48,10 +48,36 @@ router.get('/', auth, async (req, res) => {
     }
 });
 
+// Get all managers (must come before /:id route)
+router.get('/managers', auth, async (req, res) => {
+    try {
+        console.log('Fetching managers');
+        const result = await pool.query(`
+            SELECT 
+                u.id,
+                u.first_name,
+                u.last_name,
+                d.name as department_name
+            FROM users u
+            LEFT JOIN departments d ON u.department_id = d.id
+            WHERE u.is_manager = true
+            ORDER BY u.first_name, u.last_name
+        `);
+        
+        console.log(`Found ${result.rows.length} managers`);
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error fetching managers:', err);
+        res.status(500).json({ error: 'Failed to fetch managers' });
+    }
+});
+
 // Get single user
 router.get('/:id', auth, async (req, res) => {
     try {
         const { id } = req.params;
+        console.log('Fetching user:', id);
+        
         const result = await pool.query(`
             SELECT 
                 u.id, 
@@ -68,35 +94,15 @@ router.get('/:id', auth, async (req, res) => {
         `, [id]);
 
         if (result.rows.length === 0) {
+            console.log('User not found:', id);
             return res.status(404).json({ error: 'User not found' });
         }
 
+        console.log('Found user:', result.rows[0]);
         res.json(result.rows[0]);
     } catch (err) {
         console.error('Error fetching user:', err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-// Get all managers
-router.get('/managers', auth, async (req, res) => {
-    try {
-        const result = await pool.query(`
-            SELECT 
-                u.id,
-                u.first_name,
-                u.last_name,
-                d.name as department_name
-            FROM users u
-            LEFT JOIN departments d ON u.department_id = d.id
-            WHERE u.is_manager = true
-            ORDER BY u.first_name, u.last_name
-        `);
-        
-        res.json(result.rows);
-    } catch (err) {
-        console.error('Error fetching managers:', err);
-        res.status(500).json({ error: 'Failed to fetch managers' });
+        res.status(500).json({ error: 'Server error', details: err.message });
     }
 });
 
@@ -105,6 +111,7 @@ router.put('/:id', auth, async (req, res) => {
     try {
         const { id } = req.params;
         const { first_name, last_name, manager_id, is_admin } = req.body;
+        console.log('Updating user:', { id, first_name, last_name, manager_id, is_admin });
 
         const result = await pool.query(`
             UPDATE users 
@@ -112,20 +119,21 @@ router.put('/:id', auth, async (req, res) => {
                 first_name = $1,
                 last_name = $2,
                 manager_id = $3,
-                is_admin = $4,
-                updated_at = CURRENT_TIMESTAMP
+                is_admin = $4
             WHERE id = $5
             RETURNING *
         `, [first_name, last_name, manager_id, is_admin, id]);
 
         if (result.rows.length === 0) {
+            console.log('User not found for update:', id);
             return res.status(404).json({ error: 'User not found' });
         }
 
+        console.log('User updated successfully:', result.rows[0]);
         res.json(result.rows[0]);
     } catch (err) {
         console.error('Error updating user:', err);
-        res.status(500).json({ error: 'Failed to update user' });
+        res.status(500).json({ error: 'Failed to update user', details: err.message });
     }
 });
 
