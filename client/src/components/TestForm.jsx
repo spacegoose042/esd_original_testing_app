@@ -5,7 +5,7 @@ function TestForm() {
     const [formData, setFormData] = useState({
         fullName: '',
         test_period: '',
-        passed: false,
+        passed: null,
         notes: ''
     });
     const [message, setMessage] = useState('');
@@ -34,6 +34,11 @@ function TestForm() {
             return;
         }
 
+        if (formData.passed === null) {
+            setError('Please select pass or fail');
+            return;
+        }
+
         try {
             const names = formData.fullName.split(' ');
             const firstName = names[0];
@@ -55,7 +60,7 @@ function TestForm() {
             setFormData({
                 fullName: '',
                 test_period: '',
-                passed: false,
+                passed: null,
                 notes: ''
             });
         } catch (err) {
@@ -87,10 +92,10 @@ function TestForm() {
     };
 
     const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
+        const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : value
+            [name]: value
         }));
     };
 
@@ -169,18 +174,34 @@ function TestForm() {
                     </div>
                 </div>
 
-                <div className="flex items-center">
-                    <input
-                        type="checkbox"
-                        id="passed"
-                        name="passed"
-                        checked={formData.passed}
-                        onChange={handleChange}
-                        className="h-4 w-4 text-blue-600"
-                    />
-                    <label htmlFor="passed" className="ml-2 block text-gray-700">
-                        Test Passed
+                <div>
+                    <label className="block text-gray-700 text-sm font-bold mb-2">
+                        Test Result
                     </label>
+                    <div className="grid grid-cols-2 gap-4">
+                        <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, passed: true }))}
+                            className={`py-6 px-4 text-lg font-semibold rounded-lg transition-colors duration-200 ${
+                                formData.passed === true
+                                ? 'bg-green-600 text-white'
+                                : 'bg-green-100 text-green-600 hover:bg-green-200'
+                            }`}
+                        >
+                            PASS
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, passed: false }))}
+                            className={`py-6 px-4 text-lg font-semibold rounded-lg transition-colors duration-200 ${
+                                formData.passed === false
+                                ? 'bg-red-600 text-white'
+                                : 'bg-red-100 text-red-600 hover:bg-red-200'
+                            }`}
+                        >
+                            FAIL
+                        </button>
+                    </div>
                 </div>
 
                 <div>
