@@ -28,6 +28,26 @@ router.get('/history', async (req, res) => {
     }
 });
 
+// Get active users for autocomplete
+router.get('/active-users', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT DISTINCT 
+                first_name || ' ' || last_name as full_name,
+                first_name,
+                last_name
+            FROM users 
+            WHERE first_name IS NOT NULL 
+            AND last_name IS NOT NULL
+            ORDER BY full_name
+        `);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching active users:', error);
+        res.status(500).json({ error: 'Failed to fetch active users' });
+    }
+});
+
 // Submit test result
 router.post('/submit', async (req, res) => {
     const client = await pool.connect();

@@ -1,28 +1,53 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../services/api';
 
 function TestForm() {
     const [formData, setFormData] = useState({
-        first_name: '',
-        last_name: '',
+        fullName: '',
         test_period: 'AM Test',
         passed: false,
         notes: ''
     });
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
+    const [activeUsers, setActiveUsers] = useState([]);
+    const [suggestions, setSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+
+    useEffect(() => {
+        const fetchActiveUsers = async () => {
+            try {
+                const response = await api.get('/tests/active-users');
+                setActiveUsers(response.data);
+            } catch (err) {
+                console.error('Failed to fetch active users:', err);
+            }
+        };
+        fetchActiveUsers();
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            console.log('Submitting test:', formData);
-            const response = await api.post('/tests/submit', formData);
+            const names = formData.fullName.split(' ');
+            const firstName = names[0];
+            const lastName = names.slice(1).join(' ');
+
+            const submitData = {
+                first_name: firstName,
+                last_name: lastName,
+                test_period: formData.test_period,
+                passed: formData.passed,
+                notes: formData.notes
+            };
+
+            console.log('Submitting test:', submitData);
+            const response = await api.post('/tests/submit', submitData);
             console.log('Submit response:', response.data);
             
             setMessage(response.data.message || 'Test submitted successfully');
             setFormData({
-                first_name: '',
-                last_name: '',
+                fullName: '',
                 test_period: 'AM Test',
                 passed: false,
                 notes: ''
@@ -31,6 +56,28 @@ function TestForm() {
             console.error('Submit error:', err);
             setError(err.response?.data?.error || 'Failed to submit test');
         }
+    };
+
+    const handleNameChange = (e) => {
+        const value = e.target.value;
+        setFormData(prev => ({ ...prev, fullName: value }));
+        
+        if (value.length > 0) {
+            const filtered = activeUsers.filter(user => 
+                user.full_name.toLowerCase().includes(value.toLowerCase())
+            );
+            setSuggestions(filtered);
+            setShowSuggestions(true);
+        } else {
+            setSuggestions([]);
+            setShowSuggestions(false);
+        }
+    };
+
+    const handleSuggestionClick = (suggestion) => {
+        setFormData(prev => ({ ...prev, fullName: suggestion.full_name }));
+        setSuggestions([]);
+        setShowSuggestions(false);
     };
 
     const handleChange = (e) => {
@@ -58,32 +105,32 @@ function TestForm() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
+                <div className="relative">
                     <label className="block text-gray-700 text-sm font-bold mb-2">
-                        First Name
+                        Full Name
                     </label>
                     <input
                         type="text"
-                        name="first_name"
-                        value={formData.first_name}
-                        onChange={handleChange}
+                        name="fullName"
+                        value={formData.fullName}
+                        onChange={handleNameChange}
                         required
                         className="w-full px-3 py-2 border rounded-md"
+                        placeholder="Enter full name"
                     />
-                </div>
-
-                <div>
-                    <label className="block text-gray-700 text-sm font-bold mb-2">
-                        Last Name
-                    </label>
-                    <input
-                        type="text"
-                        name="last_name"
-                        value={formData.last_name}
-                        onChange={handleChange}
-                        required
-                        className="w-full px-3 py-2 border rounded-md"
-                    />
+                    {showSuggestions && suggestions.length > 0 && (
+                        <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-60 overflow-auto">
+                            {suggestions.map((suggestion, index) => (
+                                <div
+                                    key={index}
+                                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                    onClick={() => handleSuggestionClick(suggestion)}
+                                >
+                                    {suggestion.full_name}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 <div>
