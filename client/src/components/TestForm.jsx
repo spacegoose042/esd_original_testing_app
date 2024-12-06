@@ -210,11 +210,18 @@ function TestForm() {
                     </div>
                 </div>
 
-                <div>
+                <button
+                    type="submit"
+                    className="w-full bg-blue-500 text-white py-6 px-4 text-lg font-semibold rounded-lg hover:bg-blue-600 transition-colors duration-200"
+                >
+                    Submit Test
+                </button>
+
+                <div className="mt-2">
                     <button
                         type="button"
                         onClick={toggleNotes}
-                        className={`w-full py-6 px-4 text-lg font-semibold rounded-lg transition-colors duration-200 ${
+                        className={`w-full py-3 px-4 text-base font-medium rounded-lg transition-colors duration-200 ${
                             showNotes
                             ? 'bg-gray-600 text-white'
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -236,13 +243,6 @@ function TestForm() {
                         </div>
                     )}
                 </div>
-
-                <button
-                    type="submit"
-                    className="w-full bg-blue-500 text-white py-6 px-4 text-lg font-semibold rounded-lg hover:bg-blue-600 transition-colors duration-200"
-                >
-                    Submit Test
-                </button>
             </form>
         </div>
     );
