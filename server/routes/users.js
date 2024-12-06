@@ -162,11 +162,13 @@ router.get('/:id', auth, async (req, res) => {
 
 // Update user
 router.put('/:id', auth, async (req, res) => {
+    const client = await pool.connect();
     try {
         const { id } = req.params;
         console.log('Update request received:', {
             id,
-            body: req.body
+            body: req.body,
+            headers: req.headers
         });
 
         const { 
@@ -177,26 +179,41 @@ router.put('/:id', auth, async (req, res) => {
             is_active 
         } = req.body;
 
+        await client.query('BEGIN');
+
         // First check if the user exists
-        const checkUser = await pool.query('SELECT id FROM users WHERE id = $1', [id]);
+        const checkUser = await client.query('SELECT id, email FROM users WHERE id = $1', [id]);
         if (checkUser.rows.length === 0) {
             console.log('User not found:', id);
+            await client.query('ROLLBACK');
             return res.status(404).json({ error: 'User not found' });
         }
 
+        console.log('Found user:', checkUser.rows[0]);
+
         // If manager_id is provided, check if the manager exists
         if (manager_id) {
-            const checkManager = await pool.query('SELECT id FROM users WHERE id = $1', [manager_id]);
+            const checkManager = await client.query('SELECT id FROM users WHERE id = $1', [manager_id]);
             if (checkManager.rows.length === 0) {
                 console.log('Manager not found:', manager_id);
+                await client.query('ROLLBACK');
                 return res.status(400).json({ error: 'Selected manager does not exist' });
             }
+            console.log('Found manager:', checkManager.rows[0]);
         }
 
         // Build update fields and values array
         const updateFields = [];
         const values = [];
         let paramCount = 1;
+
+        console.log('Building update query with fields:', {
+            first_name,
+            last_name,
+            manager_id,
+            is_admin,
+            is_active
+        });
 
         if (first_name !== undefined) {
             updateFields.push(`first_name = $${paramCount}`);
@@ -215,12 +232,12 @@ router.put('/:id', auth, async (req, res) => {
         }
         if (is_admin !== undefined) {
             updateFields.push(`is_admin = $${paramCount}`);
-            values.push(is_admin);
+            values.push(Boolean(is_admin));
             paramCount++;
         }
         if (is_active !== undefined) {
             updateFields.push(`is_active = $${paramCount}`);
-            values.push(is_active);
+            values.push(Boolean(is_active));
             paramCount++;
         }
 
@@ -228,6 +245,7 @@ router.put('/:id', auth, async (req, res) => {
         values.push(id);
 
         if (updateFields.length === 0) {
+            await client.query('ROLLBACK');
             return res.status(400).json({ error: 'No fields to update' });
         }
 
@@ -252,15 +270,19 @@ router.put('/:id', auth, async (req, res) => {
             paramCount
         });
 
-        const result = await pool.query(query, values);
+        const result = await client.query(query, values);
         
         if (result.rows.length === 0) {
+            await client.query('ROLLBACK');
             return res.status(404).json({ error: 'User not found after update' });
         }
+
+        await client.query('COMMIT');
 
         console.log('User updated successfully:', result.rows[0]);
         res.json(result.rows[0]);
     } catch (err) {
+        await client.query('ROLLBACK');
         console.error('Detailed error updating user:', {
             error: err,
             message: err.message,
@@ -271,14 +293,23 @@ router.put('/:id', auth, async (req, res) => {
             position: err.position,
             detail: err.detail,
             hint: err.hint,
-            where: err.where
+            where: err.where,
+            severity: err.severity,
+            schema: err.schema,
+            table: err.table,
+            column: err.column,
+            dataType: err.dataType,
+            constraint: err.constraint
         });
         res.status(500).json({ 
             error: 'Failed to update user',
             details: err.message,
             code: err.code,
-            detail: err.detail
+            detail: err.detail,
+            constraint: err.constraint
         });
+    } finally {
+        client.release();
     }
 });
 
