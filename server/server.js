@@ -118,11 +118,13 @@ const staticPath = path.join(__dirname, '../client/dist');
 app.use(express.static(staticPath, {
     setHeaders: (res, filePath) => {
         if (filePath.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
+            res.setHeader('Content-Type', 'application/javascript');
+        } else if (filePath.endsWith('.mjs')) {
+            res.setHeader('Content-Type', 'application/javascript');
         } else if (filePath.endsWith('.css')) {
-            res.setHeader('Content-Type', 'text/css; charset=UTF-8');
+            res.setHeader('Content-Type', 'text/css');
         } else if (filePath.endsWith('.html')) {
-            res.setHeader('Content-Type', 'text/html; charset=UTF-8');
+            res.setHeader('Content-Type', 'text/html');
         }
     }
 }));
