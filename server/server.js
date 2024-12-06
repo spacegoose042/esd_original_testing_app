@@ -113,18 +113,35 @@ app.use('/api/debug', require('./routes/debug'));
 
 const staticPath = path.join(__dirname, '../client/dist');
 
-// Serve static files with proper MIME types
-app.use(express.static(staticPath, {
-    setHeaders: (res, filepath) => {
-        if (filepath.endsWith('.js')) {
-            res.set('Content-Type', 'application/javascript');
-        } else if (filepath.endsWith('.css')) {
-            res.set('Content-Type', 'text/css');
-        }
-    }
-}));
+// Handle assets first
+app.get('/assets/*', (req, res, next) => {
+    const filePath = path.join(staticPath, req.path);
+    console.log('Asset request:', {
+        requestPath: req.path,
+        fullPath: filePath
+    });
 
-// Handle client-side routing
+    if (filePath.endsWith('.js')) {
+        res.set('Content-Type', 'application/javascript');
+    } else if (filePath.endsWith('.css')) {
+        res.set('Content-Type', 'text/css');
+    }
+
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            console.error('Error serving asset:', {
+                path: filePath,
+                error: err.message
+            });
+            next(err);
+        }
+    });
+});
+
+// Then serve other static files
+app.use(express.static(staticPath));
+
+// Finally, handle client-side routing
 app.get('*', (req, res) => {
     if (req.path.startsWith('/api')) {
         res.status(404).json({ error: 'API endpoint not found' });
