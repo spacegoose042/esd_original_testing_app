@@ -264,19 +264,16 @@ router.post('/', auth, async (req, res) => {
             }
         }
 
-        // Generate a random password for managers and admins
-        let hashedPassword = null;
-        let tempPassword = null;
-        if (is_manager || is_admin) {
-            if (!email) {
-                return res.status(400).json({ 
-                    error: 'Email is required for managers and admins'
-                });
-            }
-            // Generate a random password
-            tempPassword = Math.random().toString(36).slice(-8);
-            hashedPassword = await bcrypt.hash(tempPassword, 10);
-            console.log('Generated temporary password for new manager/admin:', tempPassword);
+        // Generate a password for all users (since it's required in the database)
+        const tempPassword = Math.random().toString(36).slice(-8);
+        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+        console.log('Generated password for new user:', tempPassword);
+
+        // Validate email for managers and admins
+        if ((is_manager || is_admin) && !email) {
+            return res.status(400).json({ 
+                error: 'Email is required for managers and admins'
+            });
         }
 
         const query = `
@@ -315,15 +312,15 @@ router.post('/', auth, async (req, res) => {
 
         const response = {
             ...result.rows[0],
-            ...(tempPassword && { 
-                tempPassword,
-                message: 'User created with temporary password. Please provide this password to the user.'
-            })
+            tempPassword,
+            message: is_manager || is_admin ? 
+                'User created with temporary password. Please provide this password to the user.' :
+                'User created successfully. Password not required for regular users.'
         };
 
         console.log('User created successfully:', {
             ...response,
-            tempPassword: tempPassword ? '(password logged above)' : undefined
+            tempPassword: '(password logged above)'
         });
         res.status(201).json(response);
     } catch (err) {
