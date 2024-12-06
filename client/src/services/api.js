@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const baseURL = process.env.NODE_ENV === 'production' 
-    ? 'https://esdoriginaltestingapp-production.up.railway.app/api'
-    : '/api';
+    ? 'https://esdoriginaltestingapp-production.up.railway.app'
+    : '';
 
 const api = axios.create({
     baseURL,
@@ -20,6 +20,10 @@ api.interceptors.request.use(
         
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
+        }
+        
+        if (config.url.startsWith('/api/')) {
+            config.url = config.url.replace('/api/', '/');
         }
         
         console.log('API Request:', {
