@@ -111,38 +111,28 @@ app.use('/api/tests', require('./routes/tests'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/debug', require('./routes/debug'));
 
-// Serve static files from the React app
 const staticPath = path.join(__dirname, '../client/dist');
 
-// Serve assets directory first with strict MIME types
-app.use('/assets', express.static(path.join(staticPath, 'assets'), {
+// Serve static assets with strict MIME types
+app.use('/', express.static(staticPath, {
     setHeaders: (res, filePath) => {
         if (filePath.endsWith('.js')) {
             res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
         } else if (filePath.endsWith('.css')) {
             res.setHeader('Content-Type', 'text/css; charset=utf-8');
-        }
-    },
-    maxAge: '1y',
-    immutable: true
-}));
-
-// Then serve other static files
-app.use(express.static(staticPath, {
-    setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.html')) {
+        } else if (filePath.endsWith('.html')) {
             res.setHeader('Content-Type', 'text/html; charset=utf-8');
         }
     }
 }));
 
-// Handle all other routes by serving index.html
+// Handle client-side routing
 app.get('*', (req, res) => {
     if (req.path.startsWith('/api')) {
         res.status(404).json({ error: 'API endpoint not found' });
-    } else {
-        res.sendFile(path.join(staticPath, 'index.html'));
+        return;
     }
+    res.sendFile(path.join(staticPath, 'index.html'));
 });
 
 const PORT = process.env.PORT || 3001;
