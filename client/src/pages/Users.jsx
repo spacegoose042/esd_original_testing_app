@@ -50,11 +50,12 @@ function UserEdit({ userId, onClose, onUpdate }) {
         try {
             console.log('Submitting update with data:', formData);
             
-            // Only send essential fields
+            // Send all required fields
             const updateData = {
                 firstName: formData.firstName.trim(),
                 lastName: formData.lastName.trim(),
-                managerId: formData.managerId
+                managerId: formData.managerId,
+                isAdmin: Boolean(formData.isAdmin)
             };
 
             console.log('Transformed update data:', updateData);

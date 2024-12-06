@@ -164,7 +164,7 @@ router.get('/:id', auth, async (req, res) => {
 router.put('/:id', auth, async (req, res) => {
     try {
         const { id } = req.params;
-        const { firstName, lastName, managerId, isAdmin, isActive } = req.body;
+        const { firstName, lastName, managerId, isAdmin } = req.body;
 
         console.log('Update request received:', {
             id,
@@ -177,15 +177,15 @@ router.put('/:id', auth, async (req, res) => {
             SET 
                 first_name = $1,
                 last_name = $2,
-                manager_id = $3
-            WHERE id = $4
+                manager_id = $3,
+                is_admin = $4
+            WHERE id = $5
             RETURNING 
                 id, 
                 first_name, 
                 last_name, 
                 email,
                 is_admin,
-                is_active,
                 manager_id,
                 department_id,
                 is_manager,
@@ -196,6 +196,7 @@ router.put('/:id', auth, async (req, res) => {
             firstName,
             lastName,
             managerId === '' ? null : managerId,
+            Boolean(isAdmin),
             id
         ];
 
