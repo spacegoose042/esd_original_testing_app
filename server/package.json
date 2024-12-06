@@ -18,9 +18,7 @@
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.12",
     "pg": "^8.13.1",
-    "jsonparse": "^1.3.1",
-    "csv-stringify": "^6.4.6",
-    "csv-parse": "^5.5.5"
+    "csv-stringify": "^6.4.6"
   },
   "devDependencies": {
     "nodemon": "^3.1.7",

@@ -1,5 +1,5 @@
 const nodemailer = require('nodemailer');
-const { stringify } = require('csv-stringify/sync');
+const { stringify } = require('csv-stringify');
 const pool = require('../config/db');
 
 // Email templates
@@ -119,9 +119,18 @@ async function sendWeeklyReport() {
             manager_email: 'Manager Email'
         };
 
-        const csv = stringify(tests, {
-            header: true,
-            columns: columns
+        // Create CSV string synchronously
+        let csvContent = '';
+        // Add headers
+        csvContent += Object.values(columns).join(',') + '\n';
+        // Add data rows
+        tests.forEach(test => {
+            const row = Object.keys(columns).map(key => {
+                const value = test[key] || '';
+                // Escape commas and quotes in values
+                return `"${value.toString().replace(/"/g, '""')}"`;
+            });
+            csvContent += row.join(',') + '\n';
         });
 
         const endDate = new Date().toLocaleDateString();
@@ -136,7 +145,7 @@ async function sendWeeklyReport() {
             html: template.html,
             attachments: [{
                 filename: `esd_tests_${startDate}_${endDate}.csv`,
-                content: csv
+                content: csvContent
             }]
         };
 
