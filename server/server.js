@@ -12,65 +12,52 @@ async function runEmailMigration() {
         
         await client.query('BEGIN');
 
-        // First, update any NULL emails to empty string to avoid constraint violation
-        await client.query(`
-            UPDATE users 
-            SET email = '' 
-            WHERE email IS NULL;
-        `);
-        console.log('Updated NULL emails to empty string');
-
-        // Drop existing constraints
+        // Drop only email-related constraints
         await client.query(`
             DO $$ 
             BEGIN
-                -- Drop foreign key constraints that might reference users table
-                ALTER TABLE users DROP CONSTRAINT IF EXISTS fk_users_manager;
-                
-                -- Drop the primary key temporarily to allow column modifications
-                ALTER TABLE users DROP CONSTRAINT IF EXISTS users_pkey;
-                
                 -- Drop email constraints
                 ALTER TABLE users DROP CONSTRAINT IF EXISTS users_email_key;
                 ALTER TABLE users DROP CONSTRAINT IF EXISTS users_email_unique;
                 ALTER TABLE users DROP CONSTRAINT IF EXISTS users_email_not_null;
+            EXCEPTION 
+                WHEN others THEN 
+                    -- Log error but continue
+                    RAISE NOTICE 'Error dropping constraints: %', SQLERRM;
             END $$;
         `);
-        console.log('Dropped existing constraints');
+        console.log('Attempted to drop email constraints');
 
-        // Modify columns to be nullable
-        await client.query(`
-            ALTER TABLE users 
-            ALTER COLUMN email DROP NOT NULL,
-            ALTER COLUMN password DROP NOT NULL;
-        `);
-        console.log('Modified columns to be nullable');
-
-        // Restore primary key and foreign key constraints
+        // Try to modify email column directly
         await client.query(`
             DO $$ 
             BEGIN
-                -- Restore primary key
-                ALTER TABLE users ADD CONSTRAINT users_pkey PRIMARY KEY (id);
-                
-                -- Restore foreign key constraint
-                ALTER TABLE users ADD CONSTRAINT fk_users_manager 
-                    FOREIGN KEY (manager_id) REFERENCES users(id);
-                
-                -- Add new email unique constraint that allows nulls
-                ALTER TABLE users ADD CONSTRAINT users_email_unique 
-                    UNIQUE (email) 
-                    WHERE email IS NOT NULL AND email != '';
+                -- First attempt: try direct ALTER COLUMN
+                ALTER TABLE users ALTER COLUMN email DROP NOT NULL;
+            EXCEPTION 
+                WHEN others THEN
+                    -- If direct approach fails, try with a temporary column
+                    ALTER TABLE users ADD COLUMN temp_email VARCHAR(255);
+                    UPDATE users SET temp_email = email;
+                    ALTER TABLE users DROP COLUMN email;
+                    ALTER TABLE users RENAME COLUMN temp_email TO email;
             END $$;
         `);
-        console.log('Restored constraints with new configuration');
+        console.log('Modified email column');
+
+        // Add new email unique constraint that allows nulls
+        await client.query(`
+            ALTER TABLE users ADD CONSTRAINT users_email_unique 
+                UNIQUE (email) 
+                WHERE email IS NOT NULL AND email != '';
+        `);
+        console.log('Added new email constraint');
 
         await client.query('COMMIT');
         console.log('Email migration completed successfully');
     } catch (error) {
         await client.query('ROLLBACK');
         console.error('Email migration failed:', error);
-        // Log detailed error information
         console.error('Error details:', {
             message: error.message,
             code: error.code,
