@@ -7,30 +7,39 @@ function UserEdit({ userId, onClose, onUpdate }) {
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
-        managerEmail: '',
+        managerId: '',
         isAdmin: false
     });
+    const [managers, setManagers] = useState([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
     useEffect(() => {
-        if (userId) {
-            const fetchUser = async () => {
-                try {
-                    const response = await api.get(`/users/${userId}`);
-                    setFormData({
-                        firstName: response.data.first_name,
-                        lastName: response.data.last_name,
-                        managerEmail: response.data.manager_email || '',
-                        isAdmin: response.data.is_admin
-                    });
-                } catch (err) {
-                    console.error('Error fetching user:', err);
-                    setError(err.response?.data?.error || 'Failed to load user data');
-                }
-            };
-            fetchUser();
-        }
+        const fetchData = async () => {
+            try {
+                // Fetch both user data and managers list
+                const [userResponse, managersResponse] = await Promise.all([
+                    api.get(`/users/${userId}`),
+                    api.get('/users')
+                ]);
+
+                // Filter managers from all users
+                const managersList = managersResponse.data.filter(user => user.is_manager);
+                setManagers(managersList);
+
+                // Set user data
+                setFormData({
+                    firstName: userResponse.data.first_name,
+                    lastName: userResponse.data.last_name,
+                    managerId: userResponse.data.manager_id || '',
+                    isAdmin: userResponse.data.is_admin
+                });
+            } catch (err) {
+                console.error('Error fetching data:', err);
+                setError(err.response?.data?.error || 'Failed to load data');
+            }
+        };
+        fetchData();
     }, [userId]);
 
     const handleSubmit = async (e) => {
@@ -39,7 +48,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
             await api.put(`/users/${userId}`, {
                 first_name: formData.firstName,
                 last_name: formData.lastName,
-                manager_email: formData.managerEmail,
+                manager_id: formData.managerId,
                 is_admin: formData.isAdmin
             });
 
@@ -92,13 +101,21 @@ function UserEdit({ userId, onClose, onUpdate }) {
                     </div>
 
                     <div className="form-group">
-                        <label>Manager's Email</label>
-                        <input
-                            type="email"
-                            name="managerEmail"
-                            value={formData.managerEmail}
+                        <label>Manager</label>
+                        <select
+                            name="managerId"
+                            value={formData.managerId}
                             onChange={handleChange}
-                        />
+                            required
+                            className="manager-select"
+                        >
+                            <option value="">Select a Manager</option>
+                            {managers.map(manager => (
+                                <option key={manager.id} value={manager.id}>
+                                    {manager.first_name} {manager.last_name}
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
                     <div className="form-group checkbox">
