@@ -265,7 +265,8 @@ router.post('/', auth, async (req, res) => {
         }
 
         // Generate a random password for managers and admins
-        let password_hash = null;
+        let hashedPassword = null;
+        let tempPassword = null;
         if (is_manager || is_admin) {
             if (!email) {
                 return res.status(400).json({ 
@@ -273,8 +274,8 @@ router.post('/', auth, async (req, res) => {
                 });
             }
             // Generate a random password
-            const tempPassword = Math.random().toString(36).slice(-8);
-            password_hash = await bcrypt.hash(tempPassword, 10);
+            tempPassword = Math.random().toString(36).slice(-8);
+            hashedPassword = await bcrypt.hash(tempPassword, 10);
             console.log('Generated temporary password for new manager/admin:', tempPassword);
         }
 
@@ -283,7 +284,7 @@ router.post('/', auth, async (req, res) => {
                 first_name,
                 last_name,
                 email,
-                password_hash,
+                password,
                 manager_id,
                 department_id,
                 is_manager,
@@ -305,7 +306,7 @@ router.post('/', auth, async (req, res) => {
             first_name,
             last_name,
             email || null,
-            password_hash,
+            hashedPassword,
             manager_id || null,
             department_id || null,
             is_manager || false,
@@ -314,12 +315,16 @@ router.post('/', auth, async (req, res) => {
 
         const response = {
             ...result.rows[0],
-            ...(password_hash && { 
-                message: 'User created with temporary password. Please change it upon first login.'
+            ...(tempPassword && { 
+                tempPassword,
+                message: 'User created with temporary password. Please provide this password to the user.'
             })
         };
 
-        console.log('User created successfully:', response);
+        console.log('User created successfully:', {
+            ...response,
+            tempPassword: tempPassword ? '(password logged above)' : undefined
+        });
         res.status(201).json(response);
     } catch (err) {
         console.error('Error creating user:', {
