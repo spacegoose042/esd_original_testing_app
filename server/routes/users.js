@@ -164,6 +164,11 @@ router.get('/:id', auth, async (req, res) => {
 router.put('/:id', auth, async (req, res) => {
     try {
         const { id } = req.params;
+        console.log('Update request received:', {
+            id,
+            body: req.body
+        });
+
         const { 
             first_name, 
             last_name, 
@@ -175,6 +180,7 @@ router.put('/:id', auth, async (req, res) => {
         // First check if the user exists
         const checkUser = await pool.query('SELECT id FROM users WHERE id = $1', [id]);
         if (checkUser.rows.length === 0) {
+            console.log('User not found:', id);
             return res.status(404).json({ error: 'User not found' });
         }
 
@@ -182,6 +188,7 @@ router.put('/:id', auth, async (req, res) => {
         if (manager_id) {
             const checkManager = await pool.query('SELECT id FROM users WHERE id = $1', [manager_id]);
             if (checkManager.rows.length === 0) {
+                console.log('Manager not found:', manager_id);
                 return res.status(400).json({ error: 'Selected manager does not exist' });
             }
         }
@@ -190,6 +197,14 @@ router.put('/:id', auth, async (req, res) => {
         const updates = [];
         const values = [];
         let paramCount = 1;
+
+        console.log('Building update query with fields:', {
+            first_name,
+            last_name,
+            manager_id,
+            is_admin,
+            is_active
+        });
 
         if (first_name !== undefined) {
             updates.push(`first_name = $${paramCount}`);
@@ -235,19 +250,32 @@ router.put('/:id', auth, async (req, res) => {
                 created_at::text as created_at
         `;
 
+        console.log('Executing update query:', {
+            query,
+            values
+        });
+
         const result = await pool.query(query, values);
         console.log('User updated successfully:', result.rows[0]);
         res.json(result.rows[0]);
     } catch (err) {
-        console.error('Error updating user:', {
+        console.error('Detailed error updating user:', {
             error: err,
             message: err.message,
             stack: err.stack,
-            query: err.query
+            query: err.query,
+            parameters: err.parameters,
+            code: err.code,
+            position: err.position,
+            detail: err.detail,
+            hint: err.hint,
+            where: err.where
         });
         res.status(500).json({ 
             error: 'Failed to update user',
-            details: err.message
+            details: err.message,
+            code: err.code,
+            detail: err.detail
         });
     }
 });

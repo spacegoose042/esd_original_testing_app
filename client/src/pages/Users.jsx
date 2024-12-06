@@ -34,8 +34,8 @@ function UserEdit({ userId, onClose, onUpdate }) {
                     firstName: userResponse.data.first_name,
                     lastName: userResponse.data.last_name,
                     managerId: userResponse.data.manager_id || '',
-                    isAdmin: userResponse.data.is_admin,
-                    isActive: userResponse.data.is_active
+                    isAdmin: userResponse.data.is_admin || false,
+                    isActive: userResponse.data.is_active !== false // default to true if undefined
                 });
             } catch (err) {
                 console.error('Error fetching data:', err);
@@ -48,15 +48,20 @@ function UserEdit({ userId, onClose, onUpdate }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            console.log('Submitting update with data:', formData);
+            
             const updateData = {
                 first_name: formData.firstName,
                 last_name: formData.lastName,
-                manager_id: formData.managerId,
-                is_admin: formData.isAdmin,
-                is_active: formData.isActive
+                manager_id: formData.managerId || null,
+                is_admin: Boolean(formData.isAdmin),
+                is_active: Boolean(formData.isActive)
             };
 
-            await api.put(`/users/${userId}`, updateData);
+            console.log('Transformed update data:', updateData);
+
+            const response = await api.put(`/users/${userId}`, updateData);
+            console.log('Update response:', response.data);
 
             setSuccess('User updated successfully');
             setTimeout(() => {
@@ -64,6 +69,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
                 onClose();
             }, 2000);
         } catch (err) {
+            console.error('Update error:', err);
             setError(err.response?.data?.error || 'Failed to update user');
         }
     };
