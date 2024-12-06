@@ -114,17 +114,13 @@ app.use('/api/debug', require('./routes/debug'));
 // Serve static files from the React app
 const staticPath = path.join(__dirname, '../client/dist');
 
-// Set proper MIME types
+// Serve static files with proper MIME types
 app.use(express.static(staticPath, {
     setHeaders: (res, filePath) => {
         if (filePath.endsWith('.js')) {
             res.setHeader('Content-Type', 'application/javascript');
-        } else if (filePath.endsWith('.mjs')) {
-            res.setHeader('Content-Type', 'application/javascript');
         } else if (filePath.endsWith('.css')) {
             res.setHeader('Content-Type', 'text/css');
-        } else if (filePath.endsWith('.html')) {
-            res.setHeader('Content-Type', 'text/html');
         }
     }
 }));
