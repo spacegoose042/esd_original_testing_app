@@ -113,15 +113,16 @@ app.use('/api/debug', require('./routes/debug'));
 
 const staticPath = path.join(__dirname, '../client/dist');
 
-// Serve static assets with strict MIME types
-app.use('/', express.static(staticPath, {
+// Serve static files with proper MIME types
+app.use(express.static(staticPath));
+
+// Explicitly handle /assets/* requests
+app.use('/assets', express.static(path.join(staticPath, 'assets'), {
     setHeaders: (res, filePath) => {
         if (filePath.endsWith('.js')) {
             res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
         } else if (filePath.endsWith('.css')) {
             res.setHeader('Content-Type', 'text/css; charset=utf-8');
-        } else if (filePath.endsWith('.html')) {
-            res.setHeader('Content-Type', 'text/html; charset=utf-8');
         }
     }
 }));
