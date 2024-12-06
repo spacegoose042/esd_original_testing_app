@@ -23,11 +23,9 @@ function Navbar({ isAdmin, isAuthenticated }) {
                             <Link to="/" className="py-4 px-2 text-gray-500 hover:text-gray-900">
                                 Home
                             </Link>
-                            {isAuthenticated && (
-                                <Link to="/history" className="py-4 px-2 text-gray-500 hover:text-gray-900">
-                                    History
-                                </Link>
-                            )}
+                            <Link to="/history" className="py-4 px-2 text-gray-500 hover:text-gray-900">
+                                History
+                            </Link>
                             {isAdmin && (
                                 <>
                                     <Link to="/users" className="py-4 px-2 text-gray-500 hover:text-gray-900">
