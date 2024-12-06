@@ -3,10 +3,135 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import './Users.css';
 
+function UserEdit({ userId, onClose, onUpdate }) {
+    const [formData, setFormData] = useState({
+        firstName: '',
+        lastName: '',
+        managerEmail: '',
+        isAdmin: false
+    });
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+
+    useEffect(() => {
+        if (userId) {
+            const fetchUser = async () => {
+                try {
+                    const response = await api.get(`/users/${userId}`);
+                    setFormData({
+                        firstName: response.data.first_name,
+                        lastName: response.data.last_name,
+                        managerEmail: response.data.manager_email || '',
+                        isAdmin: response.data.is_admin
+                    });
+                } catch (err) {
+                    console.error('Error fetching user:', err);
+                    setError(err.response?.data?.error || 'Failed to load user data');
+                }
+            };
+            fetchUser();
+        }
+    }, [userId]);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await api.put(`/users/${userId}`, {
+                first_name: formData.firstName,
+                last_name: formData.lastName,
+                manager_email: formData.managerEmail,
+                is_admin: formData.isAdmin
+            });
+
+            setSuccess('User updated successfully');
+            setTimeout(() => {
+                onUpdate();
+                onClose();
+            }, 2000);
+        } catch (err) {
+            setError(err.response?.data?.error || 'Failed to update user');
+        }
+    };
+
+    const handleChange = (e) => {
+        const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+        setFormData({
+            ...formData,
+            [e.target.name]: value
+        });
+    };
+
+    return (
+        <div className="modal-overlay">
+            <div className="modal-content">
+                <h2>Edit User</h2>
+                <form onSubmit={handleSubmit}>
+                    {error && <div className="error-message">{error}</div>}
+                    {success && <div className="success-message">{success}</div>}
+                    
+                    <div className="form-group">
+                        <label>First Name</label>
+                        <input
+                            type="text"
+                            name="firstName"
+                            value={formData.firstName}
+                            onChange={handleChange}
+                            required
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Last Name</label>
+                        <input
+                            type="text"
+                            name="lastName"
+                            value={formData.lastName}
+                            onChange={handleChange}
+                            required
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Manager's Email</label>
+                        <input
+                            type="email"
+                            name="managerEmail"
+                            value={formData.managerEmail}
+                            onChange={handleChange}
+                        />
+                    </div>
+
+                    <div className="form-group checkbox">
+                        <label>
+                            <input
+                                type="checkbox"
+                                name="isAdmin"
+                                checked={formData.isAdmin}
+                                onChange={handleChange}
+                            />
+                            Is Admin
+                        </label>
+                    </div>
+
+                    <div className="button-group">
+                        <button type="button" onClick={onClose} className="cancel-button">
+                            Cancel
+                        </button>
+                        <button type="submit" className="save-button">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
 function Users() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [editingUserId, setEditingUserId] = useState(null);
     const navigate = useNavigate();
 
     const fetchUsers = async () => {
@@ -40,8 +165,11 @@ function Users() {
     }, []);
 
     const handleEdit = (userId) => {
-        // Navigate to edit page or open modal
-        console.log('Edit user:', userId);
+        setEditingUserId(userId);
+    };
+
+    const handleCloseEdit = () => {
+        setEditingUserId(null);
     };
 
     if (loading) {
@@ -100,6 +228,14 @@ function Users() {
                     </tbody>
                 </table>
             </div>
+
+            {editingUserId && (
+                <UserEdit
+                    userId={editingUserId}
+                    onClose={handleCloseEdit}
+                    onUpdate={fetchUsers}
+                />
+            )}
         </div>
     );
 }
