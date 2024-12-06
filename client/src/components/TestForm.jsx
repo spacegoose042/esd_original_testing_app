@@ -4,7 +4,7 @@ import api from '../services/api';
 function TestForm() {
     const [formData, setFormData] = useState({
         fullName: '',
-        test_period: 'AM Test',
+        test_period: '',
         passed: false,
         notes: ''
     });
@@ -28,6 +28,12 @@ function TestForm() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (!formData.test_period) {
+            setError('Please select a test period');
+            return;
+        }
+
         try {
             const names = formData.fullName.split(' ');
             const firstName = names[0];
@@ -48,7 +54,7 @@ function TestForm() {
             setMessage(response.data.message || 'Test submitted successfully');
             setFormData({
                 fullName: '',
-                test_period: 'AM Test',
+                test_period: '',
                 passed: false,
                 notes: ''
             });
@@ -137,15 +143,30 @@ function TestForm() {
                     <label className="block text-gray-700 text-sm font-bold mb-2">
                         Test Period
                     </label>
-                    <select
-                        name="test_period"
-                        value={formData.test_period}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border rounded-md"
-                    >
-                        <option value="AM Test">Morning Test</option>
-                        <option value="PM Test">Afternoon Test</option>
-                    </select>
+                    <div className="grid grid-cols-2 gap-4">
+                        <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, test_period: 'AM Test' }))}
+                            className={`py-6 px-4 text-lg font-semibold rounded-lg transition-colors duration-200 ${
+                                formData.test_period === 'AM Test'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+                            }`}
+                        >
+                            1st Test
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, test_period: 'PM Test' }))}
+                            className={`py-6 px-4 text-lg font-semibold rounded-lg transition-colors duration-200 ${
+                                formData.test_period === 'PM Test'
+                                ? 'bg-purple-600 text-white'
+                                : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
+                            }`}
+                        >
+                            2nd Test
+                        </button>
+                    </div>
                 </div>
 
                 <div className="flex items-center">
