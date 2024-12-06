@@ -224,4 +224,101 @@ router.put('/:id', auth, async (req, res) => {
     }
 });
 
+// Create new user
+router.post('/', auth, async (req, res) => {
+    try {
+        const {
+            first_name,
+            last_name,
+            email,
+            manager_id,
+            department_id,
+            is_manager,
+            is_admin
+        } = req.body;
+
+        console.log('Creating new user:', {
+            first_name,
+            last_name,
+            email,
+            manager_id,
+            department_id,
+            is_manager,
+            is_admin
+        });
+
+        // Validate department exists
+        if (department_id) {
+            const deptCheck = await pool.query('SELECT id FROM departments WHERE id = $1', [department_id]);
+            if (deptCheck.rows.length === 0) {
+                return res.status(400).json({ error: 'Selected department does not exist' });
+            }
+        }
+
+        // Validate manager exists
+        if (manager_id) {
+            const managerCheck = await pool.query('SELECT id FROM users WHERE id = $1', [manager_id]);
+            if (managerCheck.rows.length === 0) {
+                return res.status(400).json({ error: 'Selected manager does not exist' });
+            }
+        }
+
+        const query = `
+            INSERT INTO users (
+                first_name,
+                last_name,
+                email,
+                manager_id,
+                department_id,
+                is_manager,
+                is_admin
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING 
+                id,
+                first_name,
+                last_name,
+                email,
+                manager_id,
+                department_id,
+                is_manager,
+                is_admin,
+                created_at::text as created_at
+        `;
+
+        const result = await pool.query(query, [
+            first_name,
+            last_name,
+            email || null,  // Convert empty string to null
+            manager_id || null,  // Convert empty string to null
+            department_id || null,  // Convert empty string to null
+            is_manager || false,
+            is_admin || false
+        ]);
+
+        console.log('User created successfully:', result.rows[0]);
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        console.error('Error creating user:', {
+            error: err,
+            message: err.message,
+            stack: err.stack,
+            query: err.query,
+            body: req.body
+        });
+
+        // Check for unique constraint violation
+        if (err.code === '23505' && err.constraint === 'users_email_unique') {
+            return res.status(400).json({
+                error: 'Email already exists',
+                details: 'A user with this email address already exists'
+            });
+        }
+
+        res.status(500).json({
+            error: 'Failed to create user',
+            details: err.message
+        });
+    }
+});
+
 module.exports = router;
