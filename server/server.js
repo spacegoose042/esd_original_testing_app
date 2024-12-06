@@ -113,16 +113,47 @@ app.use('/api/debug', require('./routes/debug'));
 
 const staticPath = path.join(__dirname, '../client/dist');
 
-// Serve static files and assets with correct MIME types
-app.use(express.static(staticPath, {
-    setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.js')) {
-            res.set('Content-Type', 'application/javascript; charset=utf-8');
-        } else if (filePath.endsWith('.css')) {
-            res.set('Content-Type', 'text/css; charset=utf-8');
-        }
+// Explicitly handle assets with correct MIME types
+app.get('/assets/*', (req, res, next) => {
+    const assetPath = path.join(staticPath, req.path);
+    console.log('Asset request:', {
+        requestPath: req.path,
+        fullPath: assetPath
+    });
+
+    // Set MIME types explicitly
+    const ext = path.extname(assetPath);
+    switch (ext) {
+        case '.js':
+            res.set('Content-Type', 'application/javascript');
+            break;
+        case '.css':
+            res.set('Content-Type', 'text/css');
+            break;
+        case '.png':
+            res.set('Content-Type', 'image/png');
+            break;
+        case '.svg':
+            res.set('Content-Type', 'image/svg+xml');
+            break;
+        case '.json':
+            res.set('Content-Type', 'application/json');
+            break;
     }
-}));
+
+    res.sendFile(assetPath, (err) => {
+        if (err) {
+            console.error('Error serving asset:', {
+                path: assetPath,
+                error: err.message
+            });
+            next(err);
+        }
+    });
+});
+
+// Serve static files
+app.use(express.static(staticPath));
 
 // Handle client-side routing
 app.get('*', (req, res) => {
