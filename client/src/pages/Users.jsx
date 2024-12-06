@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
 function Users() {
@@ -6,6 +7,7 @@ function Users() {
     const [showInactive, setShowInactive] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const navigate = useNavigate();
 
     const fetchUsers = async () => {
         try {
@@ -14,15 +16,17 @@ function Users() {
                 params: { showInactive }
             });
             
-            // Log the response for debugging
-            console.log('Users response:', response.data);
-            
             // Ensure we always set an array
             setUsers(Array.isArray(response.data) ? response.data : []);
             setError(null);
         } catch (err) {
             console.error('Error fetching users:', err);
-            setError('Failed to fetch users');
+            if (err.response?.status === 401) {
+                // Redirect to login if unauthorized
+                navigate('/login');
+                return;
+            }
+            setError(err.response?.data?.error || 'Failed to fetch users');
             setUsers([]); // Reset to empty array on error
         } finally {
             setLoading(false);
@@ -31,7 +35,7 @@ function Users() {
 
     useEffect(() => {
         fetchUsers();
-    }, [showInactive]);
+    }, [showInactive, navigate]);
 
     const handleToggleActive = async (userId) => {
         try {
@@ -39,7 +43,11 @@ function Users() {
             await fetchUsers(); // Refresh the list
         } catch (err) {
             console.error('Error updating user status:', err);
-            setError('Failed to update user status');
+            if (err.response?.status === 401) {
+                navigate('/login');
+                return;
+            }
+            setError(err.response?.data?.error || 'Failed to update user status');
         }
     };
 
