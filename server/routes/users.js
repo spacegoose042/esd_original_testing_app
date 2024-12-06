@@ -164,74 +164,71 @@ router.get('/:id', auth, async (req, res) => {
 router.put('/:id', auth, async (req, res) => {
     try {
         const { id } = req.params;
+        const { firstName, lastName, managerId, isAdmin, isActive } = req.body;
+
         console.log('Update request received:', {
             id,
             body: req.body
         });
 
-        // First check if the user exists
-        const checkUser = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
-        if (checkUser.rows.length === 0) {
-            console.log('User not found:', id);
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        console.log('Current user data:', checkUser.rows[0]);
-
-        // Get the current user data
-        const currentUser = checkUser.rows[0];
-
-        // Prepare the update data, keeping existing values if not provided
+        // Transform the data to match database column names
         const updateData = {
-            first_name: req.body.first_name ?? currentUser.first_name,
-            last_name: req.body.last_name ?? currentUser.last_name,
-            manager_id: req.body.manager_id === '' ? null : (req.body.manager_id ?? currentUser.manager_id),
-            is_admin: req.body.is_admin ?? currentUser.is_admin,
-            is_active: req.body.is_active ?? currentUser.is_active,
-            email: currentUser.email, // preserve existing email
-            department_id: currentUser.department_id, // preserve existing department
-            is_manager: currentUser.is_manager // preserve existing manager status
+            first_name: firstName,
+            last_name: lastName,
+            manager_id: managerId === '' ? null : managerId,
+            is_admin: isAdmin,
+            is_active: isActive
         };
 
         console.log('Update data prepared:', updateData);
 
-        // Perform the update with all fields explicitly set
+        // Build the update query dynamically
+        const updates = [];
+        const values = [];
+        let paramCount = 1;
+
+        Object.entries(updateData).forEach(([key, value]) => {
+            if (value !== undefined) {
+                updates.push(`${key} = $${paramCount}`);
+                values.push(value);
+                paramCount++;
+            }
+        });
+
+        // Add the WHERE clause parameter
+        values.push(id);
+
         const query = `
             UPDATE users 
-            SET 
-                first_name = $1,
-                last_name = $2,
-                manager_id = $3,
-                is_admin = $4,
-                is_active = $5,
-                email = $6,
-                department_id = $7,
-                is_manager = $8
-            WHERE id = $9
-            RETURNING *
+            SET ${updates.join(', ')}
+            WHERE id = $${paramCount}
+            RETURNING 
+                id, 
+                first_name, 
+                last_name, 
+                email,
+                is_admin,
+                is_active,
+                manager_id,
+                department_id,
+                is_manager,
+                created_at::text as created_at
         `;
 
-        const values = [
-            updateData.first_name,
-            updateData.last_name,
-            updateData.manager_id,
-            updateData.is_admin,
-            updateData.is_active,
-            updateData.email,
-            updateData.department_id,
-            updateData.is_manager,
-            id
-        ];
-
         console.log('Executing update query:', {
-            text: query,
-            values: values,
-            valueTypes: values.map(v => typeof v)
+            query,
+            values,
+            paramCount,
+            valueTypes: values.map(v => `${typeof v}:${v}`)
         });
 
         const result = await pool.query(query, values);
-        console.log('Update result:', result.rows[0]);
 
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        console.log('Update successful:', result.rows[0]);
         res.json(result.rows[0]);
     } catch (err) {
         console.error('Error updating user:', {
@@ -245,7 +242,6 @@ router.put('/:id', auth, async (req, res) => {
             parameters: err.parameters
         });
 
-        // Send a more detailed error response
         res.status(500).json({
             error: 'Failed to update user',
             message: err.message,

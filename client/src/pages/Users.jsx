@@ -51,11 +51,11 @@ function UserEdit({ userId, onClose, onUpdate }) {
             console.log('Submitting update with data:', formData);
             
             const updateData = {
-                first_name: formData.firstName,
-                last_name: formData.lastName,
-                manager_id: formData.managerId || null,
-                is_admin: Boolean(formData.isAdmin),
-                is_active: Boolean(formData.isActive)
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                managerId: formData.managerId,
+                isAdmin: Boolean(formData.isAdmin),
+                isActive: Boolean(formData.isActive)
             };
 
             console.log('Transformed update data:', updateData);
@@ -70,7 +70,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
             }, 2000);
         } catch (err) {
             console.error('Update error:', err);
-            setError(err.response?.data?.error || 'Failed to update user');
+            setError(err.response?.data?.message || err.response?.data?.error || 'Failed to update user');
         }
     };
 
