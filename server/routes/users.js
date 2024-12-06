@@ -171,37 +171,14 @@ router.put('/:id', auth, async (req, res) => {
             body: req.body
         });
 
-        // Transform the data to match database column names
-        const updateData = {
-            first_name: firstName,
-            last_name: lastName,
-            manager_id: managerId === '' ? null : managerId,
-            is_admin: isAdmin,
-            is_active: isActive
-        };
-
-        console.log('Update data prepared:', updateData);
-
-        // Build the update query dynamically
-        const updates = [];
-        const values = [];
-        let paramCount = 1;
-
-        Object.entries(updateData).forEach(([key, value]) => {
-            if (value !== undefined) {
-                updates.push(`${key} = $${paramCount}`);
-                values.push(value);
-                paramCount++;
-            }
-        });
-
-        // Add the WHERE clause parameter
-        values.push(id);
-
+        // Basic update query with minimal fields
         const query = `
             UPDATE users 
-            SET ${updates.join(', ')}
-            WHERE id = $${paramCount}
+            SET 
+                first_name = $1,
+                last_name = $2,
+                manager_id = $3
+            WHERE id = $4
             RETURNING 
                 id, 
                 first_name, 
@@ -215,10 +192,16 @@ router.put('/:id', auth, async (req, res) => {
                 created_at::text as created_at
         `;
 
+        const values = [
+            firstName,
+            lastName,
+            managerId === '' ? null : managerId,
+            id
+        ];
+
         console.log('Executing update query:', {
             query,
             values,
-            paramCount,
             valueTypes: values.map(v => `${typeof v}:${v}`)
         });
 

@@ -50,12 +50,11 @@ function UserEdit({ userId, onClose, onUpdate }) {
         try {
             console.log('Submitting update with data:', formData);
             
+            // Only send essential fields
             const updateData = {
-                firstName: formData.firstName,
-                lastName: formData.lastName,
-                managerId: formData.managerId,
-                isAdmin: Boolean(formData.isAdmin),
-                isActive: Boolean(formData.isActive)
+                firstName: formData.firstName.trim(),
+                lastName: formData.lastName.trim(),
+                managerId: formData.managerId
             };
 
             console.log('Transformed update data:', updateData);
@@ -70,7 +69,11 @@ function UserEdit({ userId, onClose, onUpdate }) {
             }, 2000);
         } catch (err) {
             console.error('Update error:', err);
-            setError(err.response?.data?.message || err.response?.data?.error || 'Failed to update user');
+            const errorMessage = err.response?.data?.message || 
+                               err.response?.data?.error || 
+                               err.response?.data?.detail ||
+                               'Failed to update user';
+            setError(errorMessage);
         }
     };
 
