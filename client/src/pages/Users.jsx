@@ -39,6 +39,11 @@ function Users() {
         fetchUsers();
     }, []);
 
+    const handleEdit = (userId) => {
+        // Navigate to edit page or open modal
+        console.log('Edit user:', userId);
+    };
+
     if (loading) {
         return <div className="loading">Loading...</div>;
     }
@@ -59,12 +64,12 @@ function Users() {
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th>Email</th>
                             <th>Department</th>
                             <th>Role</th>
                             <th>Manager</th>
                             <th>Admin</th>
                             <th>Created</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -73,7 +78,6 @@ function Users() {
                                 <td className="name-cell">
                                     {user.first_name} {user.last_name}
                                 </td>
-                                <td>{user.email || 'N/A'}</td>
                                 <td>{user.department_name || 'N/A'}</td>
                                 <td>{user.role}</td>
                                 <td>{user.manager_name}</td>
@@ -83,6 +87,14 @@ function Users() {
                                     </span>
                                 </td>
                                 <td>{new Date(user.created_at).toLocaleDateString()}</td>
+                                <td>
+                                    <button 
+                                        className="edit-button"
+                                        onClick={() => handleEdit(user.id)}
+                                    >
+                                        Edit
+                                    </button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
