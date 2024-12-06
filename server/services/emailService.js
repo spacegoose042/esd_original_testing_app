@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
-const { Parser } = require('json2csv');
-const pool = require('../db');
+const { stringify } = require('csv-stringify/sync');
+const pool = require('../config/db');
 
 // Email templates
 const templates = {
@@ -109,9 +109,20 @@ async function sendWeeklyReport() {
     try {
         const tests = await getLastSevenDaysTests();
         
-        const fields = ['test_date', 'test_time', 'test_period', 'result', 'first_name', 'last_name', 'manager_email'];
-        const parser = new Parser({ fields });
-        const csv = parser.parse(tests);
+        const columns = {
+            test_date: 'Test Date',
+            test_time: 'Test Time',
+            test_period: 'Period',
+            result: 'Result',
+            first_name: 'First Name',
+            last_name: 'Last Name',
+            manager_email: 'Manager Email'
+        };
+
+        const csv = stringify(tests, {
+            header: true,
+            columns: columns
+        });
 
         const endDate = new Date().toLocaleDateString();
         const startDate = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toLocaleDateString();
@@ -120,7 +131,7 @@ async function sendWeeklyReport() {
 
         const mailOptions = {
             from: process.env.EMAIL_USER,
-            to: 'michael.knapp@sandyindustries.com',
+            to: process.env.EMAIL_USER, // Send to configured email for testing
             subject: template.subject,
             html: template.html,
             attachments: [{
