@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
+import logo from '../assets/S_and_Y_logo_50_vectorized.png';
 
 function Navbar({ isAdmin, isAuthenticated }) {
     const navigate = useNavigate();
@@ -14,6 +15,11 @@ function Navbar({ isAdmin, isAuthenticated }) {
             <div className="max-w-6xl mx-auto px-4">
                 <div className="flex justify-between">
                     <div className="flex space-x-7">
+                        <div className="flex items-center py-2">
+                            <Link to="/" className="flex items-center">
+                                <img src={logo} alt="S and Y Industries" className="h-12" />
+                            </Link>
+                        </div>
                         <div className="flex items-center py-4 px-2">
                             <Link to="/" className="text-gray-800 text-lg font-semibold">
                                 ESD Testing
