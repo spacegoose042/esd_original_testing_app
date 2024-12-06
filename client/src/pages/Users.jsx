@@ -13,16 +13,19 @@ function UserEdit({ userId, onClose, onUpdate }) {
     const [managers, setManagers] = useState([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [currentUser, setCurrentUser] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch both user data and managers list
-                const [userResponse, managersResponse] = await Promise.all([
+                // Fetch current user's auth status, user data, and managers list
+                const [authResponse, userResponse, managersResponse] = await Promise.all([
+                    api.get('/auth/verify'),
                     api.get(`/users/${userId}`),
                     api.get('/users/managers')
                 ]);
 
+                setCurrentUser(authResponse.data);
                 setManagers(managersResponse.data);
 
                 // Set user data
@@ -43,12 +46,15 @@ function UserEdit({ userId, onClose, onUpdate }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await api.put(`/users/${userId}`, {
+            // Only include isAdmin in the update if the current user is an admin
+            const updateData = {
                 first_name: formData.firstName,
                 last_name: formData.lastName,
                 manager_id: formData.managerId,
-                is_admin: formData.isAdmin
-            });
+                ...(currentUser?.isAdmin ? { is_admin: formData.isAdmin } : {})
+            };
+
+            await api.put(`/users/${userId}`, updateData);
 
             setSuccess('User updated successfully');
             setTimeout(() => {
@@ -116,17 +122,19 @@ function UserEdit({ userId, onClose, onUpdate }) {
                         </select>
                     </div>
 
-                    <div className="form-group checkbox">
-                        <label>
-                            <input
-                                type="checkbox"
-                                name="isAdmin"
-                                checked={formData.isAdmin}
-                                onChange={handleChange}
-                            />
-                            Is Admin
-                        </label>
-                    </div>
+                    {currentUser?.isAdmin && (
+                        <div className="form-group checkbox">
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    name="isAdmin"
+                                    checked={formData.isAdmin}
+                                    onChange={handleChange}
+                                />
+                                Is Admin
+                            </label>
+                        </div>
+                    )}
 
                     <div className="button-group">
                         <button type="button" onClick={onClose} className="cancel-button">
