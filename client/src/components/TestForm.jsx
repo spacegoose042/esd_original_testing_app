@@ -13,6 +13,7 @@ function TestForm() {
     const [activeUsers, setActiveUsers] = useState([]);
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
+    const [showNotes, setShowNotes] = useState(false);
 
     useEffect(() => {
         const fetchActiveUsers = async () => {
@@ -63,6 +64,7 @@ function TestForm() {
                 passed: null,
                 notes: ''
             });
+            setShowNotes(false);
         } catch (err) {
             console.error('Submit error:', err);
             setError(err.response?.data?.error || 'Failed to submit test');
@@ -97,6 +99,10 @@ function TestForm() {
             ...prev,
             [name]: value
         }));
+    };
+
+    const toggleNotes = () => {
+        setShowNotes(!showNotes);
     };
 
     return (
@@ -205,16 +211,30 @@ function TestForm() {
                 </div>
 
                 <div>
-                    <label className="block text-gray-700 text-sm font-bold mb-2">
-                        Notes
-                    </label>
-                    <textarea
-                        name="notes"
-                        value={formData.notes}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border rounded-md"
-                        rows="3"
-                    />
+                    <button
+                        type="button"
+                        onClick={toggleNotes}
+                        className={`w-full py-6 px-4 text-lg font-semibold rounded-lg transition-colors duration-200 ${
+                            showNotes
+                            ? 'bg-gray-600 text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                    >
+                        {showNotes ? 'Hide Notes' : 'Add Notes'}
+                    </button>
+                    
+                    {showNotes && (
+                        <div className="mt-2">
+                            <textarea
+                                name="notes"
+                                value={formData.notes}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2 border rounded-md"
+                                rows="3"
+                                placeholder="Enter notes here..."
+                            />
+                        </div>
+                    )}
                 </div>
 
                 <button
