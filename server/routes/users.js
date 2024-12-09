@@ -187,26 +187,26 @@ router.get('/:id', auth, async (req, res) => {
 
 // Update user
 router.put('/:id', auth, async (req, res) => {
+    const client = await pool.connect();
     try {
         const { id } = req.params;
         const { firstName, lastName, managerEmail, isAdmin, isActive } = req.body;
 
-        console.log('Raw update request:', {
+        // Log the current state in database
+        const beforeUpdate = await client.query(
+            'SELECT * FROM users WHERE id = $1',
+            [id]
+        );
+        console.log('Before update - Database state:', beforeUpdate.rows[0]);
+
+        console.log('Update request received:', {
             id,
-            body: req.body,
-            isActive,
+            requestBody: req.body,
+            isActive: isActive,
             isActiveType: typeof isActive
         });
 
-        // Ensure proper boolean conversion
-        const isActiveValue = isActive === true || isActive === 'true';
-        const isAdminValue = isAdmin === true || isAdmin === 'true';
-
-        console.log('Processed values:', {
-            isActiveValue,
-            isAdminValue,
-            originalIsActive: isActive
-        });
+        await client.query('BEGIN');
 
         const query = `
             UPDATE users 
@@ -217,44 +217,43 @@ router.put('/:id', auth, async (req, res) => {
                 is_admin = $4,
                 is_active = $5
             WHERE id = $6
-            RETURNING 
-                id, 
-                first_name, 
-                last_name, 
-                email,
-                manager_email,
-                is_admin,
-                is_active,
-                manager_id,
-                department_id,
-                is_manager,
-                created_at::text as created_at
+            RETURNING *
         `;
 
         const values = [
             firstName,
             lastName,
             managerEmail,
-            isAdminValue,
-            isActiveValue,
+            isAdmin === true,
+            isActive === true,
             id
         ];
 
-        console.log('Database update:', {
+        console.log('Executing update with values:', {
             values,
-            isActiveValue,
-            sql: query
+            isActive,
+            parsedIsActive: isActive === true
         });
 
-        const result = await pool.query(query, values);
+        const result = await client.query(query, values);
+
+        // Verify the update
+        const verifyQuery = await client.query(
+            'SELECT * FROM users WHERE id = $1',
+            [id]
+        );
+        console.log('After update - Database state:', verifyQuery.rows[0]);
+
+        await client.query('COMMIT');
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        console.log('Updated user:', result.rows[0]);
+        console.log('Update successful:', result.rows[0]);
         res.json(result.rows[0]);
     } catch (err) {
+        await client.query('ROLLBACK');
         console.error('Error updating user:', {
             error: err.message,
             code: err.code,
@@ -270,6 +269,8 @@ router.put('/:id', auth, async (req, res) => {
             detail: err.detail,
             constraint: err.constraint
         });
+    } finally {
+        client.release();
     }
 });
 

@@ -23,7 +23,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
                         firstName: response.data.first_name,
                         lastName: response.data.last_name,
                         managerEmail: response.data.manager_email || '',
-                        isAdmin: Boolean(response.data.is_admin),
+                        isAdmin: response.data.is_admin === true,
                         isActive: response.data.is_active === true
                     };
                     console.log('Setting initial form data:', userData);
@@ -40,20 +40,27 @@ function UserEdit({ userId, onClose, onUpdate }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            console.log('Submitting form with data:', formData);
+            console.log('Form submission - Current form data:', formData);
             
             const updateData = {
                 firstName: formData.firstName.trim(),
                 lastName: formData.lastName.trim(),
                 managerEmail: formData.managerEmail.trim(),
-                isAdmin: Boolean(formData.isAdmin),
+                isAdmin: formData.isAdmin === true,
                 isActive: formData.isActive === true
             };
 
-            console.log('Sending update data:', updateData);
+            console.log('Sending update request with data:', updateData);
 
             const response = await api.put(`/users/${userId}`, updateData);
             console.log('Server response:', response.data);
+
+            if (response.data.is_active !== updateData.isActive) {
+                console.warn('Warning: Server response active status does not match request', {
+                    requested: updateData.isActive,
+                    received: response.data.is_active
+                });
+            }
 
             setSuccess('User updated successfully');
             setTimeout(() => {
@@ -71,17 +78,21 @@ function UserEdit({ userId, onClose, onUpdate }) {
     };
 
     const handleChange = (e) => {
-        const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
-        console.log('Field changed:', {
-            name: e.target.name,
-            value: value,
-            type: e.target.type,
-            checked: e.target.checked
+        const { name, type, checked, value } = e.target;
+        const newValue = type === 'checkbox' ? checked : value;
+        
+        console.log('Field change event:', {
+            name,
+            type,
+            checked,
+            value,
+            newValue
         });
+
         setFormData(prev => {
             const newData = {
                 ...prev,
-                [e.target.name]: value
+                [name]: newValue
             };
             console.log('Updated form data:', newData);
             return newData;
