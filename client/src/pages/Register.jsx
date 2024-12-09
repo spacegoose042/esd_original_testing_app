@@ -21,20 +21,37 @@ function Register() {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                // Get auth token
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    navigate('/login');
+                    return;
+                }
+
                 const [managersRes, departmentsRes] = await Promise.all([
                     api.get('/users/managers'),
                     api.get('/users/departments')
                 ]);
+
+                console.log('Fetched data:', {
+                    managers: managersRes.data,
+                    departments: departmentsRes.data
+                });
+
                 setManagers(managersRes.data);
                 setDepartments(departmentsRes.data);
             } catch (err) {
                 console.error('Error fetching data:', err);
+                if (err.response?.status === 401) {
+                    navigate('/login');
+                    return;
+                }
                 setError('Failed to load required data');
             }
         };
 
         fetchData();
-    }, []);
+    }, [navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

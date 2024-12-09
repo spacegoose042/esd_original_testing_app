@@ -6,51 +6,59 @@ function UserEdit({ userId, onClose, onUpdate }) {
         firstName: '',
         lastName: '',
         managerId: '',
+        departmentId: '',
         isAdmin: false,
         isActive: false,
+        isManager: false,
         exemptFromTesting: false
     });
     const [managers, setManagers] = useState([]);
+    const [departments, setDepartments] = useState([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
     useEffect(() => {
-        const fetchManagers = async () => {
+        const fetchData = async () => {
             try {
-                const response = await api.get('/users/managers');
-                setManagers(response.data);
+                // Fetch all required data in parallel
+                const [userResponse, managersResponse, departmentsResponse] = await Promise.all([
+                    api.get(`/users/${userId}`),
+                    api.get('/users/managers'),
+                    api.get('/users/departments')
+                ]);
+
+                console.log('Fetched data:', {
+                    user: userResponse.data,
+                    managers: managersResponse.data,
+                    departments: departmentsResponse.data
+                });
+
+                setManagers(managersResponse.data);
+                setDepartments(departmentsResponse.data);
+
+                setFormData({
+                    firstName: userResponse.data.first_name,
+                    lastName: userResponse.data.last_name,
+                    managerId: userResponse.data.manager_id || '',
+                    departmentId: userResponse.data.department_id || '',
+                    isAdmin: userResponse.data.is_admin === true,
+                    isActive: userResponse.data.is_active === true,
+                    isManager: userResponse.data.is_manager === true,
+                    exemptFromTesting: userResponse.data.exempt_from_testing === true
+                });
             } catch (err) {
-                console.error('Error fetching managers:', err);
+                console.error('Error fetching data:', err);
+                if (err.response?.status === 401) {
+                    // Handle unauthorized access
+                    setError('Please log in again');
+                    return;
+                }
+                setError(err.response?.data?.error || 'Failed to load data');
             }
         };
 
-        fetchManagers();
-    }, []);
-
-    useEffect(() => {
         if (userId) {
-            const fetchUser = async () => {
-                try {
-                    const response = await api.get(`/users/${userId}`);
-                    console.log('DEBUG - Raw user data fields:', Object.keys(response.data));
-                    console.log('DEBUG - Full user data:', response.data);
-                    
-                    const userData = {
-                        firstName: response.data.first_name,
-                        lastName: response.data.last_name,
-                        managerId: response.data.manager_id || '',
-                        isAdmin: response.data.is_admin === true,
-                        isActive: response.data.is_active === true,
-                        exemptFromTesting: response.data.exempt_from_testing === true
-                    };
-                    console.log('DEBUG - Processed form data:', userData);
-                    setFormData(userData);
-                } catch (err) {
-                    console.error('Error fetching user:', err);
-                    setError(err.response?.data?.error || 'Failed to load user data');
-                }
-            };
-            fetchUser();
+            fetchData();
         }
     }, [userId]);
 
@@ -61,8 +69,10 @@ function UserEdit({ userId, onClose, onUpdate }) {
                 firstName: formData.firstName.trim(),
                 lastName: formData.lastName.trim(),
                 managerId: formData.managerId,
+                departmentId: formData.departmentId,
                 isAdmin: formData.isAdmin,
                 isActive: formData.isActive,
+                isManager: formData.isManager,
                 exemptFromTesting: formData.exemptFromTesting
             };
 
@@ -84,22 +94,17 @@ function UserEdit({ userId, onClose, onUpdate }) {
     const handleChange = (e) => {
         const { name, type, checked, value } = e.target;
         const newValue = type === 'checkbox' ? checked : value;
-        console.log('Field change:', { name, type, newValue });
         setFormData(prev => ({
             ...prev,
             [name]: newValue
         }));
     };
 
-    console.log('Current form data:', formData);
-
     return (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
             <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
                 <div className="mt-3">
-                    <h2 className="text-lg leading-6 font-medium text-gray-900">
-                        Edit User
-                    </h2>
+                    <h2 className="text-lg leading-6 font-medium text-gray-900">Edit User</h2>
                     <form className="mt-4" onSubmit={handleSubmit}>
                         {error && (
                             <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
@@ -137,15 +142,34 @@ function UserEdit({ userId, onClose, onUpdate }) {
                                 />
                             </div>
                             <div>
+                                <label htmlFor="departmentId" className="block text-sm font-medium text-gray-700">Department</label>
+                                <select
+                                    id="departmentId"
+                                    name="departmentId"
+                                    required
+                                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                    value={formData.departmentId}
+                                    onChange={handleChange}
+                                >
+                                    <option value="">Select Department</option>
+                                    {departments.map(dept => (
+                                        <option key={dept.id} value={dept.id}>
+                                            {dept.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
                                 <label htmlFor="managerId" className="block text-sm font-medium text-gray-700">Manager</label>
                                 <select
                                     id="managerId"
                                     name="managerId"
+                                    required
                                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                                     value={formData.managerId}
                                     onChange={handleChange}
                                 >
-                                    <option value="">Select a manager</option>
+                                    <option value="">Select Manager</option>
                                     {managers.map(manager => (
                                         <option key={manager.id} value={manager.id}>
                                             {manager.first_name} {manager.last_name}
@@ -155,6 +179,23 @@ function UserEdit({ userId, onClose, onUpdate }) {
                             </div>
 
                             <div className="pt-4 space-y-3">
+                                <div className="flex items-center">
+                                    <input
+                                        id="isManager"
+                                        name="isManager"
+                                        type="checkbox"
+                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                        checked={formData.isManager}
+                                        onChange={handleChange}
+                                    />
+                                    <label htmlFor="isManager" className="ml-2 block text-sm text-gray-900">
+                                        Is Manager
+                                        <span className="ml-1 text-xs text-gray-500">
+                                            (Can receive notifications about team members)
+                                        </span>
+                                    </label>
+                                </div>
+
                                 <div className="flex items-center">
                                     <input
                                         id="isAdmin"
@@ -195,7 +236,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
                                     <label htmlFor="exemptFromTesting" className="ml-2 block text-sm text-gray-900">
                                         Exempt from Testing
                                         <span className="ml-1 text-xs text-gray-500">
-                                            (Will not receive notifications)
+                                            (Will not receive notifications about their own tests, but will still receive notifications about team members)
                                         </span>
                                     </label>
                                 </div>
