@@ -137,6 +137,7 @@ async function getLastSevenDaysTests() {
         JOIN users u ON t.user_id = u.id
         WHERE t.test_date >= CURRENT_DATE - INTERVAL '6 days'
         AND t.test_date <= CURRENT_DATE
+        AND u.exempt_from_testing = false
         ORDER BY t.test_date DESC, t.test_time DESC
     `;
 

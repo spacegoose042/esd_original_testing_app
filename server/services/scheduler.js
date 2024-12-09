@@ -23,6 +23,8 @@ const checkMorningTests = async () => {
             FROM users u
             WHERE u.is_admin = false
             AND u.manager_email IS NOT NULL
+            AND u.is_active = true
+            AND u.exempt_from_testing = false
             AND NOT EXISTS (
                 SELECT 1
                 FROM esd_tests t
@@ -61,6 +63,8 @@ const checkAfternoonTests = async () => {
             FROM users u
             WHERE u.is_admin = false
             AND u.manager_email IS NOT NULL
+            AND u.is_active = true
+            AND u.exempt_from_testing = false
             AND NOT EXISTS (
                 SELECT 1
                 FROM esd_tests t
