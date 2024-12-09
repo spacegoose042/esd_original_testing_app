@@ -190,23 +190,24 @@ router.put('/:id', auth, async (req, res) => {
     const client = await pool.connect();
     try {
         const { id } = req.params;
-        const { firstName, lastName, managerEmail, isAdmin, isActive } = req.body;
-
-        // Log the current state in database
-        const beforeUpdate = await client.query(
-            'SELECT * FROM users WHERE id = $1',
-            [id]
-        );
-        console.log('Before update - Database state:', beforeUpdate.rows[0]);
+        const { firstName, lastName, managerEmail, managerId, isAdmin, isActive } = req.body;
 
         console.log('Update request received:', {
             id,
             requestBody: req.body,
-            isActive: isActive,
-            isActiveType: typeof isActive
+            isActive,
+            isActiveType: typeof isActive,
+            isActiveParsed: isActive === true
         });
 
         await client.query('BEGIN');
+
+        // Get current user state
+        const currentState = await client.query(
+            'SELECT * FROM users WHERE id = $1',
+            [id]
+        );
+        console.log('Current user state:', currentState.rows[0]);
 
         const query = `
             UPDATE users 
@@ -214,9 +215,10 @@ router.put('/:id', auth, async (req, res) => {
                 first_name = $1,
                 last_name = $2,
                 manager_email = $3,
-                is_admin = $4,
-                is_active = $5
-            WHERE id = $6
+                manager_id = $4,
+                is_admin = $5,
+                is_active = $6
+            WHERE id = $7
             RETURNING *
         `;
 
@@ -224,8 +226,9 @@ router.put('/:id', auth, async (req, res) => {
             firstName,
             lastName,
             managerEmail,
+            managerId,
             isAdmin === true,
-            isActive === true,
+            isActive === true, // Explicitly convert to boolean
             id
         ];
 
@@ -242,7 +245,7 @@ router.put('/:id', auth, async (req, res) => {
             'SELECT * FROM users WHERE id = $1',
             [id]
         );
-        console.log('After update - Database state:', verifyQuery.rows[0]);
+        console.log('Updated user state:', verifyQuery.rows[0]);
 
         await client.query('COMMIT');
 
@@ -250,7 +253,11 @@ router.put('/:id', auth, async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        console.log('Update successful:', result.rows[0]);
+        console.log('Update successful:', {
+            before: currentState.rows[0],
+            after: result.rows[0]
+        });
+        
         res.json(result.rows[0]);
     } catch (err) {
         await client.query('ROLLBACK');

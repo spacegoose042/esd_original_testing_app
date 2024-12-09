@@ -6,6 +6,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
         firstName: '',
         lastName: '',
         managerEmail: '',
+        managerId: '',
         isAdmin: false,
         isActive: false
     });
@@ -23,6 +24,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
                         firstName: response.data.first_name,
                         lastName: response.data.last_name,
                         managerEmail: response.data.manager_email || '',
+                        managerId: response.data.manager_id || '',
                         isAdmin: response.data.is_admin === true,
                         isActive: response.data.is_active === true
                     };
@@ -46,6 +48,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
                 firstName: formData.firstName.trim(),
                 lastName: formData.lastName.trim(),
                 managerEmail: formData.managerEmail.trim(),
+                managerId: formData.managerId,
                 isAdmin: formData.isAdmin === true,
                 isActive: formData.isActive === true
             };
@@ -56,7 +59,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
             console.log('Server response:', response.data);
 
             if (response.data.is_active !== updateData.isActive) {
-                console.warn('Warning: Server response active status does not match request', {
+                console.warn('Active status mismatch:', {
                     requested: updateData.isActive,
                     received: response.data.is_active
                 });
@@ -86,7 +89,8 @@ function UserEdit({ userId, onClose, onUpdate }) {
             type,
             checked,
             value,
-            newValue
+            newValue,
+            currentFormData: formData
         });
 
         setFormData(prev => {
@@ -94,7 +98,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
                 ...prev,
                 [name]: newValue
             };
-            console.log('Updated form data:', newData);
+            console.log('Form data after update:', newData);
             return newData;
         });
     };
