@@ -16,6 +16,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
     const [departments, setDepartments] = useState([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [resetPasswordSuccess, setResetPasswordSuccess] = useState('');
 
     useEffect(() => {
         const fetchData = async () => {
@@ -100,6 +101,18 @@ function UserEdit({ userId, onClose, onUpdate }) {
         }));
     };
 
+    const handleResetPassword = async () => {
+        try {
+            const response = await api.post(`/users/${userId}/reset-password`);
+            console.log('Password reset response:', response.data);
+            setResetPasswordSuccess(`New password: ${response.data.newPassword}`);
+            setTimeout(() => setResetPasswordSuccess(''), 30000); // Clear after 30 seconds
+        } catch (err) {
+            console.error('Password reset error:', err);
+            setError(err.response?.data?.error || 'Failed to reset password');
+        }
+    };
+
     return (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
             <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
@@ -114,6 +127,11 @@ function UserEdit({ userId, onClose, onUpdate }) {
                         {success && (
                             <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
                                 {success}
+                            </div>
+                        )}
+                        {resetPasswordSuccess && (
+                            <div className="mb-4 bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded relative">
+                                {resetPasswordSuccess}
                             </div>
                         )}
                         <div className="space-y-4">
@@ -243,20 +261,31 @@ function UserEdit({ userId, onClose, onUpdate }) {
                             </div>
                         </div>
 
-                        <div className="mt-5 flex justify-end space-x-3">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                            >
-                                Save Changes
-                            </button>
+                        <div className="mt-5 flex flex-col space-y-3">
+                            {(formData.isAdmin || formData.isManager) && (
+                                <button
+                                    type="button"
+                                    onClick={handleResetPassword}
+                                    className="w-full px-4 py-2 text-sm font-medium text-white bg-yellow-600 border border-transparent rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                                >
+                                    Reset Password
+                                </button>
+                            )}
+                            <div className="flex justify-end space-x-3">
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                >
+                                    Save Changes
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
