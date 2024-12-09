@@ -20,6 +20,42 @@ function History() {
         result: ''
     });
 
+    const exportToCSV = (data) => {
+        // Define CSV headers and map data to CSV format
+        const headers = ['Date', 'Time', 'Name', 'Period', 'Result', 'Notes'];
+        const csvData = data.map(test => [
+            test.test_date,
+            test.test_time,
+            `${test.first_name} ${test.last_name}`,
+            test.test_period,
+            test.passed ? 'PASS' : 'FAIL',
+            test.notes || ''
+        ]);
+
+        // Add headers to the beginning
+        csvData.unshift(headers);
+
+        // Convert to CSV string
+        const csvString = csvData.map(row => 
+            row.map(cell => 
+                typeof cell === 'string' ? `"${cell.replace(/"/g, '""')}"` : cell
+            ).join(',')
+        ).join('\n');
+
+        // Create and trigger download
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `test_history_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    };
+
     useEffect(() => {
         const fetchTests = async () => {
             try {
@@ -110,7 +146,23 @@ function History() {
 
     return (
         <div className="container mx-auto px-4">
-            <h1 className="text-2xl font-bold mb-4">Test History</h1>
+            <div className="flex justify-between items-center mb-4">
+                <h1 className="text-2xl font-bold">Test History</h1>
+                <div className="space-x-4">
+                    <button
+                        onClick={() => exportToCSV(filteredTests)}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                    >
+                        Export Filtered Data
+                    </button>
+                    <button
+                        onClick={() => exportToCSV(tests)}
+                        className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                    >
+                        Export All Data
+                    </button>
+                </div>
+            </div>
 
             {/* Filters */}
             <div className="mb-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
