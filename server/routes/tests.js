@@ -131,10 +131,11 @@ router.get('/daily-status', async (req, res) => {
                 SELECT 
                     user_id,
                     test_period,
-                    passed,
-                    to_char(test_time::time, 'HH12:MI AM') as test_time
+                    BOOL_OR(passed) as passed,  -- Will be true if ANY test passed
+                    MAX(to_char(test_time::time, 'HH12:MI AM')) as test_time
                 FROM esd_tests
                 WHERE test_date = CURRENT_DATE
+                GROUP BY user_id, test_period
             )
             SELECT 
                 u.id,
