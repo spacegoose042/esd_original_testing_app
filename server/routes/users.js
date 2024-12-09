@@ -9,6 +9,17 @@ router.get('/', auth, async (req, res) => {
     try {
         console.log('Fetching users with department info');
         
+        // First, let's check if the column exists
+        const checkColumnQuery = `
+            SELECT column_name, data_type, column_default
+            FROM information_schema.columns
+            WHERE table_name = 'users'
+            ORDER BY ordinal_position;
+        `;
+        
+        const columnCheck = await pool.query(checkColumnQuery);
+        console.log('Available columns in users table:', columnCheck.rows);
+        
         const query = `
             SELECT 
                 u.id, 
@@ -17,7 +28,6 @@ router.get('/', auth, async (req, res) => {
                 COALESCE(u.email, '') as email,
                 COALESCE(u.is_admin, false) as is_admin,
                 COALESCE(u.is_active, true) as is_active,
-                u.created_at::text as created_at,
                 d.name as department_name,
                 CASE 
                     WHEN u.is_manager THEN 'Manager'
@@ -41,12 +51,25 @@ router.get('/', auth, async (req, res) => {
             error: err,
             message: err.message,
             stack: err.stack,
-            query: err.query
+            query: err.query,
+            code: err.code,
+            detail: err.detail,
+            hint: err.hint,
+            position: err.position,
+            internalPosition: err.internalPosition,
+            internalQuery: err.internalQuery,
+            where: err.where,
+            schema: err.schema,
+            table: err.table,
+            column: err.column,
+            dataType: err.dataType,
+            constraint: err.constraint
         });
         res.status(500).json({ 
             error: 'Server error',
             details: err.message,
-            query: err.query
+            code: err.code,
+            detail: err.detail
         });
     }
 });
@@ -173,7 +196,6 @@ router.put('/:id', auth, async (req, res) => {
             body: req.body
         });
 
-        // Updated query to include is_active
         const query = `
             UPDATE users 
             SET 
