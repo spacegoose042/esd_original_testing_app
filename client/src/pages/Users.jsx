@@ -249,6 +249,14 @@ function Users() {
     const [editingUserId, setEditingUserId] = useState(null);
     const [resettingUserId, setResettingUserId] = useState(null);
     const [showInactive, setShowInactive] = useState(false);
+    const [filters, setFilters] = useState({
+        first_name: '',
+        last_name: '',
+        department_name: '',
+        role: '',
+        manager_name: ''
+    });
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchUsers();
@@ -258,87 +266,169 @@ function Users() {
         try {
             setLoading(true);
             const response = await api.get('/users');
-            setUsers(response.data);
+            
+            if (Array.isArray(response.data)) {
+                setUsers(response.data);
+                setError(null);
+            } else {
+                console.error('Invalid response format:', response.data);
+                setUsers([]);
+                setError('Invalid data format received');
+            }
         } catch (err) {
             console.error('Error fetching users:', err);
-            setError('Failed to load users');
+            if (err.response?.status === 401) {
+                navigate('/login');
+                return;
+            }
+            setError(err.response?.data?.error || 'Failed to fetch users');
+            setUsers([]);
         } finally {
             setLoading(false);
         }
     };
 
-    // Filter users based on active status
-    const filteredUsers = users.filter(user => 
-        showInactive ? !user.is_active : user.is_active
-    );
+    const handleEdit = (userId) => {
+        setEditingUserId(userId);
+    };
 
-    if (loading) return <div>Loading...</div>;
-    if (error) return <div className="error-message">{error}</div>;
+    const handleCloseEdit = () => {
+        setEditingUserId(null);
+    };
+
+    const handleResetPassword = (userId) => {
+        setResettingUserId(userId);
+    };
+
+    const handleCloseReset = () => {
+        setResettingUserId(null);
+    };
+
+    const handleFilterChange = (field, value) => {
+        setFilters(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
+    // Combined filtering logic for both active status and other filters
+    const filteredUsers = users.filter(user => {
+        // First filter by active status
+        if (!showInactive && !user.is_active) return false;
+        if (showInactive && user.is_active) return false;
+
+        // Then apply the text filters
+        return Object.entries(filters).every(([key, value]) => {
+            if (!value) return true;
+            return user[key]?.toLowerCase().includes(value.toLowerCase());
+        });
+    });
+
+    if (loading) {
+        return <div className="loading">Loading...</div>;
+    }
+
+    if (error) {
+        return <div className="error">{error}</div>;
+    }
+
+    if (!Array.isArray(users) || users.length === 0) {
+        return <div className="no-data">No users found.</div>;
+    }
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Users</h1>
-                <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-2">
+        <div className="users-container">
+            <h2>User Management</h2>
+            
+            {/* Filters */}
+            <div className="filters-container">
+                <div className="text-filters">
+                    <input
+                        type="text"
+                        placeholder="Filter by First Name"
+                        value={filters.first_name}
+                        onChange={(e) => handleFilterChange('first_name', e.target.value)}
+                        className="filter-input"
+                    />
+                    <input
+                        type="text"
+                        placeholder="Filter by Last Name"
+                        value={filters.last_name}
+                        onChange={(e) => handleFilterChange('last_name', e.target.value)}
+                        className="filter-input"
+                    />
+                    <input
+                        type="text"
+                        placeholder="Filter by Department"
+                        value={filters.department_name}
+                        onChange={(e) => handleFilterChange('department_name', e.target.value)}
+                        className="filter-input"
+                    />
+                    <input
+                        type="text"
+                        placeholder="Filter by Role"
+                        value={filters.role}
+                        onChange={(e) => handleFilterChange('role', e.target.value)}
+                        className="filter-input"
+                    />
+                    <input
+                        type="text"
+                        placeholder="Filter by Manager"
+                        value={filters.manager_name}
+                        onChange={(e) => handleFilterChange('manager_name', e.target.value)}
+                        className="filter-input"
+                    />
+                </div>
+                <div className="active-filter">
+                    <label className="active-filter-label">
                         <input
                             type="checkbox"
                             checked={showInactive}
                             onChange={(e) => setShowInactive(e.target.checked)}
-                            className="form-checkbox h-5 w-5 text-blue-600"
+                            className="active-checkbox"
                         />
-                        <span className="text-gray-700">Show Inactive Users</span>
+                        Show Inactive Users
                     </label>
                 </div>
             </div>
 
-            <div className="bg-white shadow-md rounded-lg overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+            <div className="table-container">
+                <table className="users-table">
+                    <thead>
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Manager</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Role</th>
+                            <th>Manager</th>
+                            <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {filteredUsers.map(user => (
-                            <tr key={user.id}>
-                                <td className="px-6 py-4 whitespace-nowrap">
+                    <tbody>
+                        {filteredUsers.map((user) => (
+                            <tr key={user.id} className={!user.is_active ? 'inactive-user' : ''}>
+                                <td className="name-cell">
                                     {user.first_name} {user.last_name}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    {user.email || 'N/A'}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    {user.role}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                        user.is_active 
-                                            ? 'bg-green-100 text-green-800' 
-                                            : 'bg-red-100 text-red-800'
-                                    }`}>
+                                <td>{user.department_name || 'N/A'}</td>
+                                <td>{user.role}</td>
+                                <td>{user.manager_name}</td>
+                                <td>
+                                    <span className={`status-badge ${user.is_active ? 'active' : 'inactive'}`}>
                                         {user.is_active ? 'Active' : 'Inactive'}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    {user.manager_name}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <td>
                                     <button
-                                        onClick={() => setEditingUserId(user.id)}
-                                        className="text-indigo-600 hover:text-indigo-900 mr-4"
+                                        className="edit-button"
+                                        onClick={() => handleEdit(user.id)}
                                     >
                                         Edit
                                     </button>
-                                    {user.is_admin && (
+                                    {user.email && (
                                         <button
-                                            onClick={() => setResettingUserId(user.id)}
-                                            className="text-red-600 hover:text-red-900"
+                                            className="reset-button ml-2"
+                                            onClick={() => handleResetPassword(user.id)}
                                         >
                                             Reset Password
                                         </button>
@@ -353,7 +443,7 @@ function Users() {
             {editingUserId && (
                 <UserEdit
                     userId={editingUserId}
-                    onClose={() => setEditingUserId(null)}
+                    onClose={handleCloseEdit}
                     onUpdate={fetchUsers}
                 />
             )}
@@ -361,8 +451,8 @@ function Users() {
             {resettingUserId && (
                 <ResetPasswordModal
                     userId={resettingUserId}
-                    userName={users.find(u => u.id === resettingUserId)?.first_name}
-                    onClose={() => setResettingUserId(null)}
+                    userName={users.find(u => u.id === resettingUserId)?.first_name + ' ' + users.find(u => u.id === resettingUserId)?.last_name}
+                    onClose={handleCloseReset}
                     onReset={fetchUsers}
                 />
             )}
