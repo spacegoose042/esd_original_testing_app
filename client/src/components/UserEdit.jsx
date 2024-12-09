@@ -6,7 +6,8 @@ function UserEdit({ userId, onClose, onUpdate }) {
         firstName: '',
         lastName: '',
         managerEmail: '',
-        isAdmin: false
+        isAdmin: false,
+        isActive: false
     });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -21,7 +22,8 @@ function UserEdit({ userId, onClose, onUpdate }) {
                         firstName: response.data.first_name,
                         lastName: response.data.last_name,
                         managerEmail: response.data.manager_email || '',
-                        isAdmin: response.data.is_admin
+                        isAdmin: response.data.is_admin,
+                        isActive: response.data.is_active
                     });
                 } catch (err) {
                     console.error('Error fetching user:', err);
@@ -35,12 +37,21 @@ function UserEdit({ userId, onClose, onUpdate }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await api.put(`/users/${userId}`, {
-                first_name: formData.firstName,
-                last_name: formData.lastName,
-                manager_email: formData.managerEmail,
-                is_admin: formData.isAdmin
-            });
+            console.log('Submitting update with data:', formData);
+            
+            // Send all required fields
+            const updateData = {
+                firstName: formData.firstName.trim(),
+                lastName: formData.lastName.trim(),
+                managerId: formData.managerId,
+                isAdmin: Boolean(formData.isAdmin),
+                isActive: Boolean(formData.isActive) // Add isActive to the update data
+            };
+
+            console.log('Transformed update data:', updateData);
+
+            const response = await api.put(`/users/${userId}`, updateData);
+            console.log('Update response:', response.data);
 
             setSuccess('User updated successfully');
             setTimeout(() => {
@@ -48,7 +59,12 @@ function UserEdit({ userId, onClose, onUpdate }) {
                 onClose();
             }, 2000);
         } catch (err) {
-            setError(err.response?.data?.error || 'Failed to update user');
+            console.error('Update error:', err);
+            const errorMessage = err.response?.data?.message || 
+                               err.response?.data?.error || 
+                               err.response?.data?.detail ||
+                               'Failed to update user';
+            setError(errorMessage);
         }
     };
 
@@ -126,6 +142,19 @@ function UserEdit({ userId, onClose, onUpdate }) {
                                 />
                                 <label htmlFor="isAdmin" className="ml-2 block text-sm text-gray-900">
                                     Is Admin
+                                </label>
+                            </div>
+                            <div className="flex items-center">
+                                <input
+                                    id="isActive"
+                                    name="isActive"
+                                    type="checkbox"
+                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                    checked={formData.isActive}
+                                    onChange={handleChange}
+                                />
+                                <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
+                                    Is Active
                                 </label>
                             </div>
                         </div>

@@ -193,7 +193,9 @@ router.put('/:id', auth, async (req, res) => {
 
         console.log('Update request received:', {
             id,
-            body: req.body
+            body: req.body,
+            isActive: isActive,
+            isActiveType: typeof isActive
         });
 
         const query = `
@@ -230,7 +232,8 @@ router.put('/:id', auth, async (req, res) => {
         console.log('Executing update query:', {
             query,
             values,
-            valueTypes: values.map(v => `${typeof v}:${v}`)
+            valueTypes: values.map(v => `${typeof v}:${v}`),
+            isActiveValue: Boolean(isActive)
         });
 
         const result = await pool.query(query, values);
@@ -248,11 +251,8 @@ router.put('/:id', auth, async (req, res) => {
             detail: err.detail,
             table: err.table,
             constraint: err.constraint,
-            stack: err.stack,
-            query: err.query,
-            parameters: err.parameters
+            stack: err.stack
         });
-
         res.status(500).json({
             error: 'Failed to update user',
             message: err.message,
