@@ -191,16 +191,22 @@ router.put('/:id', auth, async (req, res) => {
         const { id } = req.params;
         const { firstName, lastName, managerEmail, isAdmin, isActive } = req.body;
 
-        console.log('Update request received:', {
+        console.log('Raw update request:', {
             id,
             body: req.body,
-            isActive: isActive,
-            isActiveType: typeof isActive,
-            isActiveParsed: isActive === true || isActive === 'true'
+            isActive,
+            isActiveType: typeof isActive
         });
 
-        // Handle isActive value explicitly
+        // Ensure proper boolean conversion
         const isActiveValue = isActive === true || isActive === 'true';
+        const isAdminValue = isAdmin === true || isAdmin === 'true';
+
+        console.log('Processed values:', {
+            isActiveValue,
+            isAdminValue,
+            originalIsActive: isActive
+        });
 
         const query = `
             UPDATE users 
@@ -229,16 +235,15 @@ router.put('/:id', auth, async (req, res) => {
             firstName,
             lastName,
             managerEmail,
-            Boolean(isAdmin),
-            isActiveValue, // Use the explicitly parsed value
+            isAdminValue,
+            isActiveValue,
             id
         ];
 
-        console.log('Executing update query:', {
-            query,
+        console.log('Database update:', {
             values,
-            valueTypes: values.map(v => `${typeof v}:${v}`),
-            isActiveValue
+            isActiveValue,
+            sql: query
         });
 
         const result = await pool.query(query, values);
@@ -247,7 +252,7 @@ router.put('/:id', auth, async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        console.log('Update successful:', result.rows[0]);
+        console.log('Updated user:', result.rows[0]);
         res.json(result.rows[0]);
     } catch (err) {
         console.error('Error updating user:', {

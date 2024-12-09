@@ -19,13 +19,15 @@ function UserEdit({ userId, onClose, onUpdate }) {
                     const response = await api.get(`/users/${userId}`);
                     console.log('Fetched user data:', response.data);
                     
-                    setFormData({
+                    const userData = {
                         firstName: response.data.first_name,
                         lastName: response.data.last_name,
                         managerEmail: response.data.manager_email || '',
-                        isAdmin: response.data.is_admin || false,
-                        isActive: response.data.is_active !== false
-                    });
+                        isAdmin: Boolean(response.data.is_admin),
+                        isActive: response.data.is_active === true
+                    };
+                    console.log('Setting initial form data:', userData);
+                    setFormData(userData);
                 } catch (err) {
                     console.error('Error fetching user:', err);
                     setError(err.response?.data?.error || 'Failed to load user data');
@@ -38,21 +40,20 @@ function UserEdit({ userId, onClose, onUpdate }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            console.log('Current form data:', formData);
+            console.log('Submitting form with data:', formData);
             
-            // Send all required fields
             const updateData = {
                 firstName: formData.firstName.trim(),
                 lastName: formData.lastName.trim(),
                 managerEmail: formData.managerEmail.trim(),
                 isAdmin: Boolean(formData.isAdmin),
-                isActive: formData.isActive
+                isActive: formData.isActive === true
             };
 
             console.log('Sending update data:', updateData);
 
             const response = await api.put(`/users/${userId}`, updateData);
-            console.log('Update response:', response.data);
+            console.log('Server response:', response.data);
 
             setSuccess('User updated successfully');
             setTimeout(() => {
@@ -71,9 +72,19 @@ function UserEdit({ userId, onClose, onUpdate }) {
 
     const handleChange = (e) => {
         const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
-        setFormData({
-            ...formData,
-            [e.target.name]: value
+        console.log('Field changed:', {
+            name: e.target.name,
+            value: value,
+            type: e.target.type,
+            checked: e.target.checked
+        });
+        setFormData(prev => {
+            const newData = {
+                ...prev,
+                [e.target.name]: value
+            };
+            console.log('Updated form data:', newData);
+            return newData;
         });
     };
 
