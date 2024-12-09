@@ -42,8 +42,19 @@ function UserEdit({ userId, onClose, onUpdate }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await api.put(`/users/${userId}`, formData);
-            console.log('Server response:', response.data);
+            console.log('Submitting update with data:', formData);
+            
+            const updateData = {
+                firstName: formData.firstName.trim(),
+                lastName: formData.lastName.trim(),
+                managerId: formData.managerId,
+                isAdmin: formData.isAdmin,
+                isActive: formData.isActive
+            };
+
+            console.log('Transformed update data:', updateData);
+            const response = await api.put(`/users/${userId}`, updateData);
+            console.log('Update response:', response.data);
 
             setSuccess('User updated successfully');
             setTimeout(() => {

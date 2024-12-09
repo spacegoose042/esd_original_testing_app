@@ -187,40 +187,83 @@ router.get('/:id', auth, async (req, res) => {
 
 // Update user
 router.put('/:id', auth, async (req, res) => {
+    const client = await pool.connect();
     try {
+        await client.query('BEGIN');
+        
         const userId = req.params.id;
         const updates = {
             first_name: req.body.firstName,
             last_name: req.body.lastName,
             manager_id: req.body.managerId,
-            is_admin: req.body.isAdmin,
-            is_active: req.body.isActive
+            is_admin: req.body.isAdmin === true,
+            is_active: req.body.isActive === true
         };
         
         console.log('Received update data:', req.body);
         console.log('Processed updates:', updates);
 
-        const result = await pool.query(
-            `UPDATE users 
-             SET first_name = $1, 
-                 last_name = $2, 
-                 manager_id = $3, 
-                 is_admin = $4,
-                 is_active = $5
-             WHERE id = $6 
-             RETURNING *`,
-            [updates.first_name, updates.last_name, updates.manager_id, updates.is_admin, updates.is_active, userId]
+        // Get current user state
+        const currentState = await client.query(
+            'SELECT * FROM users WHERE id = $1',
+            [userId]
         );
+        console.log('Current user state:', currentState.rows[0]);
+
+        const result = await client.query(`
+            UPDATE users 
+            SET first_name = $1, 
+                last_name = $2, 
+                manager_id = $3, 
+                is_admin = $4,
+                is_active = $5
+            WHERE id = $6 
+            RETURNING *
+        `, [
+            updates.first_name,
+            updates.last_name,
+            updates.manager_id,
+            updates.is_admin,
+            updates.is_active,
+            userId
+        ]);
 
         if (result.rows.length === 0) {
+            await client.query('ROLLBACK');
             return res.status(404).json({ error: 'User not found' });
         }
 
-        console.log('Updated user:', result.rows[0]);
+        // Verify the update
+        const verifyQuery = await client.query(
+            'SELECT * FROM users WHERE id = $1',
+            [userId]
+        );
+        console.log('Updated user state:', verifyQuery.rows[0]);
+
+        await client.query('COMMIT');
+        console.log('Update successful:', {
+            before: currentState.rows[0],
+            after: result.rows[0]
+        });
+        
         res.json(result.rows[0]);
     } catch (error) {
-        console.error('Error updating user:', error);
-        res.status(500).json({ error: 'Failed to update user' });
+        await client.query('ROLLBACK');
+        console.error('Error updating user:', {
+            error: error.message,
+            code: error.code,
+            detail: error.detail,
+            table: error.table,
+            constraint: error.constraint,
+            stack: error.stack
+        });
+        res.status(500).json({ 
+            error: 'Failed to update user',
+            message: error.message,
+            detail: error.detail
+        });
+    } finally {
+        client.release();
     }
 });
 
