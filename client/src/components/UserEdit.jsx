@@ -148,47 +148,52 @@ function UserEdit({ userId, onClose, onUpdate }) {
                                     onChange={handleChange}
                                 />
                             </div>
-                            <div className="flex items-center">
-                                <input
-                                    id="isAdmin"
-                                    name="isAdmin"
-                                    type="checkbox"
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                    checked={formData.isAdmin}
-                                    onChange={handleChange}
-                                />
-                                <label htmlFor="isAdmin" className="ml-2 block text-sm text-gray-900">
-                                    Is Admin
-                                </label>
-                            </div>
-                            <div className="flex items-center">
-                                <input
-                                    id="isActive"
-                                    name="isActive"
-                                    type="checkbox"
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                    checked={formData.isActive}
-                                    onChange={handleChange}
-                                />
-                                <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
-                                    Is Active
-                                </label>
-                            </div>
-                            <div className="flex items-center">
-                                <input
-                                    id="exemptFromTesting"
-                                    name="exemptFromTesting"
-                                    type="checkbox"
-                                    className="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"
-                                    checked={formData.exemptFromTesting}
-                                    onChange={handleChange}
-                                />
-                                <label htmlFor="exemptFromTesting" className="ml-2 block text-sm text-gray-900">
-                                    Exempt from Testing
-                                    <span className="ml-1 text-xs text-gray-500">
-                                        (User will not appear in test logs)
-                                    </span>
-                                </label>
+
+                            <div className="space-y-2">
+                                <div className="flex items-center">
+                                    <input
+                                        id="isActive"
+                                        name="isActive"
+                                        type="checkbox"
+                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                        checked={formData.isActive}
+                                        onChange={handleChange}
+                                    />
+                                    <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
+                                        Is Active
+                                    </label>
+                                </div>
+
+                                <div className="flex items-center">
+                                    <input
+                                        id="exemptFromTesting"
+                                        name="exemptFromTesting"
+                                        type="checkbox"
+                                        className="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"
+                                        checked={formData.exemptFromTesting}
+                                        onChange={handleChange}
+                                    />
+                                    <label htmlFor="exemptFromTesting" className="ml-2 block text-sm text-gray-900">
+                                        Exempt from Testing
+                                        <span className="ml-1 text-xs text-gray-500">
+                                            (Will not receive notifications)
+                                        </span>
+                                    </label>
+                                </div>
+
+                                <div className="flex items-center">
+                                    <input
+                                        id="isAdmin"
+                                        name="isAdmin"
+                                        type="checkbox"
+                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                        checked={formData.isAdmin}
+                                        onChange={handleChange}
+                                    />
+                                    <label htmlFor="isAdmin" className="ml-2 block text-sm text-gray-900">
+                                        Is Admin
+                                    </label>
+                                </div>
                             </div>
                         </div>
 
