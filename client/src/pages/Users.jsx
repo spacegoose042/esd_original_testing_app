@@ -9,7 +9,8 @@ function UserEdit({ userId, onClose, onUpdate }) {
         lastName: '',
         managerId: '',
         isAdmin: false,
-        isActive: true
+        isActive: true,
+        exemptFromTesting: false
     });
     const [managers, setManagers] = useState([]);
     const [error, setError] = useState('');
@@ -35,7 +36,8 @@ function UserEdit({ userId, onClose, onUpdate }) {
                     lastName: userResponse.data.last_name,
                     managerId: userResponse.data.manager_id || '',
                     isAdmin: userResponse.data.is_admin || false,
-                    isActive: userResponse.data.is_active !== false // default to true if undefined
+                    isActive: userResponse.data.is_active !== false, // default to true if undefined
+                    exemptFromTesting: userResponse.data.exempt_from_testing || false
                 });
             } catch (err) {
                 console.error('Error fetching data:', err);
@@ -55,7 +57,9 @@ function UserEdit({ userId, onClose, onUpdate }) {
                 firstName: formData.firstName.trim(),
                 lastName: formData.lastName.trim(),
                 managerId: formData.managerId,
-                isAdmin: Boolean(formData.isAdmin)
+                isAdmin: Boolean(formData.isAdmin),
+                isActive: Boolean(formData.isActive),
+                exemptFromTesting: Boolean(formData.exemptFromTesting)
             };
 
             console.log('Transformed update data:', updateData);
@@ -135,7 +139,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
                     </div>
 
                     {currentUser?.isAdmin && (
-                        <>
+                        <div className="checkbox-group">
                             <div className="form-group checkbox">
                                 <label>
                                     <input
@@ -158,7 +162,19 @@ function UserEdit({ userId, onClose, onUpdate }) {
                                     Is Active
                                 </label>
                             </div>
-                        </>
+                            <div className="form-group checkbox">
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        name="exemptFromTesting"
+                                        checked={formData.exemptFromTesting}
+                                        onChange={handleChange}
+                                    />
+                                    Exempt from Testing
+                                    <span className="help-text">(Will not receive notifications)</span>
+                                </label>
+                            </div>
+                        </div>
                     )}
 
                     <div className="button-group">

@@ -294,4 +294,25 @@
         padding: 8px 10px;
     }
 }
+
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 1rem 0;
+    padding: 1rem;
+    background-color: #f9fafb;
+    border-radius: 0.5rem;
+}
+
+.checkbox-group .form-group.checkbox {
+    margin: 0;
+}
+
+.help-text {
+    margin-left: 0.5rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-style: italic;
+}
  
