@@ -399,19 +399,19 @@ router.post('/', auth, async (req, res) => {
     }
 });
 
-// Reset user password (admin only)
+// Reset user password
 router.post('/:id/reset-password', auth, async (req, res) => {
     try {
         const { id } = req.params;
         
-        // Verify the requester is an admin
+        // Verify the requester is an admin or manager
         const authResponse = await pool.query(
-            'SELECT is_admin FROM users WHERE id = $1',
+            'SELECT is_admin, is_manager FROM users WHERE id = $1',
             [req.user.id]
         );
 
-        if (!authResponse.rows[0]?.is_admin) {
-            return res.status(403).json({ error: 'Only administrators can reset passwords' });
+        if (!authResponse.rows[0]?.is_admin && !authResponse.rows[0]?.is_manager) {
+            return res.status(403).json({ error: 'Only administrators and managers can reset passwords' });
         }
 
         // Generate a new random password
@@ -420,7 +420,7 @@ router.post('/:id/reset-password', auth, async (req, res) => {
 
         // Update the user's password
         const result = await pool.query(
-            'UPDATE users SET password = $1 WHERE id = $2 RETURNING id, email, first_name, last_name',
+            'UPDATE users SET password_hash = $1 WHERE id = $2 RETURNING id, email, first_name, last_name',
             [hashedPassword, id]
         );
 
