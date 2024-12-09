@@ -8,7 +8,8 @@ function UserEdit({ userId, onClose, onUpdate }) {
         managerEmail: '',
         managerId: '',
         isAdmin: false,
-        isActive: false
+        isActive: false,
+        exemptFromTesting: false
     });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -26,7 +27,8 @@ function UserEdit({ userId, onClose, onUpdate }) {
                         managerEmail: response.data.manager_email || '',
                         managerId: response.data.manager_id || '',
                         isAdmin: response.data.is_admin === true,
-                        isActive: response.data.is_active === true
+                        isActive: response.data.is_active === true,
+                        exemptFromTesting: response.data.exempt_from_testing === true
                     };
                     console.log('Setting initial form data:', userData);
                     setFormData(userData);
@@ -49,7 +51,8 @@ function UserEdit({ userId, onClose, onUpdate }) {
                 lastName: formData.lastName.trim(),
                 managerId: formData.managerId,
                 isAdmin: formData.isAdmin,
-                isActive: formData.isActive
+                isActive: formData.isActive,
+                exemptFromTesting: formData.exemptFromTesting
             };
 
             console.log('Transformed update data:', updateData);
@@ -169,6 +172,22 @@ function UserEdit({ userId, onClose, onUpdate }) {
                                 />
                                 <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
                                     Is Active
+                                </label>
+                            </div>
+                            <div className="flex items-center">
+                                <input
+                                    id="exemptFromTesting"
+                                    name="exemptFromTesting"
+                                    type="checkbox"
+                                    className="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"
+                                    checked={formData.exemptFromTesting}
+                                    onChange={handleChange}
+                                />
+                                <label htmlFor="exemptFromTesting" className="ml-2 block text-sm text-gray-900">
+                                    Exempt from Testing
+                                    <span className="ml-1 text-xs text-gray-500">
+                                        (User will not appear in test logs)
+                                    </span>
                                 </label>
                             </div>
                         </div>

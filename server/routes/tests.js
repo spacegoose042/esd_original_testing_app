@@ -155,7 +155,8 @@ router.get('/daily-status', async (req, res) => {
             LEFT JOIN (
                 SELECT * FROM today_tests WHERE test_period = 'PM'
             ) pm ON u.id = pm.user_id
-            WHERE u.is_active = true
+            WHERE u.is_active = true 
+            AND u.exempt_from_testing = false
             ORDER BY u.first_name, u.last_name;
         `);
         

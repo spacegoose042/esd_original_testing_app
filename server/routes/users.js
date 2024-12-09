@@ -197,7 +197,8 @@ router.put('/:id', auth, async (req, res) => {
             last_name: req.body.lastName,
             manager_id: req.body.managerId,
             is_admin: req.body.isAdmin === true,
-            is_active: req.body.isActive === true
+            is_active: req.body.isActive === true,
+            exempt_from_testing: req.body.exemptFromTesting === true
         };
         
         console.log('Received update data:', req.body);
@@ -216,8 +217,9 @@ router.put('/:id', auth, async (req, res) => {
                 last_name = $2, 
                 manager_id = $3, 
                 is_admin = $4,
-                is_active = $5
-            WHERE id = $6 
+                is_active = $5,
+                exempt_from_testing = $6
+            WHERE id = $7 
             RETURNING *
         `, [
             updates.first_name,
@@ -225,6 +227,7 @@ router.put('/:id', auth, async (req, res) => {
             updates.manager_id,
             updates.is_admin,
             updates.is_active,
+            updates.exempt_from_testing,
             userId
         ]);
 
