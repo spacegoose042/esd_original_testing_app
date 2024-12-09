@@ -43,9 +43,9 @@ function UserEdit({ userId, onClose, onUpdate }) {
             const updateData = {
                 firstName: formData.firstName.trim(),
                 lastName: formData.lastName.trim(),
-                managerId: formData.managerId,
+                managerEmail: formData.managerEmail.trim(),
                 isAdmin: Boolean(formData.isAdmin),
-                isActive: Boolean(formData.isActive) // Add isActive to the update data
+                isActive: Boolean(formData.isActive)
             };
 
             console.log('Transformed update data:', updateData);
