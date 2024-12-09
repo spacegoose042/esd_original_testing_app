@@ -8,11 +8,14 @@ function UserEdit({ userId, onClose, onUpdate }) {
         firstName: '',
         lastName: '',
         managerId: '',
+        departmentId: '',
         isAdmin: false,
         isActive: true,
+        isManager: false,
         exemptFromTesting: false
     });
     const [managers, setManagers] = useState([]);
+    const [departments, setDepartments] = useState([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [currentUser, setCurrentUser] = useState(null);
@@ -20,23 +23,27 @@ function UserEdit({ userId, onClose, onUpdate }) {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch current user's auth status, user data, and managers list
-                const [authResponse, userResponse, managersResponse] = await Promise.all([
+                // Fetch current user's auth status, user data, managers list, and departments
+                const [authResponse, userResponse, managersResponse, departmentsResponse] = await Promise.all([
                     api.get('/auth/verify'),
                     api.get(`/users/${userId}`),
-                    api.get('/users/managers')
+                    api.get('/users/managers'),
+                    api.get('/users/departments')
                 ]);
 
                 setCurrentUser(authResponse.data);
                 setManagers(managersResponse.data);
+                setDepartments(departmentsResponse.data);
 
                 // Set user data
                 setFormData({
                     firstName: userResponse.data.first_name,
                     lastName: userResponse.data.last_name,
                     managerId: userResponse.data.manager_id || '',
+                    departmentId: userResponse.data.department_id || '',
                     isAdmin: userResponse.data.is_admin || false,
-                    isActive: userResponse.data.is_active !== false, // default to true if undefined
+                    isActive: userResponse.data.is_active !== false,
+                    isManager: userResponse.data.is_manager || false,
                     exemptFromTesting: userResponse.data.exempt_from_testing || false
                 });
             } catch (err) {
@@ -52,18 +59,18 @@ function UserEdit({ userId, onClose, onUpdate }) {
         try {
             console.log('Submitting update with data:', formData);
             
-            // Send all required fields
             const updateData = {
                 firstName: formData.firstName.trim(),
                 lastName: formData.lastName.trim(),
                 managerId: formData.managerId,
+                departmentId: formData.departmentId,
                 isAdmin: Boolean(formData.isAdmin),
                 isActive: Boolean(formData.isActive),
+                isManager: Boolean(formData.isManager),
                 exemptFromTesting: Boolean(formData.exemptFromTesting)
             };
 
             console.log('Transformed update data:', updateData);
-
             const response = await api.put(`/users/${userId}`, updateData);
             console.log('Update response:', response.data);
 
@@ -121,6 +128,24 @@ function UserEdit({ userId, onClose, onUpdate }) {
                     </div>
 
                     <div className="form-group">
+                        <label>Department</label>
+                        <select
+                            name="departmentId"
+                            value={formData.departmentId}
+                            onChange={handleChange}
+                            required
+                            className="department-select"
+                        >
+                            <option value="">Select a Department</option>
+                            {departments.map(dept => (
+                                <option key={dept.id} value={dept.id}>
+                                    {dept.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="form-group">
                         <label>Manager</label>
                         <select
                             name="managerId"
@@ -144,6 +169,21 @@ function UserEdit({ userId, onClose, onUpdate }) {
                                 <label>
                                     <input
                                         type="checkbox"
+                                        name="isManager"
+                                        checked={formData.isManager}
+                                        onChange={handleChange}
+                                    />
+                                    Is Manager
+                                    <span className="help-text">
+                                        (Can receive notifications about team members)
+                                    </span>
+                                </label>
+                            </div>
+
+                            <div className="form-group checkbox">
+                                <label>
+                                    <input
+                                        type="checkbox"
                                         name="isAdmin"
                                         checked={formData.isAdmin}
                                         onChange={handleChange}
@@ -151,6 +191,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
                                     Is Admin
                                 </label>
                             </div>
+
                             <div className="form-group checkbox">
                                 <label>
                                     <input
@@ -162,6 +203,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
                                     Is Active
                                 </label>
                             </div>
+
                             <div className="form-group checkbox">
                                 <label>
                                     <input

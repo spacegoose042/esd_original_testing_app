@@ -197,8 +197,10 @@ router.put('/:id', auth, async (req, res) => {
             first_name: req.body.firstName,
             last_name: req.body.lastName,
             manager_id: req.body.managerId,
+            department_id: req.body.departmentId,
             is_admin: req.body.isAdmin === true,
             is_active: req.body.isActive === true,
+            is_manager: req.body.isManager === true,
             exempt_from_testing: req.body.exemptFromTesting === true
         };
         
@@ -216,18 +218,22 @@ router.put('/:id', auth, async (req, res) => {
             UPDATE users 
             SET first_name = $1, 
                 last_name = $2, 
-                manager_id = $3, 
-                is_admin = $4,
-                is_active = $5,
-                exempt_from_testing = $6
-            WHERE id = $7 
+                manager_id = $3,
+                department_id = $4,
+                is_admin = $5,
+                is_active = $6,
+                is_manager = $7,
+                exempt_from_testing = $8
+            WHERE id = $9 
             RETURNING *
         `, [
             updates.first_name,
             updates.last_name,
             updates.manager_id,
+            updates.department_id,
             updates.is_admin,
             updates.is_active,
+            updates.is_manager,
             updates.exempt_from_testing,
             userId
         ]);
