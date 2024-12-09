@@ -420,7 +420,7 @@ router.post('/:id/reset-password', auth, async (req, res) => {
 
         // Update the user's password
         const result = await pool.query(
-            'UPDATE users SET password_hash = $1 WHERE id = $2 RETURNING id, email, first_name, last_name',
+            'UPDATE users SET password = $1 WHERE id = $2 RETURNING id, email, first_name, last_name',
             [hashedPassword, id]
         );
 
