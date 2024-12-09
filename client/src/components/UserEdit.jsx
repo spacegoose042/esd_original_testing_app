@@ -42,28 +42,8 @@ function UserEdit({ userId, onClose, onUpdate }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            console.log('Form submission - Current form data:', formData);
-            
-            const updateData = {
-                firstName: formData.firstName.trim(),
-                lastName: formData.lastName.trim(),
-                managerEmail: formData.managerEmail.trim(),
-                managerId: formData.managerId,
-                isAdmin: formData.isAdmin === true,
-                isActive: formData.isActive === true
-            };
-
-            console.log('Sending update request with data:', updateData);
-
-            const response = await api.put(`/users/${userId}`, updateData);
+            const response = await api.put(`/users/${userId}`, formData);
             console.log('Server response:', response.data);
-
-            if (response.data.is_active !== updateData.isActive) {
-                console.warn('Active status mismatch:', {
-                    requested: updateData.isActive,
-                    received: response.data.is_active
-                });
-            }
 
             setSuccess('User updated successfully');
             setTimeout(() => {
@@ -72,11 +52,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
             }, 2000);
         } catch (err) {
             console.error('Update error:', err);
-            const errorMessage = err.response?.data?.message || 
-                               err.response?.data?.error || 
-                               err.response?.data?.detail ||
-                               'Failed to update user';
-            setError(errorMessage);
+            setError(err.response?.data?.error || 'Failed to update user');
         }
     };
 

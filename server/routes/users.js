@@ -187,97 +187,40 @@ router.get('/:id', auth, async (req, res) => {
 
 // Update user
 router.put('/:id', auth, async (req, res) => {
-    const client = await pool.connect();
     try {
-        const { id } = req.params;
-        const { firstName, lastName, managerEmail, managerId, isAdmin, isActive } = req.body;
+        const userId = req.params.id;
+        const updates = {
+            first_name: req.body.firstName,
+            last_name: req.body.lastName,
+            manager_id: req.body.managerId,
+            is_admin: req.body.isAdmin,
+            is_active: req.body.isActive
+        };
+        
+        console.log('Received update data:', req.body);
+        console.log('Processed updates:', updates);
 
-        console.log('Update request received:', {
-            id,
-            requestBody: req.body,
-            isActive,
-            isActiveType: typeof isActive,
-            isActiveParsed: isActive === true
-        });
-
-        await client.query('BEGIN');
-
-        // Get current user state
-        const currentState = await client.query(
-            'SELECT * FROM users WHERE id = $1',
-            [id]
+        const result = await pool.query(
+            `UPDATE users 
+             SET first_name = $1, 
+                 last_name = $2, 
+                 manager_id = $3, 
+                 is_admin = $4,
+                 is_active = $5
+             WHERE id = $6 
+             RETURNING *`,
+            [updates.first_name, updates.last_name, updates.manager_id, updates.is_admin, updates.is_active, userId]
         );
-        console.log('Current user state:', currentState.rows[0]);
-
-        const query = `
-            UPDATE users 
-            SET 
-                first_name = $1,
-                last_name = $2,
-                manager_email = $3,
-                manager_id = $4,
-                is_admin = $5,
-                is_active = $6
-            WHERE id = $7
-            RETURNING *
-        `;
-
-        const values = [
-            firstName,
-            lastName,
-            managerEmail,
-            managerId,
-            isAdmin === true,
-            isActive === true, // Explicitly convert to boolean
-            id
-        ];
-
-        console.log('Executing update with values:', {
-            values,
-            isActive,
-            parsedIsActive: isActive === true
-        });
-
-        const result = await client.query(query, values);
-
-        // Verify the update
-        const verifyQuery = await client.query(
-            'SELECT * FROM users WHERE id = $1',
-            [id]
-        );
-        console.log('Updated user state:', verifyQuery.rows[0]);
-
-        await client.query('COMMIT');
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        console.log('Update successful:', {
-            before: currentState.rows[0],
-            after: result.rows[0]
-        });
-        
+        console.log('Updated user:', result.rows[0]);
         res.json(result.rows[0]);
-    } catch (err) {
-        await client.query('ROLLBACK');
-        console.error('Error updating user:', {
-            error: err.message,
-            code: err.code,
-            detail: err.detail,
-            table: err.table,
-            constraint: err.constraint,
-            stack: err.stack
-        });
-        res.status(500).json({
-            error: 'Failed to update user',
-            message: err.message,
-            code: err.code,
-            detail: err.detail,
-            constraint: err.constraint
-        });
-    } finally {
-        client.release();
+    } catch (error) {
+        console.error('Error updating user:', error);
+        res.status(500).json({ error: 'Failed to update user' });
     }
 });
 
