@@ -4,7 +4,6 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import History from './pages/History';
 import DailyLog from './pages/DailyLog';
-import Admin from './pages/Admin';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Users from './pages/Users';
@@ -12,6 +11,7 @@ import api from './services/api';
 
 function App() {
     const [isAdmin, setIsAdmin] = useState(false);
+    const [isManager, setIsManager] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -28,6 +28,7 @@ function App() {
                 const response = await api.get('/auth/verify');
                 console.log('Auth verification response:', response.data);
                 setIsAdmin(response.data.isAdmin);
+                setIsManager(response.data.isManager);
                 setIsAuthenticated(true);
             } catch (error) {
                 console.error('Auth verification error:', error);
@@ -52,11 +53,14 @@ function App() {
     }
 
     // Protected Route component
-    const ProtectedRoute = ({ children, adminOnly = false }) => {
-        if (!isAuthenticated && adminOnly) {
+    const ProtectedRoute = ({ children, adminOnly = false, managerOrAdmin = false }) => {
+        if (!isAuthenticated && (adminOnly || managerOrAdmin)) {
             return <Navigate to="/login" />;
         }
         if (adminOnly && !isAdmin) {
+            return <Navigate to="/" />;
+        }
+        if (managerOrAdmin && !isAdmin && !isManager) {
             return <Navigate to="/" />;
         }
         return children;
@@ -64,16 +68,20 @@ function App() {
 
     return (
         <div className="min-h-screen bg-gray-100">
-            <Navbar isAdmin={isAdmin} isAuthenticated={isAuthenticated} />
+            <Navbar isAdmin={isAdmin} isManager={isManager} isAuthenticated={isAuthenticated} />
             <div className="py-10">
                 <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/daily-log" element={<DailyLog />} />
-                    <Route path="/history" element={<History />} />
+                    <Route path="/history" element={
+                        <ProtectedRoute managerOrAdmin>
+                            <History />
+                        </ProtectedRoute>
+                    } />
                     <Route path="/login" element={
                         isAuthenticated ? 
                         <Navigate to="/" /> : 
-                        <Login setIsAdmin={setIsAdmin} />
+                        <Login setIsAdmin={setIsAdmin} setIsManager={setIsManager} />
                     } />
                     <Route path="/users" element={
                         <ProtectedRoute adminOnly>

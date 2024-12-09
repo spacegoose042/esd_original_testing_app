@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import logo from '../assets/S_and_Y_logo_50_vectorized.png';
 
-function Navbar({ isAdmin, isAuthenticated }) {
+function Navbar({ isAdmin, isManager, isAuthenticated }) {
     const navigate = useNavigate();
     
     const handleLogout = () => {
@@ -32,9 +32,11 @@ function Navbar({ isAdmin, isAuthenticated }) {
                             <Link to="/daily-log" className="py-4 px-2 text-gray-500 hover:text-gray-900">
                                 Daily Log
                             </Link>
-                            <Link to="/history" className="py-4 px-2 text-gray-500 hover:text-gray-900">
-                                History
-                            </Link>
+                            {(isAdmin || isManager) && (
+                                <Link to="/history" className="py-4 px-2 text-gray-500 hover:text-gray-900">
+                                    History
+                                </Link>
+                            )}
                             {isAdmin && (
                                 <>
                                     <Link to="/users" className="py-4 px-2 text-gray-500 hover:text-gray-900">
