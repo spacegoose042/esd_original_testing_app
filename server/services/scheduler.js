@@ -2,6 +2,9 @@ const cron = require('node-cron');
 const pool = require('../config/db');
 const { sendMissingTestAlert } = require('./emailService');
 
+// Set timezone to CST
+process.env.TZ = 'America/Chicago';
+
 // Utility function to check if it's a holiday or weekend
 const isWorkDay = () => {
     const today = new Date();
@@ -16,7 +19,7 @@ const checkMorningTests = async () => {
         return;
     }
 
-    console.log('Starting morning test check...');
+    console.log('Starting morning test check...', new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' }));
     try {
         // First, get all active users who need to test (not exempt)
         const usersToCheck = await pool.query(`
@@ -36,8 +39,8 @@ const checkMorningTests = async () => {
                 SELECT 1
                 FROM esd_tests t
                 WHERE t.user_id = u.id
-                AND t.created_at::date = CURRENT_DATE
-                AND t.created_at::time BETWEEN '06:00:00' AND '10:00:00'
+                AND t.test_date = CURRENT_DATE
+                AND t.test_time BETWEEN '06:00:00' AND '10:00:00'
                 AND t.test_period = 'AM'
             )
         `);
@@ -45,9 +48,6 @@ const checkMorningTests = async () => {
         console.log(`Found ${usersToCheck.rows.length} users missing morning tests`);
 
         for (const user of usersToCheck.rows) {
-            // Only send notification if either:
-            // 1. The manager is not exempt, or
-            // 2. The manager is exempt but this notification is about someone else's test
             await sendMissingTestAlert(
                 `${user.first_name} ${user.last_name}`,
                 'morning',
@@ -66,9 +66,8 @@ const checkAfternoonTests = async () => {
         return;
     }
 
-    console.log('Starting afternoon test check...');
+    console.log('Starting afternoon test check...', new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' }));
     try {
-        // First, get all active users who need to test (not exempt)
         const usersToCheck = await pool.query(`
             SELECT 
                 u.id, 
@@ -86,8 +85,8 @@ const checkAfternoonTests = async () => {
                 SELECT 1
                 FROM esd_tests t
                 WHERE t.user_id = u.id
-                AND t.created_at::date = CURRENT_DATE
-                AND t.created_at::time BETWEEN '12:00:00' AND '15:00:00'
+                AND t.test_date = CURRENT_DATE
+                AND t.test_time BETWEEN '12:00:00' AND '15:00:00'
                 AND t.test_period = 'PM'
             )
         `);
@@ -95,9 +94,6 @@ const checkAfternoonTests = async () => {
         console.log(`Found ${usersToCheck.rows.length} users missing afternoon tests`);
 
         for (const user of usersToCheck.rows) {
-            // Only send notification if either:
-            // 1. The manager is not exempt, or
-            // 2. The manager is exempt but this notification is about someone else's test
             await sendMissingTestAlert(
                 `${user.first_name} ${user.last_name}`,
                 'afternoon',
@@ -109,14 +105,15 @@ const checkAfternoonTests = async () => {
     }
 };
 
-// Schedule the checks
-// Morning check at 10:01 AM on weekdays
-cron.schedule('1 10 * * 1-5', checkMorningTests);
+// Schedule the checks using CST timezone
+cron.schedule('1 10 * * 1-5', checkMorningTests, {
+    timezone: "America/Chicago"
+});
 
-// Afternoon check at 3:01 PM on weekdays
-cron.schedule('1 15 * * 1-5', checkAfternoonTests);
+cron.schedule('1 15 * * 1-5', checkAfternoonTests, {
+    timezone: "America/Chicago"
+});
 
-// Export for testing purposes
 module.exports = {
     checkMorningTests,
     checkAfternoonTests

@@ -4,6 +4,9 @@ const cors = require('cors');
 const path = require('path');
 const pool = require('./config/db');
 
+// Set timezone to CST
+process.env.TZ = 'America/Chicago';
+
 // Validate required email environment variables
 function validateEmailConfig() {
     const requiredVars = ['EMAIL_HOST', 'EMAIL_PORT', 'EMAIL_USER', 'EMAIL_PASSWORD'];
