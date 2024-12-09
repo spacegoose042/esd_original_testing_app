@@ -5,14 +5,27 @@ function UserEdit({ userId, onClose, onUpdate }) {
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
-        managerEmail: '',
         managerId: '',
         isAdmin: false,
         isActive: false,
         exemptFromTesting: false
     });
+    const [managers, setManagers] = useState([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+
+    useEffect(() => {
+        const fetchManagers = async () => {
+            try {
+                const response = await api.get('/users/managers');
+                setManagers(response.data);
+            } catch (err) {
+                console.error('Error fetching managers:', err);
+            }
+        };
+
+        fetchManagers();
+    }, []);
 
     useEffect(() => {
         if (userId) {
@@ -24,7 +37,6 @@ function UserEdit({ userId, onClose, onUpdate }) {
                     const userData = {
                         firstName: response.data.first_name,
                         lastName: response.data.last_name,
-                        managerEmail: response.data.manager_email || '',
                         managerId: response.data.manager_id || '',
                         isAdmin: response.data.is_admin === true,
                         isActive: response.data.is_active === true,
@@ -73,24 +85,10 @@ function UserEdit({ userId, onClose, onUpdate }) {
     const handleChange = (e) => {
         const { name, type, checked, value } = e.target;
         const newValue = type === 'checkbox' ? checked : value;
-        
-        console.log('Field change event:', {
-            name,
-            type,
-            checked,
-            value,
-            newValue,
-            currentFormData: formData
-        });
-
-        setFormData(prev => {
-            const newData = {
-                ...prev,
-                [name]: newValue
-            };
-            console.log('Form data after update:', newData);
-            return newData;
-        });
+        setFormData(prev => ({
+            ...prev,
+            [name]: newValue
+        }));
     };
 
     return (
@@ -137,19 +135,38 @@ function UserEdit({ userId, onClose, onUpdate }) {
                                 />
                             </div>
                             <div>
-                                <label htmlFor="managerEmail" className="block text-sm font-medium text-gray-700">Manager's Email</label>
-                                <input
-                                    id="managerEmail"
-                                    name="managerEmail"
-                                    type="email"
-                                    required
+                                <label htmlFor="managerId" className="block text-sm font-medium text-gray-700">Manager</label>
+                                <select
+                                    id="managerId"
+                                    name="managerId"
                                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                    value={formData.managerEmail}
+                                    value={formData.managerId}
                                     onChange={handleChange}
-                                />
+                                >
+                                    <option value="">Select a manager</option>
+                                    {managers.map(manager => (
+                                        <option key={manager.id} value={manager.id}>
+                                            {manager.first_name} {manager.last_name}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
 
-                            <div className="space-y-2">
+                            <div className="space-y-3 pt-2">
+                                <div className="flex items-center">
+                                    <input
+                                        id="isAdmin"
+                                        name="isAdmin"
+                                        type="checkbox"
+                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                        checked={formData.isAdmin}
+                                        onChange={handleChange}
+                                    />
+                                    <label htmlFor="isAdmin" className="ml-2 block text-sm text-gray-900">
+                                        Is Admin
+                                    </label>
+                                </div>
+
                                 <div className="flex items-center">
                                     <input
                                         id="isActive"
@@ -178,20 +195,6 @@ function UserEdit({ userId, onClose, onUpdate }) {
                                         <span className="ml-1 text-xs text-gray-500">
                                             (Will not receive notifications)
                                         </span>
-                                    </label>
-                                </div>
-
-                                <div className="flex items-center">
-                                    <input
-                                        id="isAdmin"
-                                        name="isAdmin"
-                                        type="checkbox"
-                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                        checked={formData.isAdmin}
-                                        onChange={handleChange}
-                                    />
-                                    <label htmlFor="isAdmin" className="ml-2 block text-sm text-gray-900">
-                                        Is Admin
                                     </label>
                                 </div>
                             </div>
