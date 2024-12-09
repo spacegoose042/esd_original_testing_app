@@ -32,7 +32,8 @@ function UserEdit({ userId, onClose, onUpdate }) {
             const fetchUser = async () => {
                 try {
                     const response = await api.get(`/users/${userId}`);
-                    console.log('Raw user data:', response.data);
+                    console.log('DEBUG - Raw user data fields:', Object.keys(response.data));
+                    console.log('DEBUG - Full user data:', response.data);
                     
                     const userData = {
                         firstName: response.data.first_name,
@@ -42,7 +43,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
                         isActive: response.data.is_active === true,
                         exemptFromTesting: response.data.exempt_from_testing === true
                     };
-                    console.log('Processed form data:', userData);
+                    console.log('DEBUG - Processed form data:', userData);
                     setFormData(userData);
                 } catch (err) {
                     console.error('Error fetching user:', err);

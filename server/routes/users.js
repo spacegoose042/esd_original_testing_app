@@ -152,6 +152,7 @@ router.get('/:id', auth, async (req, res) => {
                 u.is_admin,
                 u.is_manager,
                 u.is_active,
+                u.exempt_from_testing,
                 u.manager_id,
                 u.department_id,
                 u.created_at::text as created_at,
@@ -168,7 +169,7 @@ router.get('/:id', auth, async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        console.log('Found user:', result.rows[0]);
+        console.log('Found user data:', result.rows[0]);
         res.json(result.rows[0]);
     } catch (err) {
         console.error('Error fetching user:', {
