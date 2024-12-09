@@ -10,6 +10,13 @@ function Navbar({ isAdmin, isAuthenticated }) {
         window.location.reload();
     };
 
+    // Add Daily Log to the navigation items
+    const navItems = [
+        { path: '/', label: 'Home' },
+        { path: '/daily-log', label: 'Daily Log' },
+        { path: '/history', label: 'History' }
+    ];
+
     return (
         <nav className="bg-white shadow-lg">
             <div className="max-w-6xl mx-auto px-4">

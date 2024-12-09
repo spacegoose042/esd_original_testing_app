@@ -123,4 +123,54 @@ router.post('/submit', async (req, res) => {
     }
 });
 
+// Get daily test status for all active users
+router.get('/daily-status', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            WITH today_tests AS (
+                SELECT 
+                    user_id,
+                    test_period,
+                    passed,
+                    to_char(test_time::time, 'HH12:MI AM') as test_time
+                FROM esd_tests
+                WHERE test_date = CURRENT_DATE
+            )
+            SELECT 
+                u.id,
+                u.first_name,
+                u.last_name,
+                json_build_object(
+                    'passed', am.passed,
+                    'time', am.test_time
+                ) as am_test,
+                json_build_object(
+                    'passed', pm.passed,
+                    'time', pm.test_time
+                ) as pm_test
+            FROM users u
+            LEFT JOIN (
+                SELECT * FROM today_tests WHERE test_period = 'AM'
+            ) am ON u.id = am.user_id
+            LEFT JOIN (
+                SELECT * FROM today_tests WHERE test_period = 'PM'
+            ) pm ON u.id = pm.user_id
+            WHERE u.is_active = true
+            ORDER BY u.first_name, u.last_name;
+        `);
+        
+        // Filter out null JSON objects from the results
+        const formattedResults = result.rows.map(row => ({
+            ...row,
+            am_test: row.am_test.passed !== null ? row.am_test : null,
+            pm_test: row.pm_test.passed !== null ? row.pm_test : null
+        }));
+
+        res.json(formattedResults);
+    } catch (error) {
+        console.error('Error in /tests/daily-status:', error);
+        res.status(500).json({ error: 'Failed to fetch daily test status' });
+    }
+});
+
 module.exports = router;
