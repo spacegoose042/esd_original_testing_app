@@ -171,7 +171,9 @@ function UserEdit({ userId, onClose, onUpdate }) {
                                         onChange={handleChange}
                                     />
                                     Exempt from Testing
-                                    <span className="help-text">(Will not receive notifications)</span>
+                                    <span className="help-text">
+                                        (Will not receive notifications about their own tests, but will still receive notifications about team members)
+                                    </span>
                                 </label>
                             </div>
                         </div>

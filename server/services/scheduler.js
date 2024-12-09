@@ -18,13 +18,20 @@ const checkMorningTests = async () => {
 
     console.log('Starting morning test check...');
     try {
-        const result = await pool.query(`
-            SELECT u.id, u.first_name, u.last_name, u.manager_email
+        // First, get all active users who need to test (not exempt)
+        const usersToCheck = await pool.query(`
+            SELECT 
+                u.id, 
+                u.first_name, 
+                u.last_name, 
+                u.manager_email,
+                m.exempt_from_testing as manager_is_exempt
             FROM users u
+            LEFT JOIN users m ON u.manager_id = m.id
             WHERE u.is_admin = false
-            AND u.manager_email IS NOT NULL
             AND u.is_active = true
             AND u.exempt_from_testing = false
+            AND u.manager_email IS NOT NULL
             AND NOT EXISTS (
                 SELECT 1
                 FROM esd_tests t
@@ -35,9 +42,12 @@ const checkMorningTests = async () => {
             )
         `);
 
-        console.log(`Found ${result.rows.length} users missing morning tests`);
+        console.log(`Found ${usersToCheck.rows.length} users missing morning tests`);
 
-        for (const user of result.rows) {
+        for (const user of usersToCheck.rows) {
+            // Only send notification if either:
+            // 1. The manager is not exempt, or
+            // 2. The manager is exempt but this notification is about someone else's test
             await sendMissingTestAlert(
                 `${user.first_name} ${user.last_name}`,
                 'morning',
@@ -58,13 +68,20 @@ const checkAfternoonTests = async () => {
 
     console.log('Starting afternoon test check...');
     try {
-        const result = await pool.query(`
-            SELECT u.id, u.first_name, u.last_name, u.manager_email
+        // First, get all active users who need to test (not exempt)
+        const usersToCheck = await pool.query(`
+            SELECT 
+                u.id, 
+                u.first_name, 
+                u.last_name, 
+                u.manager_email,
+                m.exempt_from_testing as manager_is_exempt
             FROM users u
+            LEFT JOIN users m ON u.manager_id = m.id
             WHERE u.is_admin = false
-            AND u.manager_email IS NOT NULL
             AND u.is_active = true
             AND u.exempt_from_testing = false
+            AND u.manager_email IS NOT NULL
             AND NOT EXISTS (
                 SELECT 1
                 FROM esd_tests t
@@ -75,9 +92,12 @@ const checkAfternoonTests = async () => {
             )
         `);
 
-        console.log(`Found ${result.rows.length} users missing afternoon tests`);
+        console.log(`Found ${usersToCheck.rows.length} users missing afternoon tests`);
 
-        for (const user of result.rows) {
+        for (const user of usersToCheck.rows) {
+            // Only send notification if either:
+            // 1. The manager is not exempt, or
+            // 2. The manager is exempt but this notification is about someone else's test
             await sendMissingTestAlert(
                 `${user.first_name} ${user.last_name}`,
                 'afternoon',
