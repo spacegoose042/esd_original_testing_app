@@ -32,7 +32,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
             const fetchUser = async () => {
                 try {
                     const response = await api.get(`/users/${userId}`);
-                    console.log('Fetched user data:', response.data);
+                    console.log('Raw user data:', response.data);
                     
                     const userData = {
                         firstName: response.data.first_name,
@@ -42,7 +42,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
                         isActive: response.data.is_active === true,
                         exemptFromTesting: response.data.exempt_from_testing === true
                     };
-                    console.log('Setting initial form data:', userData);
+                    console.log('Processed form data:', userData);
                     setFormData(userData);
                 } catch (err) {
                     console.error('Error fetching user:', err);
@@ -56,8 +56,6 @@ function UserEdit({ userId, onClose, onUpdate }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            console.log('Submitting update with data:', formData);
-            
             const updateData = {
                 firstName: formData.firstName.trim(),
                 lastName: formData.lastName.trim(),
@@ -67,7 +65,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
                 exemptFromTesting: formData.exemptFromTesting
             };
 
-            console.log('Transformed update data:', updateData);
+            console.log('Submitting update:', updateData);
             const response = await api.put(`/users/${userId}`, updateData);
             console.log('Update response:', response.data);
 
@@ -85,11 +83,14 @@ function UserEdit({ userId, onClose, onUpdate }) {
     const handleChange = (e) => {
         const { name, type, checked, value } = e.target;
         const newValue = type === 'checkbox' ? checked : value;
+        console.log('Field change:', { name, type, newValue });
         setFormData(prev => ({
             ...prev,
             [name]: newValue
         }));
     };
+
+    console.log('Current form data:', formData);
 
     return (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
@@ -152,7 +153,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
                                 </select>
                             </div>
 
-                            <div className="space-y-3 pt-2">
+                            <div className="pt-4 space-y-3">
                                 <div className="flex items-center">
                                     <input
                                         id="isAdmin"
@@ -181,7 +182,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
                                     </label>
                                 </div>
 
-                                <div className="flex items-center">
+                                <div className="flex items-center border-t pt-3">
                                     <input
                                         id="exemptFromTesting"
                                         name="exemptFromTesting"
