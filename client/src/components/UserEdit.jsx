@@ -17,13 +17,14 @@ function UserEdit({ userId, onClose, onUpdate }) {
             const fetchUser = async () => {
                 try {
                     const response = await api.get(`/users/${userId}`);
+                    console.log('Fetched user data:', response.data);
                     
                     setFormData({
                         firstName: response.data.first_name,
                         lastName: response.data.last_name,
                         managerEmail: response.data.manager_email || '',
-                        isAdmin: response.data.is_admin,
-                        isActive: response.data.is_active
+                        isAdmin: response.data.is_admin || false,
+                        isActive: response.data.is_active !== false
                     });
                 } catch (err) {
                     console.error('Error fetching user:', err);
@@ -37,7 +38,7 @@ function UserEdit({ userId, onClose, onUpdate }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            console.log('Submitting update with data:', formData);
+            console.log('Current form data:', formData);
             
             // Send all required fields
             const updateData = {
@@ -45,10 +46,10 @@ function UserEdit({ userId, onClose, onUpdate }) {
                 lastName: formData.lastName.trim(),
                 managerEmail: formData.managerEmail.trim(),
                 isAdmin: Boolean(formData.isAdmin),
-                isActive: Boolean(formData.isActive)
+                isActive: formData.isActive
             };
 
-            console.log('Transformed update data:', updateData);
+            console.log('Sending update data:', updateData);
 
             const response = await api.put(`/users/${userId}`, updateData);
             console.log('Update response:', response.data);

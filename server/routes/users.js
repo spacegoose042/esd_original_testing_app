@@ -195,8 +195,12 @@ router.put('/:id', auth, async (req, res) => {
             id,
             body: req.body,
             isActive: isActive,
-            isActiveType: typeof isActive
+            isActiveType: typeof isActive,
+            isActiveParsed: isActive === true || isActive === 'true'
         });
+
+        // Handle isActive value explicitly
+        const isActiveValue = isActive === true || isActive === 'true';
 
         const query = `
             UPDATE users 
@@ -226,7 +230,7 @@ router.put('/:id', auth, async (req, res) => {
             lastName,
             managerEmail,
             Boolean(isAdmin),
-            Boolean(isActive),
+            isActiveValue, // Use the explicitly parsed value
             id
         ];
 
@@ -234,7 +238,7 @@ router.put('/:id', auth, async (req, res) => {
             query,
             values,
             valueTypes: values.map(v => `${typeof v}:${v}`),
-            isActiveValue: Boolean(isActive)
+            isActiveValue
         });
 
         const result = await pool.query(query, values);
