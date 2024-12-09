@@ -16,6 +16,7 @@ router.get('/', auth, async (req, res) => {
                 u.last_name, 
                 COALESCE(u.email, '') as email,
                 COALESCE(u.is_admin, false) as is_admin,
+                COALESCE(u.is_active, true) as is_active,
                 u.created_at::text as created_at,
                 d.name as department_name,
                 CASE 
@@ -127,6 +128,7 @@ router.get('/:id', auth, async (req, res) => {
                 u.email,
                 u.is_admin,
                 u.is_manager,
+                u.is_active,
                 u.manager_id,
                 u.department_id,
                 u.created_at::text as created_at,
@@ -164,28 +166,30 @@ router.get('/:id', auth, async (req, res) => {
 router.put('/:id', auth, async (req, res) => {
     try {
         const { id } = req.params;
-        const { firstName, lastName, managerId, isAdmin } = req.body;
+        const { firstName, lastName, managerId, isAdmin, isActive } = req.body;
 
         console.log('Update request received:', {
             id,
             body: req.body
         });
 
-        // Basic update query with minimal fields
+        // Updated query to include is_active
         const query = `
             UPDATE users 
             SET 
                 first_name = $1,
                 last_name = $2,
                 manager_id = $3,
-                is_admin = $4
-            WHERE id = $5
+                is_admin = $4,
+                is_active = $5
+            WHERE id = $6
             RETURNING 
                 id, 
                 first_name, 
                 last_name, 
                 email,
                 is_admin,
+                is_active,
                 manager_id,
                 department_id,
                 is_manager,
@@ -197,6 +201,7 @@ router.put('/:id', auth, async (req, res) => {
             lastName,
             managerId === '' ? null : managerId,
             Boolean(isAdmin),
+            Boolean(isActive),
             id
         ];
 

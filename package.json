@@ -6,6 +6,7 @@
     "build": "cd client && npm install && npm run build",
     "start": "npm run build && cd server && npm start",
     "dev": "cd server && npm run dev",
-    "add-active-status": "cd server && node scripts/add_active_status.js"
+    "add-active-status": "cd server && node scripts/add_active_status.js",
+    "add-is-active": "cd server && node scripts/add_is_active_column.js"
   }
 }
