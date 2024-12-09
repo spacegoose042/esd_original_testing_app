@@ -126,6 +126,8 @@ router.post('/submit', async (req, res) => {
 // Get daily test status for all active users
 router.get('/daily-status', async (req, res) => {
     try {
+        const targetDate = req.query.date || 'CURRENT_DATE';
+        
         const result = await pool.query(`
             WITH today_tests AS (
                 SELECT 
@@ -134,7 +136,7 @@ router.get('/daily-status', async (req, res) => {
                     BOOL_OR(passed) as passed,  -- Will be true if ANY test passed
                     MAX(to_char(test_time::time, 'HH12:MI AM')) as test_time
                 FROM esd_tests
-                WHERE test_date = CURRENT_DATE
+                WHERE test_date = ${targetDate === 'CURRENT_DATE' ? 'CURRENT_DATE' : '$1'}
                 GROUP BY user_id, test_period
             )
             SELECT 
@@ -159,7 +161,7 @@ router.get('/daily-status', async (req, res) => {
             WHERE u.is_active = true 
             AND u.exempt_from_testing = false
             ORDER BY u.first_name, u.last_name;
-        `);
+        `, targetDate === 'CURRENT_DATE' ? [] : [targetDate]);
         
         // Filter out null JSON objects from the results
         const formattedResults = result.rows.map(row => ({

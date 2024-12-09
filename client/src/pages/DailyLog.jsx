@@ -5,12 +5,17 @@ function DailyLog() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const today = new Date().toISOString().split('T')[0];
+    const [selectedDate, setSelectedDate] = useState(today);
 
     useEffect(() => {
         const fetchDailyStatus = async () => {
             try {
-                // Get all active users with their test status for today
-                const response = await api.get('/tests/daily-status');
+                setLoading(true);
+                // Get all active users with their test status for selected date
+                const response = await api.get('/tests/daily-status', {
+                    params: { date: selectedDate }
+                });
                 setUsers(response.data);
                 setError('');
             } catch (err) {
@@ -22,17 +27,44 @@ function DailyLog() {
         };
 
         fetchDailyStatus();
-        // Refresh every 5 minutes
-        const interval = setInterval(fetchDailyStatus, 5 * 60 * 1000);
-        return () => clearInterval(interval);
-    }, []);
+        // Refresh every 5 minutes if viewing today's data
+        let interval;
+        if (selectedDate === today) {
+            interval = setInterval(fetchDailyStatus, 5 * 60 * 1000);
+        }
+        return () => interval && clearInterval(interval);
+    }, [selectedDate, today]);
+
+    const handleDateChange = (e) => {
+        setSelectedDate(e.target.value);
+    };
 
     if (loading) return <div className="text-center py-4">Loading...</div>;
     if (error) return <div className="text-red-500 text-center py-4">{error}</div>;
 
     return (
         <div className="container mx-auto px-4 py-6">
-            <h1 className="text-2xl font-bold mb-6">Daily Test Log</h1>
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold">Daily Test Log</h1>
+                <div className="flex items-center space-x-2">
+                    <input
+                        type="date"
+                        value={selectedDate}
+                        onChange={handleDateChange}
+                        max={today}
+                        className="p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    {selectedDate !== today && (
+                        <button
+                            onClick={() => setSelectedDate(today)}
+                            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                        >
+                            Today
+                        </button>
+                    )}
+                </div>
+            </div>
+
             <div className="bg-white rounded-lg shadow overflow-hidden">
                 <table className="min-w-full">
                     <thead className="bg-gray-50">
