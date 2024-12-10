@@ -17,7 +17,10 @@ function Absences() {
         const fetchData = async () => {
             try {
                 const usersResponse = await api.get('/users');
-                setUsers(usersResponse.data.filter(user => !user.exempt_from_testing));
+                setUsers(usersResponse.data.filter(user => 
+                    !user.exempt_from_testing && 
+                    user.is_active
+                ));
                 
                 if (selectedUser) {
                     const absencesResponse = await api.get(`/users/${selectedUser}/absences`);

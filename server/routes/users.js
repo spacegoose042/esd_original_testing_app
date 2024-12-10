@@ -521,21 +521,45 @@ router.get('/:id/absences', auth, async (req, res) => {
 router.delete('/:userId/absences/:absenceId', auth, async (req, res) => {
     try {
         const { userId, absenceId } = req.params;
+        console.log('Attempting to delete absence:', { userId, absenceId });
 
+        // First verify the absence exists and belongs to the user
+        const verifyQuery = await pool.query(`
+            SELECT * FROM absences WHERE id = $1 AND user_id = $2
+        `, [absenceId, userId]);
+
+        if (verifyQuery.rows.length === 0) {
+            console.log('Absence not found:', { userId, absenceId });
+            return res.status(404).json({ error: 'Absence record not found' });
+        }
+
+        console.log('Found absence to delete:', verifyQuery.rows[0]);
+
+        // Delete the absence
         const result = await pool.query(`
             DELETE FROM absences 
             WHERE id = $1 AND user_id = $2
             RETURNING *
         `, [absenceId, userId]);
 
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Absence record not found' });
-        }
-
-        res.json({ message: 'Absence record deleted successfully' });
+        console.log('Absence deleted successfully:', result.rows[0]);
+        res.json({ 
+            message: 'Absence record deleted successfully',
+            deletedRecord: result.rows[0]
+        });
     } catch (error) {
-        console.error('Error deleting absence:', error);
-        res.status(500).json({ error: 'Failed to delete absence' });
+        console.error('Error deleting absence:', {
+            error: error.message,
+            code: error.code,
+            detail: error.detail,
+            stack: error.stack,
+            userId: req.params.userId,
+            absenceId: req.params.absenceId
+        });
+        res.status(500).json({ 
+            error: 'Failed to delete absence',
+            details: error.message
+        });
     }
 });
 
