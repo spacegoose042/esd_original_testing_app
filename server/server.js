@@ -40,12 +40,13 @@ Email notifications will be disabled.
 const emailConfigValid = validateEmailConfig();
 if (emailConfigValid) {
     // Only initialize email-related services if config is valid
-    const { scheduleWeeklyReport } = require('./cronJobs');
-    const scheduler = require('./services/scheduler');
+    const { scheduleWeeklyReport, scheduleMorningCheck, scheduleAfternoonCheck } = require('./cronJobs');
     
     // Start the scheduled tasks
     scheduleWeeklyReport();
-    console.log('📅 Scheduled tasks initialized');
+    scheduleMorningCheck();
+    scheduleAfternoonCheck();
+    console.log('📅 Scheduled tasks initialized: Weekly Report, Morning Checks, Afternoon Checks');
 } else {
     console.log('📧 Email services disabled due to missing configuration');
 }
