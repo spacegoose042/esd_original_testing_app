@@ -121,15 +121,6 @@ const checkAfternoonTests = async () => {
     }
 };
 
-// Schedule the checks using CST timezone
-cron.schedule('1 10 * * 1-5', checkMorningTests, {
-    timezone: "America/Chicago"
-});
-
-cron.schedule('1 15 * * 1-5', checkAfternoonTests, {
-    timezone: "America/Chicago"
-});
-
 module.exports = {
     checkMorningTests,
     checkAfternoonTests
