@@ -21,23 +21,19 @@ const checkMorningTests = async () => {
 
     console.log('Starting morning test check...', new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' }));
     try {
-        // First, get all active users who need to test (not exempt)
+        // Get all active users who need to test and their managers
         const usersToCheck = await pool.query(`
             SELECT 
                 u.id, 
                 u.first_name, 
-                u.last_name, 
-                u.email as user_email,
+                u.last_name,
                 m.email as manager_email,
-                m.first_name as manager_first_name,
-                m.last_name as manager_last_name,
                 m.exempt_from_testing as manager_is_exempt
             FROM users u
             LEFT JOIN users m ON u.manager_id = m.id
             WHERE u.is_admin = false
             AND u.is_active = true
             AND u.exempt_from_testing = false
-            AND u.email IS NOT NULL
             AND m.email IS NOT NULL
             -- Check if user is not marked as absent
             AND NOT EXISTS (
@@ -60,11 +56,10 @@ const checkMorningTests = async () => {
         console.log(`Found ${usersToCheck.rows.length} users missing morning tests`);
 
         for (const user of usersToCheck.rows) {
-            // Send to both user and manager
             await sendMissingTestAlert(
                 `${user.first_name} ${user.last_name}`,
                 'morning',
-                [user.user_email, user.manager_email].join(',')
+                user.manager_email
             );
         }
     } catch (error) {
@@ -85,18 +80,14 @@ const checkAfternoonTests = async () => {
             SELECT 
                 u.id, 
                 u.first_name, 
-                u.last_name, 
-                u.email as user_email,
+                u.last_name,
                 m.email as manager_email,
-                m.first_name as manager_first_name,
-                m.last_name as manager_last_name,
                 m.exempt_from_testing as manager_is_exempt
             FROM users u
             LEFT JOIN users m ON u.manager_id = m.id
             WHERE u.is_admin = false
             AND u.is_active = true
             AND u.exempt_from_testing = false
-            AND u.email IS NOT NULL
             AND m.email IS NOT NULL
             -- Check if user is not marked as absent
             AND NOT EXISTS (
@@ -119,11 +110,10 @@ const checkAfternoonTests = async () => {
         console.log(`Found ${usersToCheck.rows.length} users missing afternoon tests`);
 
         for (const user of usersToCheck.rows) {
-            // Send to both user and manager
             await sendMissingTestAlert(
                 `${user.first_name} ${user.last_name}`,
                 'afternoon',
-                [user.user_email, user.manager_email].join(',')
+                user.manager_email
             );
         }
     } catch (error) {

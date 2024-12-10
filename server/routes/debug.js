@@ -93,7 +93,6 @@ router.get('/check-notifications', async (req, res) => {
                 u.id, 
                 u.first_name, 
                 u.last_name, 
-                u.email as user_email,
                 u.is_admin,
                 u.is_active,
                 u.exempt_from_testing,
@@ -135,7 +134,7 @@ router.get('/check-notifications', async (req, res) => {
             admins: usersToCheck.rows.filter(u => u.is_admin).length,
             inactive: usersToCheck.rows.filter(u => !u.is_active).length,
             exempt: usersToCheck.rows.filter(u => u.exempt_from_testing).length,
-            noUserEmail: usersToCheck.rows.filter(u => !u.user_email).length,
+            noManager: usersToCheck.rows.filter(u => !u.manager_id).length,
             noManagerEmail: usersToCheck.rows.filter(u => !u.manager_email).length,
             absent: usersToCheck.rows.filter(u => u.is_absent).length,
             hasMorningTest: usersToCheck.rows.filter(u => u.has_morning_test).length,
@@ -144,16 +143,39 @@ router.get('/check-notifications', async (req, res) => {
                 !u.is_admin && 
                 u.is_active && 
                 !u.exempt_from_testing && 
-                u.user_email && 
                 u.manager_email && 
                 !u.is_absent
             ).length
         };
 
+        // Group users by manager for notification summary
+        const managerGroups = {};
+        usersToCheck.rows.forEach(user => {
+            if (user.manager_email && !user.is_admin && user.is_active && !user.exempt_from_testing && !user.is_absent) {
+                if (!managerGroups[user.manager_email]) {
+                    managerGroups[user.manager_email] = {
+                        managerName: `${user.manager_first_name} ${user.manager_last_name}`,
+                        missingMorningTests: [],
+                        missingAfternoonTests: []
+                    };
+                }
+                if (!user.has_morning_test) {
+                    managerGroups[user.manager_email].missingMorningTests.push(
+                        `${user.first_name} ${user.last_name}`
+                    );
+                }
+                if (!user.has_afternoon_test) {
+                    managerGroups[user.manager_email].missingAfternoonTests.push(
+                        `${user.first_name} ${user.last_name}`
+                    );
+                }
+            }
+        });
+
         res.json({
             currentTime: new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' }),
             stats: usersByStatus,
-            users: usersToCheck.rows
+            notificationsByManager: managerGroups
         });
     } catch (error) {
         console.error('Failed to check notifications:', error);
