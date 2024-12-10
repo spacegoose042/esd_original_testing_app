@@ -87,13 +87,20 @@ router.get('/check-notifications', async (req, res) => {
     try {
         console.log('Checking for users who should receive notifications...');
         
-        // Get all active users who need to test
+        // Get ALL users with their status flags
         const usersToCheck = await pool.query(`
             SELECT 
                 u.id, 
                 u.first_name, 
                 u.last_name, 
-                u.manager_email,
+                u.email as user_email,
+                u.is_admin,
+                u.is_active,
+                u.exempt_from_testing,
+                m.id as manager_id,
+                m.first_name as manager_first_name,
+                m.last_name as manager_last_name,
+                m.email as manager_email,
                 m.exempt_from_testing as manager_is_exempt,
                 EXISTS (
                     SELECT 1
@@ -119,15 +126,33 @@ router.get('/check-notifications', async (req, res) => {
                 ) as is_absent
             FROM users u
             LEFT JOIN users m ON u.manager_id = m.id
-            WHERE u.is_admin = false
-            AND u.is_active = true
-            AND u.exempt_from_testing = false
-            AND u.manager_email IS NOT NULL
+            -- No WHERE clause so we can see all users
         `);
+
+        // Group users by their status
+        const usersByStatus = {
+            totalUsers: usersToCheck.rows.length,
+            admins: usersToCheck.rows.filter(u => u.is_admin).length,
+            inactive: usersToCheck.rows.filter(u => !u.is_active).length,
+            exempt: usersToCheck.rows.filter(u => u.exempt_from_testing).length,
+            noUserEmail: usersToCheck.rows.filter(u => !u.user_email).length,
+            noManagerEmail: usersToCheck.rows.filter(u => !u.manager_email).length,
+            absent: usersToCheck.rows.filter(u => u.is_absent).length,
+            hasMorningTest: usersToCheck.rows.filter(u => u.has_morning_test).length,
+            hasAfternoonTest: usersToCheck.rows.filter(u => u.has_afternoon_test).length,
+            qualifyingForNotifications: usersToCheck.rows.filter(u => 
+                !u.is_admin && 
+                u.is_active && 
+                !u.exempt_from_testing && 
+                u.user_email && 
+                u.manager_email && 
+                !u.is_absent
+            ).length
+        };
 
         res.json({
             currentTime: new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' }),
-            totalActiveUsers: usersToCheck.rows.length,
+            stats: usersByStatus,
             users: usersToCheck.rows
         });
     } catch (error) {
