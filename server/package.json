@@ -6,7 +6,8 @@
     "dev": "nodemon server.js",
     "init-db": "node -e 'require(\"./config/db.js\")'",
     "migrate-email": "node scripts/run_email_migration.js",
-    "force-nullable": "node scripts/force_email_nullable.js"
+    "force-nullable": "node scripts/force_email_nullable.js",
+    "migrate": "node scripts/run_migration.js"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
