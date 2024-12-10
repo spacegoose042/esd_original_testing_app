@@ -43,10 +43,17 @@ router.get('/verify', async (req, res) => {
 // Login route
 router.post('/login', async (req, res) => {
     try {
-        console.log('Login attempt:', req.body);
+        console.log('Login attempt:', { 
+            email: req.body.email,
+            hasPassword: !!req.body.password
+        });
         const { email, password } = req.body;
 
         if (!email || !password) {
+            console.log('Missing credentials:', { 
+                hasEmail: !!email, 
+                hasPassword: !!password 
+            });
             return res.status(400).json({ error: 'Email and password are required' });
         }
 
@@ -62,11 +69,14 @@ router.post('/login', async (req, res) => {
         }
 
         const user = result.rows[0];
-        console.log('Found user:', { id: user.id, email: user.email });
-
-        // Debug log to check stored password hash
-        console.log('Stored password hash:', user.password);
-        console.log('Attempting to compare with provided password');
+        console.log('Found user:', { 
+            id: user.id, 
+            email: user.email,
+            hasPasswordHash: !!user.password,
+            isActive: user.is_active,
+            isAdmin: user.is_admin,
+            isManager: user.is_manager
+        });
 
         // Compare password with stored hash
         const isValid = await bcrypt.compare(password, user.password);
@@ -82,15 +92,24 @@ router.post('/login', async (req, res) => {
             { 
                 id: user.id,
                 email: user.email,
-                is_admin: user.is_admin 
+                is_admin: user.is_admin,
+                is_manager: user.is_manager
             },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
 
+        console.log('Login successful:', {
+            userId: user.id,
+            isAdmin: user.is_admin,
+            isManager: user.is_manager
+        });
+
         // Return user info and token
         res.json({
             token,
+            isAdmin: user.is_admin,
+            isManager: user.is_manager,
             user: {
                 id: user.id,
                 email: user.email,
