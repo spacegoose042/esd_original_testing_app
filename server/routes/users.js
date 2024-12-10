@@ -451,4 +451,92 @@ router.post('/:id/reset-password', auth, async (req, res) => {
     }
 });
 
+// Record user absence
+router.post('/:id/absences', auth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { date, period, reason } = req.body;
+
+        // Validate period
+        if (!['AM', 'PM', 'FULL'].includes(period)) {
+            return res.status(400).json({ error: 'Invalid period. Must be AM, PM, or FULL' });
+        }
+
+        // Validate date format
+        const absenceDate = new Date(date);
+        if (isNaN(absenceDate)) {
+            return res.status(400).json({ error: 'Invalid date format' });
+        }
+
+        // Insert absence record
+        const result = await pool.query(`
+            INSERT INTO absences (user_id, absence_date, period, reason, created_by)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING *
+        `, [id, date, period, reason, req.user.id]);
+
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error('Error recording absence:', error);
+        res.status(500).json({ error: 'Failed to record absence' });
+    }
+});
+
+// Get user absences
+router.get('/:id/absences', auth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { start_date, end_date } = req.query;
+
+        let query = `
+            SELECT 
+                a.*,
+                u.first_name, 
+                u.last_name,
+                c.first_name as created_by_first_name,
+                c.last_name as created_by_last_name
+            FROM absences a
+            JOIN users u ON a.user_id = u.id
+            JOIN users c ON a.created_by = c.id
+            WHERE a.user_id = $1
+        `;
+        const params = [id];
+
+        if (start_date && end_date) {
+            query += ` AND a.absence_date BETWEEN $2 AND $3`;
+            params.push(start_date, end_date);
+        }
+
+        query += ` ORDER BY a.absence_date DESC`;
+
+        const result = await pool.query(query, params);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching absences:', error);
+        res.status(500).json({ error: 'Failed to fetch absences' });
+    }
+});
+
+// Delete absence record
+router.delete('/:userId/absences/:absenceId', auth, async (req, res) => {
+    try {
+        const { userId, absenceId } = req.params;
+
+        const result = await pool.query(`
+            DELETE FROM absences 
+            WHERE id = $1 AND user_id = $2
+            RETURNING *
+        `, [absenceId, userId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Absence record not found' });
+        }
+
+        res.json({ message: 'Absence record deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting absence:', error);
+        res.status(500).json({ error: 'Failed to delete absence' });
+    }
+});
+
 module.exports = router;

@@ -35,6 +35,14 @@ const checkMorningTests = async () => {
             AND u.is_active = true
             AND u.exempt_from_testing = false
             AND u.manager_email IS NOT NULL
+            -- Check if user is not marked as absent
+            AND NOT EXISTS (
+                SELECT 1
+                FROM absences a
+                WHERE a.user_id = u.id
+                AND a.absence_date = CURRENT_DATE
+                AND (a.period = 'AM' OR a.period = 'FULL')
+            )
             AND NOT EXISTS (
                 SELECT 1
                 FROM esd_tests t
@@ -81,6 +89,14 @@ const checkAfternoonTests = async () => {
             AND u.is_active = true
             AND u.exempt_from_testing = false
             AND u.manager_email IS NOT NULL
+            -- Check if user is not marked as absent
+            AND NOT EXISTS (
+                SELECT 1
+                FROM absences a
+                WHERE a.user_id = u.id
+                AND a.absence_date = CURRENT_DATE
+                AND (a.period = 'PM' OR a.period = 'FULL')
+            )
             AND NOT EXISTS (
                 SELECT 1
                 FROM esd_tests t
