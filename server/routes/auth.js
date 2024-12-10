@@ -45,7 +45,8 @@ router.post('/login', async (req, res) => {
     try {
         console.log('Login attempt:', { 
             email: req.body.email,
-            hasPassword: !!req.body.password
+            hasPassword: !!req.body.password,
+            passwordLength: req.body.password?.length
         });
         const { email, password } = req.body;
 
@@ -73,9 +74,17 @@ router.post('/login', async (req, res) => {
             id: user.id, 
             email: user.email,
             hasPasswordHash: !!user.password,
+            passwordHashLength: user.password?.length,
             isActive: user.is_active,
             isAdmin: user.is_admin,
             isManager: user.is_manager
+        });
+
+        // Log the actual values being compared (first few chars only for security)
+        console.log('Password comparison:', {
+            providedPassword: password.substring(0, 3) + '...',
+            storedHashStart: user.password?.substring(0, 10) + '...',
+            storedHashValid: user.password?.startsWith('$2a$')
         });
 
         // Compare password with stored hash
