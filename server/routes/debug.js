@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/db');
 const { sendMissingTestAlert, sendWeeklyReport } = require('../services/emailService');
+const { checkMorningTests, checkAfternoonTests } = require('../services/scheduler');
 
 router.get('/table-info', async (req, res) => {
     try {
@@ -78,6 +79,60 @@ router.post('/test-email', async (req, res) => {
             code: error.code,
             command: error.command
         });
+    }
+});
+
+// Debug endpoint to check who should receive notifications
+router.get('/check-notifications', async (req, res) => {
+    try {
+        console.log('Checking for users who should receive notifications...');
+        
+        // Get all active users who need to test
+        const usersToCheck = await pool.query(`
+            SELECT 
+                u.id, 
+                u.first_name, 
+                u.last_name, 
+                u.manager_email,
+                m.exempt_from_testing as manager_is_exempt,
+                EXISTS (
+                    SELECT 1
+                    FROM esd_tests t
+                    WHERE t.user_id = u.id
+                    AND t.test_date = CURRENT_DATE
+                    AND t.test_time BETWEEN '06:00:00' AND '10:00:00'
+                    AND t.test_period = 'AM'
+                ) as has_morning_test,
+                EXISTS (
+                    SELECT 1
+                    FROM esd_tests t
+                    WHERE t.user_id = u.id
+                    AND t.test_date = CURRENT_DATE
+                    AND t.test_time BETWEEN '12:00:00' AND '15:00:00'
+                    AND t.test_period = 'PM'
+                ) as has_afternoon_test,
+                EXISTS (
+                    SELECT 1
+                    FROM absences a
+                    WHERE a.user_id = u.id
+                    AND a.absence_date = CURRENT_DATE
+                ) as is_absent
+            FROM users u
+            LEFT JOIN users m ON u.manager_id = m.id
+            WHERE u.is_admin = false
+            AND u.is_active = true
+            AND u.exempt_from_testing = false
+            AND u.manager_email IS NOT NULL
+        `);
+
+        res.json({
+            currentTime: new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' }),
+            totalActiveUsers: usersToCheck.rows.length,
+            users: usersToCheck.rows
+        });
+    } catch (error) {
+        console.error('Failed to check notifications:', error);
+        res.status(500).json({ error: error.message });
     }
 });
 
