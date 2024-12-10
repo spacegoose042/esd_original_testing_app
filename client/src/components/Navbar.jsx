@@ -37,6 +37,11 @@ function Navbar({ isAdmin, isManager, isAuthenticated }) {
                                     History
                                 </Link>
                             )}
+                            {(isAdmin || isManager) && (
+                                <Link to="/absences" className="py-4 px-2 text-gray-500 hover:text-gray-900">
+                                    Absences
+                                </Link>
+                            )}
                             {isAdmin && (
                                 <>
                                     <Link to="/users" className="py-4 px-2 text-gray-500 hover:text-gray-900">
