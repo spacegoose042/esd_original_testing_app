@@ -52,11 +52,24 @@ function App() {
         );
     }
 
-    // Protected Route component
+    // If not authenticated, only show login
+    if (!isAuthenticated) {
+        return (
+            <Routes>
+                <Route path="/login" element={
+                    <Login 
+                        setIsAdmin={setIsAdmin} 
+                        setIsManager={setIsManager} 
+                        setIsAuthenticated={setIsAuthenticated}
+                    />
+                } />
+                <Route path="*" element={<Navigate to="/login" />} />
+            </Routes>
+        );
+    }
+
+    // Protected Route component for admin/manager specific routes
     const ProtectedRoute = ({ children, adminOnly = false, managerOrAdmin = false }) => {
-        if (!isAuthenticated && (adminOnly || managerOrAdmin)) {
-            return <Navigate to="/login" />;
-        }
         if (adminOnly && !isAdmin) {
             return <Navigate to="/" />;
         }
@@ -77,11 +90,6 @@ function App() {
                         <ProtectedRoute managerOrAdmin>
                             <History />
                         </ProtectedRoute>
-                    } />
-                    <Route path="/login" element={
-                        isAuthenticated ? 
-                        <Navigate to="/" /> : 
-                        <Login setIsAdmin={setIsAdmin} setIsManager={setIsManager} />
                     } />
                     <Route path="/users" element={
                         <ProtectedRoute adminOnly>

@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
-function Login({ setIsAdmin, setIsManager, setIsAuthenticated }) {
-    const [email, setEmail] = useState('');
+function StationLogin() {
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -15,19 +15,16 @@ function Login({ setIsAdmin, setIsManager, setIsAuthenticated }) {
         setError('');
 
         try {
-            const response = await api.post('/auth/login', { email, password });
-            
+            const response = await api.post('/station-auth/login', { username, password });
             if (response.data.token) {
-                localStorage.setItem('token', response.data.token);
-                setIsAdmin(response.data.isAdmin);
-                setIsManager(response.data.isManager);
-                setIsAuthenticated(true);
+                localStorage.setItem('stationToken', response.data.token);
+                localStorage.setItem('stationId', response.data.stationId);
                 navigate('/');
             } else {
                 setError('Invalid login response');
             }
         } catch (err) {
-            console.error('Login error:', err);
+            console.error('Station login error:', err);
             setError(err.response?.data?.error || 'Failed to login');
         } finally {
             setLoading(false);
@@ -39,28 +36,27 @@ function Login({ setIsAdmin, setIsManager, setIsAuthenticated }) {
             <div className="max-w-md w-full space-y-8">
                 <div>
                     <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                        ESD Testing System
+                        ESD Testing Station Login
                     </h2>
                     <p className="mt-2 text-center text-sm text-gray-600">
-                        Please sign in with your credentials
+                        Enter station credentials to continue
                     </p>
                 </div>
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
                     <div className="rounded-md shadow-sm -space-y-px">
                         <div>
-                            <label htmlFor="email-address" className="sr-only">
-                                Email address
+                            <label htmlFor="username" className="sr-only">
+                                Station Username
                             </label>
                             <input
-                                id="email-address"
-                                name="email"
-                                type="email"
-                                autoComplete="email"
+                                id="username"
+                                name="username"
+                                type="text"
                                 required
                                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                                placeholder="Email address"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="Station Username"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
                             />
                         </div>
                         <div>
@@ -71,7 +67,6 @@ function Login({ setIsAdmin, setIsManager, setIsAuthenticated }) {
                                 id="password"
                                 name="password"
                                 type="password"
-                                autoComplete="current-password"
                                 required
                                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                                 placeholder="Password"
@@ -97,7 +92,7 @@ function Login({ setIsAdmin, setIsManager, setIsAuthenticated }) {
                                     : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
                             }`}
                         >
-                            {loading ? 'Signing in...' : 'Sign in'}
+                            {loading ? 'Logging in...' : 'Log in'}
                         </button>
                     </div>
                 </form>
@@ -106,4 +101,4 @@ function Login({ setIsAdmin, setIsManager, setIsAuthenticated }) {
     );
 }
 
-export default Login;
+export default StationLogin; 
