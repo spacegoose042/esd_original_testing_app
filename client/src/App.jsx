@@ -7,6 +7,7 @@ import DailyLog from './pages/DailyLog';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Users from './pages/Users';
+import Absences from './pages/Absences';
 import api from './services/api';
 
 function App() {
@@ -89,6 +90,11 @@ function App() {
                     <Route path="/history" element={
                         <ProtectedRoute managerOrAdmin>
                             <History />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/absences" element={
+                        <ProtectedRoute managerOrAdmin>
+                            <Absences />
                         </ProtectedRoute>
                     } />
                     <Route path="/users" element={
