@@ -1,6 +1,36 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 
+// Helper function to render test status
+const TestStatus = ({ test, absencePeriod, period }) => {
+    // If user is absent for this period, show Absent in blue
+    if ((absencePeriod === 'FULL' || absencePeriod === period)) {
+        return (
+            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                Absent
+            </span>
+        );
+    }
+
+    // Otherwise show test status
+    if (test) {
+        return (
+            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                test.passed
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+            }`}>
+                {test.passed ? 'PASS' : 'FAIL'}
+                <span className="ml-2 text-gray-500">
+                    ({test.time})
+                </span>
+            </span>
+        );
+    }
+
+    return <span className="text-gray-400 text-sm">Not Tested</span>;
+};
+
 function DailyLog() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -88,36 +118,18 @@ function DailyLog() {
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    {user.am_test ? (
-                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                            user.am_test.passed
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-red-100 text-red-800'
-                                        }`}>
-                                            {user.am_test.passed ? 'PASS' : 'FAIL'}
-                                            <span className="ml-2 text-gray-500">
-                                                ({user.am_test.time})
-                                            </span>
-                                        </span>
-                                    ) : (
-                                        <span className="text-gray-400 text-sm">Not Tested</span>
-                                    )}
+                                    <TestStatus 
+                                        test={user.am_test} 
+                                        absencePeriod={user.absence_period} 
+                                        period="AM"
+                                    />
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    {user.pm_test ? (
-                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                            user.pm_test.passed
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-red-100 text-red-800'
-                                        }`}>
-                                            {user.pm_test.passed ? 'PASS' : 'FAIL'}
-                                            <span className="ml-2 text-gray-500">
-                                                ({user.pm_test.time})
-                                            </span>
-                                        </span>
-                                    ) : (
-                                        <span className="text-gray-400 text-sm">Not Tested</span>
-                                    )}
+                                    <TestStatus 
+                                        test={user.pm_test} 
+                                        absencePeriod={user.absence_period} 
+                                        period="PM"
+                                    />
                                 </td>
                             </tr>
                         ))}

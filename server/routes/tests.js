@@ -138,6 +138,14 @@ router.get('/daily-status', async (req, res) => {
                 FROM esd_tests
                 WHERE test_date = ${targetDate === 'CURRENT_DATE' ? 'CURRENT_DATE' : '$1'}
                 GROUP BY user_id, test_period
+            ),
+            today_absences AS (
+                SELECT 
+                    user_id,
+                    period,
+                    absence_date
+                FROM absences
+                WHERE absence_date = ${targetDate === 'CURRENT_DATE' ? 'CURRENT_DATE' : '$1'}
             )
             SELECT 
                 u.id,
@@ -150,7 +158,13 @@ router.get('/daily-status', async (req, res) => {
                 json_build_object(
                     'passed', pm.passed,
                     'time', pm.test_time
-                ) as pm_test
+                ) as pm_test,
+                CASE 
+                    WHEN EXISTS (SELECT 1 FROM today_absences a WHERE a.user_id = u.id AND a.period = 'FULL') THEN 'FULL'
+                    WHEN EXISTS (SELECT 1 FROM today_absences a WHERE a.user_id = u.id AND a.period = 'AM') THEN 'AM'
+                    WHEN EXISTS (SELECT 1 FROM today_absences a WHERE a.user_id = u.id AND a.period = 'PM') THEN 'PM'
+                    ELSE NULL
+                END as absence_period
             FROM users u
             LEFT JOIN (
                 SELECT * FROM today_tests WHERE test_period = 'AM'
